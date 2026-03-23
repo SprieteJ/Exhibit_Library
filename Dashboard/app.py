@@ -139,7 +139,7 @@ class Handler(BaseHTTPRequestHandler):
 
         try:
             if path == "/" or path == "/index.html":
-                self.send_file(BASE_DIR / "dashboard" / "index.html")
+                self.send_file(BASE_DIR / "index.html")
 
             elif path == "/api/assets":
                 self.send_json(handle_assets())
@@ -148,7 +148,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(handle_price(params))
 
             elif path.startswith("/static/"):
-                self.send_file(BASE_DIR / "dashboard" / path[8:])
+                self.send_file(BASE_DIR / path[8:])
 
             else:
                 self.send_response(404)
