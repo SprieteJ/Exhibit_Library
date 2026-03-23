@@ -1,0 +1,37 @@
+## Crypto Data Lake — Context
+
+Base path:
+/home/jasperdemaere/Master_JDM/Exhibit_Library/Data/crypto_data/
+
+Env file:
+/home/jasperdemaere/Master_JDM/Exhibit_Library/env/env.txt
+Contains: COINGECKO_API_KEY
+
+Asset registry:
+/home/jasperdemaere/Master_JDM/Exhibit_Library/Data/crypto_data/registry/assets-export-YYYY-MM-DD.csv
+Loaded via: scripts/utils/registry.py → Registry()
+584 assets with CoinGecko ID, CMC ID, CoinMetrics ID, sector, ecosystem etc.
+
+Storage layer:
+scripts/utils/storage.py → write(table, df) / read(table)
+TABLE_PATHS maps table names to CSV file paths.
+All tables include: source, ingested_at audit columns.
+Primary keys: timestamp + coingecko_id (+ exchange where relevant)
+
+Existing tables:
+- price_daily        → price/daily/price_daily.csv
+- price_hourly       → price/hourly/price_hourly.csv
+- marketcap_daily    → marketcap/daily/marketcap_daily.csv
+- funding_8h         → funding/8h/funding_8h.csv
+- funding_daily      → funding/daily/funding_daily.csv
+- open_interest_daily→ open_interest/daily/oi_daily.csv
+- options_snapshot   → options/snapshots/vol_surface.csv
+- liquidations       → derivatives/liquidations/liquidations.csv
+
+All ingest scripts live in: scripts/ingest/
+All utility scripts live in: scripts/utils/
+Migration script: scripts/migrate/migrate_to_postgres.py
+
+Python: python3. API calls use requests.Session() with retry logic and 0.20s sleep between calls.
+
+New script request: [DESCRIBE WHAT YOU WANT HERE]

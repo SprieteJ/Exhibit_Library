@@ -1,0 +1,12 @@
+Data/crypto_data/open_interest/hourly/
+Data/crypto_data/price/hourly/
+Data/crypto_data/volume/hourly/
+Data/crypto_data/marketcap/hourly/
+Data/crypto_data/derivatives/liquidations/
+env/
+*.backup.csv
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+scripts/ingest/derivatives_backfill_progress.json
