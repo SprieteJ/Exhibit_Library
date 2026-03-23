@@ -3,821 +3,835 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Price Comparison</title>
+<title>Wintermute — Market Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg:        #FAFAFA;
-    --surface:   #FFFFFF;
-    --border:    #E8E8E6;
-    --spine:     #606663;
-    --graphite:  #323935;
-    --ash:       #606663;
-    --text:      #1A1A1A;
-    --muted:     #888B88;
-    --green:     #00D64A;
-    --blue:      #2471CC;
-    --purple:    #746BE6;
-    --pink:      #DB33CB;
-    --red:       #EC5B5B;
-    --input-bg:  #F2F2F0;
-    --tag-bg:    #EEEEED;
-    --radius:    6px;
-    --font:      'DM Sans', 'Helvetica Neue', sans-serif;
-    --font-mono: 'DM Mono', 'Courier New', monospace;
-  }
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #FAFAFA;
+  --surface:  #FFFFFF;
+  --border:   #E8E8E6;
+  --spine:    #606663;
+  --graphite: #323935;
+  --ash:      #606663;
+  --muted:    #888B88;
+  --input-bg: #F2F2F0;
+  --tag-bg:   #EEEEED;
+  --radius:   6px;
+  --font:     'DM Sans', 'Helvetica Neue', sans-serif;
+  --mono:     'DM Mono', 'Courier New', monospace;
+  --c0: #00D64A; --c1: #2471CC; --c2: #746BE6;
+  --c3: #DB33CB; --c4: #EC5B5B; --c5: #F7931A;
+  --c6: #26A17B; --c7: #FFB800;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 13px;
-    min-height: 100vh;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── Google Fonts ── */
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+body {
+  background: var(--bg);
+  color: var(--graphite);
+  font-family: var(--font);
+  font-size: 13px;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
-  /* ── Layout ── */
-  .shell {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    grid-template-rows: 56px 1fr;
-    height: 100vh;
-    overflow: hidden;
-  }
+/* ── Header ── */
+.header {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+  flex-shrink: 0;
+}
 
-  /* ── Header ── */
-  .header {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    padding: 0 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    gap: 12px;
-  }
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-  .header-logo {
-    width: 22px;
-    height: 22px;
-    background: var(--graphite);
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.logo-mark {
+  width: 22px; height: 22px;
+  background: var(--graphite);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
 
-  .header-logo svg { width: 12px; height: 12px; fill: var(--bg); }
+.logo-mark svg { width: 12px; height: 12px; }
 
-  .header-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--graphite);
-    letter-spacing: -0.01em;
-  }
+.logo-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--graphite);
+  letter-spacing: -0.01em;
+}
 
-  .header-sub {
-    font-size: 11px;
-    color: var(--muted);
-    margin-left: 2px;
-  }
+.header-divider {
+  width: 1px; height: 16px;
+  background: var(--border);
+}
 
-  .header-spacer { flex: 1; }
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 2px;
+}
 
-  .header-badge {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--muted);
-    background: var(--tag-bg);
-    padding: 3px 8px;
-    border-radius: 20px;
-    letter-spacing: 0.02em;
-  }
+.tab {
+  padding: 5px 14px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  background: none;
+  font-family: var(--font);
+}
 
-  /* ── Sidebar ── */
-  .sidebar {
-    border-right: 1px solid var(--border);
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+.tab:hover { color: var(--graphite); background: var(--tag-bg); }
 
-  .sidebar-section {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-  }
+.tab.active {
+  color: var(--graphite);
+  background: var(--surface);
+  border-color: var(--border);
+}
 
-  .sidebar-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
+.header-spacer { flex: 1; }
 
-  /* Search */
-  .search-wrap {
-    position: relative;
-  }
+.header-pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--tag-bg);
+  padding: 3px 8px;
+  border-radius: 20px;
+}
 
-  .search-wrap svg {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 13px;
-    height: 13px;
-    stroke: var(--muted);
-    fill: none;
-  }
+/* ── Body ── */
+.body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
 
-  #search {
-    width: 100%;
-    background: var(--input-bg);
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    padding: 7px 10px 7px 30px;
-    font-family: var(--font);
-    font-size: 12px;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.15s;
-  }
+/* ── Sidebar ── */
+.sidebar {
+  width: 272px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
 
-  #search:focus { border-color: var(--spine); }
-  #search::placeholder { color: var(--muted); }
+.sidebar-block {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
 
-  /* Asset list */
-  .asset-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 6px 8px;
-  }
+.sidebar-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
 
-  .asset-list::-webkit-scrollbar { width: 4px; }
-  .asset-list::-webkit-scrollbar-track { background: transparent; }
-  .asset-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* Search */
+.search-wrap { position: relative; }
+.search-wrap svg {
+  position: absolute; left: 9px; top: 50%;
+  transform: translateY(-50%);
+  width: 12px; height: 12px;
+  stroke: var(--muted); fill: none; stroke-width: 1.5;
+  pointer-events: none;
+}
 
-  .asset-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: background 0.1s;
-    user-select: none;
-  }
+input[type=text], input[type=date] {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 7px 9px;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--graphite);
+  outline: none;
+  transition: border-color 0.15s;
+}
 
-  .asset-item:hover { background: var(--tag-bg); }
-  .asset-item.selected { background: var(--graphite); }
-  .asset-item.selected .asset-sym { color: #fff; }
-  .asset-item.selected .asset-name { color: rgba(255,255,255,0.6); }
+#search { padding-left: 28px; }
+input:focus { border-color: var(--spine); }
+input::placeholder { color: var(--muted); }
 
-  .asset-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    background: var(--border);
-  }
+/* Lists */
+.scroll-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px;
+}
 
-  .asset-item.selected .asset-dot { background: var(--green); }
+.scroll-list::-webkit-scrollbar { width: 3px; }
+.scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .asset-sym {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--graphite);
-    min-width: 52px;
-  }
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.1s;
+}
 
-  .asset-name {
-    font-size: 11px;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+.list-item:hover { background: var(--tag-bg); }
+.list-item.active { background: var(--graphite); }
+.list-item.active .item-sym,
+.list-item.active .item-name { color: #fff; }
+.list-item.active .item-name { opacity: 0.6; }
 
-  /* Date controls */
-  .date-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
+.item-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
 
-  .date-field label {
-    display: block;
-    font-size: 10px;
-    color: var(--muted);
-    margin-bottom: 4px;
-    font-weight: 500;
-  }
+.list-item.active .item-dot { background: var(--c0); }
 
-  .date-field input {
-    width: 100%;
-    background: var(--input-bg);
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    padding: 6px 8px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.15s;
-  }
+.item-sym {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--graphite);
+  min-width: 56px;
+}
 
-  .date-field input:focus { border-color: var(--spine); }
+.item-name {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  /* Quick presets */
-  .presets {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
+.item-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: auto;
+  flex-shrink: 0;
+}
 
-  .preset {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    padding: 4px 8px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.1s;
-    letter-spacing: 0.02em;
-  }
+/* Date controls */
+.date-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
 
-  .preset:hover { border-color: var(--spine); color: var(--graphite); }
-  .preset.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
+.date-grid label {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
 
-  /* Selected tags */
-  .selected-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    min-height: 28px;
-  }
+input[type=date] {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 8px;
+}
 
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    padding: 3px 8px 3px 10px;
-    border-radius: 20px;
-    color: #fff;
-    letter-spacing: 0.02em;
-  }
+/* Presets */
+.presets { display: flex; gap: 3px; flex-wrap: wrap; }
 
-  .tag-remove {
-    cursor: pointer;
-    opacity: 0.7;
-    font-size: 12px;
-    line-height: 1;
-    transition: opacity 0.1s;
-  }
-  .tag-remove:hover { opacity: 1; }
+.preset {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
 
-  /* ── Main area ── */
-  .main {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--bg);
-  }
+.preset:hover { border-color: var(--spine); color: var(--graphite); }
+.preset.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
 
-  .chart-header {
-    padding: 20px 28px 0;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-  }
+/* Selected tags */
+.tags { display: flex; flex-wrap: wrap; gap: 3px; min-height: 24px; }
 
-  .chart-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--graphite);
-    letter-spacing: -0.02em;
-  }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px 2px 9px;
+  border-radius: 20px;
+  color: #fff;
+}
 
-  .chart-subtitle {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
+.tag-x { cursor: pointer; opacity: 0.7; font-size: 13px; line-height: 1; }
+.tag-x:hover { opacity: 1; }
 
-  .chart-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+/* ── Main ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-family: var(--font);
-    font-size: 11px;
-    font-weight: 500;
-    padding: 6px 12px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--graphite);
-    cursor: pointer;
-    transition: all 0.1s;
-  }
+.chart-top {
+  padding: 18px 24px 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
 
-  .btn:hover { border-color: var(--spine); }
-  .btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; }
+.chart-title { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
+.chart-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  .btn-primary {
-    background: var(--graphite);
-    border-color: var(--graphite);
-    color: #fff;
-  }
-  .btn-primary:hover { background: #1a1f1d; border-color: #1a1f1d; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--graphite);
+  cursor: pointer;
+  transition: all 0.1s;
+}
 
-  /* Chart canvas area */
-  .chart-wrap {
-    flex: 1;
-    padding: 16px 28px 8px;
-    position: relative;
-    min-height: 0;
-  }
+.btn:hover { border-color: var(--spine); }
+.btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
-  canvas { display: block; }
+/* Perf row */
+.perf-row {
+  padding: 10px 24px 4px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-height: 30px;
+}
 
-  .chart-source {
-    padding: 4px 28px 16px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-  }
+.perf-item { display: flex; align-items: center; gap: 5px; }
+.perf-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.perf-sym  { font-family: var(--mono); font-size: 11px; font-weight: 500; }
+.perf-val  { font-family: var(--mono); font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+.pos { background: #E6F9EE; color: #0A6E2A; }
+.neg { background: #FDEAEA; color: #9B2020; }
 
-  /* Empty state */
-  .empty-state {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    gap: 8px;
-    pointer-events: none;
-  }
+/* Chart area */
+.chart-area {
+  flex: 1;
+  padding: 4px 24px 0;
+  position: relative;
+  min-height: 0;
+}
 
-  .empty-state svg {
-    width: 32px;
-    height: 32px;
-    stroke: var(--border);
-    fill: none;
-  }
+canvas { display: block; width: 100% !important; height: 100% !important; }
 
-  .empty-state p { font-size: 12px; }
+.empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--muted); gap: 8px;
+}
 
-  /* Loading */
-  .loading {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: rgba(250,250,250,0.8);
-  }
+.empty svg { width: 28px; height: 28px; stroke: var(--border); fill: none; stroke-width: 1; }
+.empty p { font-size: 12px; }
 
-  .loading.visible { display: flex; }
+.spinner-wrap {
+  position: absolute; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(250,250,250,0.85);
+}
 
-  .spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border);
-    border-top-color: var(--spine);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-  }
+.spinner-wrap.on { display: flex; }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--spine);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
 
-  /* Performance legend */
-  .perf-row {
-    padding: 0 28px 12px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  .perf-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-  }
+.source {
+  padding: 6px 24px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
 
-  .perf-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .perf-sym {
-    font-family: var(--font-mono);
-    font-weight: 500;
-    color: var(--graphite);
-  }
-
-  .perf-val {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 10px;
-  }
-
-  .perf-pos { background: #E8F9EE; color: #0A6E2A; }
-  .perf-neg { background: #FDEAEA; color: #9B2020; }
+/* ── View panels ── */
+.view { display: none; height: 100%; }
+.view.active { display: contents; }
 </style>
 </head>
 <body>
 
-<div class="shell">
-
-  <!-- Header -->
-  <header class="header">
-    <div class="header-logo">
-      <svg viewBox="0 0 12 12"><polyline points="1,9 4,5 7,7 11,2" stroke-width="1.5" stroke="white" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<!-- Header -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 12 12" fill="none">
+        <polyline points="1,9 4,5 7,7 11,2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
-    <span class="header-title">Wintermute</span>
-    <span class="header-sub">/ Price Comparison</span>
-    <div class="header-spacer"></div>
-    <span class="header-badge" id="asset-count">— assets</span>
-  </header>
+    <span class="logo-text">Wintermute</span>
+  </div>
+  <div class="header-divider"></div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="individual">Individual</button>
+    <button class="tab" data-tab="sector">Sector</button>
+  </nav>
+  <div class="header-spacer"></div>
+  <span class="header-pill" id="db-count">—</span>
+</header>
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
+<!-- Body -->
+<div class="body">
 
-    <!-- Search -->
-    <div class="sidebar-section">
-      <div class="sidebar-label">Assets</div>
-      <div class="search-wrap">
-        <svg viewBox="0 0 16 16" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
-        <input type="text" id="search" placeholder="Search ticker or name…" autocomplete="off">
-      </div>
-    </div>
-
-    <!-- Asset list -->
-    <div class="asset-list" id="asset-list">
-      <div style="padding:12px 8px;color:var(--muted);font-size:11px">Loading assets…</div>
-    </div>
-
-    <!-- Date range -->
-    <div class="sidebar-section">
-      <div class="sidebar-label">Date Range</div>
-      <div class="date-row">
-        <div class="date-field">
-          <label>From</label>
-          <input type="date" id="date-from">
-        </div>
-        <div class="date-field">
-          <label>To</label>
-          <input type="date" id="date-to">
+  <!-- ── INDIVIDUAL VIEW ── -->
+  <div class="view active" id="view-individual" style="display:contents">
+    <aside class="sidebar">
+      <div class="sidebar-block">
+        <div class="sidebar-label">Assets</div>
+        <div class="search-wrap">
+          <svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+          <input type="text" id="ind-search" placeholder="Search…">
         </div>
       </div>
-      <div class="presets">
-        <button class="preset" data-days="7">1W</button>
-        <button class="preset" data-days="30">1M</button>
-        <button class="preset" data-days="90">3M</button>
-        <button class="preset active" data-days="180">6M</button>
-        <button class="preset" data-days="365">1Y</button>
-        <button class="preset" data-days="1095">3Y</button>
-        <button class="preset" data-days="0">All</button>
+      <div class="scroll-list" id="ind-list"></div>
+      <div class="sidebar-block">
+        <div class="sidebar-label">Period</div>
+        <div class="date-grid">
+          <div><label>From</label><input type="date" id="ind-from"></div>
+          <div><label>To</label><input type="date" id="ind-to"></div>
+        </div>
+        <div class="presets" id="ind-presets">
+          <button class="preset" data-days="7">1W</button>
+          <button class="preset" data-days="30">1M</button>
+          <button class="preset" data-days="90">3M</button>
+          <button class="preset active" data-days="180">6M</button>
+          <button class="preset" data-days="365">1Y</button>
+          <button class="preset" data-days="1095">3Y</button>
+          <button class="preset" data-days="0">All</button>
+        </div>
       </div>
-    </div>
-
-    <!-- Selected -->
-    <div class="sidebar-section" style="flex-shrink:0">
-      <div class="sidebar-label">Selected</div>
-      <div class="selected-tags" id="selected-tags">
-        <span style="color:var(--muted);font-size:11px">None selected</span>
+      <div class="sidebar-block" style="flex-shrink:0">
+        <div class="sidebar-label">Selected</div>
+        <div class="tags" id="ind-tags"><span style="color:var(--muted);font-size:11px">None</span></div>
       </div>
-    </div>
+    </aside>
 
-  </aside>
-
-  <!-- Main -->
-  <main class="main">
-    <div class="chart-header">
-      <div>
-        <div class="chart-title" id="chart-title">Select assets to compare</div>
-        <div class="chart-subtitle" id="chart-subtitle">Rebased to 100 at period start</div>
-      </div>
-      <div class="chart-actions">
-        <button class="btn" id="btn-save">
-          <svg viewBox="0 0 16 16" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
+    <main class="main">
+      <div class="chart-top">
+        <div>
+          <div class="chart-title" id="ind-title">Select assets to compare</div>
+          <div class="chart-sub">Daily close · Rebased to 100 at period start</div>
+        </div>
+        <button class="btn" id="ind-save">
+          <svg viewBox="0 0 16 16"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
           Save PNG
         </button>
       </div>
-    </div>
-
-    <div class="perf-row" id="perf-row"></div>
-
-    <div class="chart-wrap">
-      <canvas id="chart"></canvas>
-      <div class="empty-state" id="empty-state">
-        <svg viewBox="0 0 32 32" stroke-width="1"><polyline points="2,26 10,16 16,20 22,10 30,14"/><rect x="2" y="2" width="28" height="28" rx="2"/></svg>
-        <p>Select assets from the sidebar</p>
+      <div class="perf-row" id="ind-perf"></div>
+      <div class="chart-area">
+        <canvas id="ind-chart"></canvas>
+        <div class="empty" id="ind-empty">
+          <svg viewBox="0 0 32 32"><polyline points="2,26 10,16 16,20 22,10 30,14"/><rect x="2" y="2" width="28" height="28" rx="2"/></svg>
+          <p>Select assets from the sidebar</p>
+        </div>
+        <div class="spinner-wrap" id="ind-spin"><div class="spinner"></div></div>
       </div>
-      <div class="loading" id="loading"><div class="spinner"></div></div>
-    </div>
+      <div class="source">Source: CoinGecko Pro — Wintermute OTC</div>
+    </main>
+  </div>
 
-    <div class="chart-source" id="chart-source">Source: CoinGecko Pro — Wintermute OTC</div>
-  </main>
+  <!-- ── SECTOR VIEW ── -->
+  <div class="view" id="view-sector">
+    <aside class="sidebar">
+      <div class="sidebar-block">
+        <div class="sidebar-label">Sectors</div>
+      </div>
+      <div class="scroll-list" id="sec-list"></div>
+      <div class="sidebar-block">
+        <div class="sidebar-label">Period</div>
+        <div class="date-grid">
+          <div><label>From</label><input type="date" id="sec-from"></div>
+          <div><label>To</label><input type="date" id="sec-to"></div>
+        </div>
+        <div class="presets" id="sec-presets">
+          <button class="preset" data-days="7">1W</button>
+          <button class="preset" data-days="30">1M</button>
+          <button class="preset" data-days="90">3M</button>
+          <button class="preset active" data-days="180">6M</button>
+          <button class="preset" data-days="365">1Y</button>
+          <button class="preset" data-days="1095">3Y</button>
+          <button class="preset" data-days="0">All</button>
+        </div>
+      </div>
+      <div class="sidebar-block" style="flex-shrink:0">
+        <div class="sidebar-label">Selected</div>
+        <div class="tags" id="sec-tags"><span style="color:var(--muted);font-size:11px">None</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="chart-top">
+        <div>
+          <div class="chart-title" id="sec-title">Select sectors to compare</div>
+          <div class="chart-sub">Equal-weighted daily price index · Rebased to 100 at period start</div>
+        </div>
+        <button class="btn" id="sec-save">
+          <svg viewBox="0 0 16 16"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
+          Save PNG
+        </button>
+      </div>
+      <div class="perf-row" id="sec-perf"></div>
+      <div class="chart-area">
+        <canvas id="sec-chart"></canvas>
+        <div class="empty" id="sec-empty">
+          <svg viewBox="0 0 32 32"><polyline points="2,26 10,16 16,20 22,10 30,14"/><rect x="2" y="2" width="28" height="28" rx="2"/></svg>
+          <p>Select sectors from the sidebar</p>
+        </div>
+        <div class="spinner-wrap" id="sec-spin"><div class="spinner"></div></div>
+      </div>
+      <div class="source">Source: CoinGecko Pro — Wintermute OTC · Equal-weighted index</div>
+    </main>
+  </div>
 
 </div>
 
 <script>
-const PALETTE = ['#00D64A','#2471CC','#746BE6','#DB33CB','#EC5B5B','#F7931A','#26A17B','#FFB800'];
+const PAL = ['#00D64A','#2471CC','#746BE6','#DB33CB','#EC5B5B','#F7931A','#26A17B','#FFB800'];
 
-let allAssets    = [];
-let selectedSyms = [];
-let chart        = null;
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+let activeTab = 'individual';
 
-// ── Init dates ────────────────────────────────────────────────────────────────
-function initDates(days = 180) {
-  const to   = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - days);
-  document.getElementById('date-to').value   = to.toISOString().split('T')[0];
-  document.getElementById('date-from').value = from.toISOString().split('T')[0];
-}
-
-// ── Load assets ───────────────────────────────────────────────────────────────
-async function loadAssets() {
-  const res  = await fetch('/api/assets');
-  allAssets  = await res.json();
-  document.getElementById('asset-count').textContent = `${allAssets.length} assets`;
-  renderList(allAssets);
-}
-
-function renderList(assets) {
-  const el = document.getElementById('asset-list');
-  if (!assets.length) {
-    el.innerHTML = '<div style="padding:12px 8px;color:var(--muted);font-size:11px">No results</div>';
-    return;
-  }
-  el.innerHTML = assets.map(a => `
-    <div class="asset-item ${selectedSyms.includes(a.symbol) ? 'selected' : ''}"
-         data-sym="${a.symbol}" onclick="toggleAsset('${a.symbol}')">
-      <div class="asset-dot"></div>
-      <span class="asset-sym">${a.symbol}</span>
-      <span class="asset-name">${a.name || ''}</span>
-    </div>
-  `).join('');
-}
-
-// ── Search ────────────────────────────────────────────────────────────────────
-document.getElementById('search').addEventListener('input', e => {
-  const q = e.target.value.toLowerCase();
-  renderList(allAssets.filter(a =>
-    a.symbol.toLowerCase().includes(q) ||
-    (a.name || '').toLowerCase().includes(q)
-  ));
-});
-
-// ── Toggle asset ──────────────────────────────────────────────────────────────
-function toggleAsset(sym) {
-  if (selectedSyms.includes(sym)) {
-    selectedSyms = selectedSyms.filter(s => s !== sym);
-  } else {
-    if (selectedSyms.length >= 8) {
-      selectedSyms.shift(); // max 8
-    }
-    selectedSyms.push(sym);
-  }
-  renderTags();
-  renderList(document.getElementById('search').value
-    ? allAssets.filter(a => {
-        const q = document.getElementById('search').value.toLowerCase();
-        return a.symbol.toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q);
-      })
-    : allAssets
-  );
-  fetchAndDraw();
-}
-
-// ── Tags ──────────────────────────────────────────────────────────────────────
-function renderTags() {
-  const el = document.getElementById('selected-tags');
-  if (!selectedSyms.length) {
-    el.innerHTML = '<span style="color:var(--muted);font-size:11px">None selected</span>';
-    return;
-  }
-  el.innerHTML = selectedSyms.map((sym, i) => `
-    <span class="tag" style="background:${PALETTE[i % PALETTE.length]}">
-      ${sym}
-      <span class="tag-remove" onclick="toggleAsset('${sym}')">×</span>
-    </span>
-  `).join('');
-}
-
-// ── Presets ───────────────────────────────────────────────────────────────────
-document.querySelectorAll('.preset').forEach(btn => {
+document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const days = parseInt(btn.dataset.days);
-    initDates(days === 0 ? 9999 : days);
-    fetchAndDraw();
+    document.getElementById('view-individual').style.display = activeTab === 'individual' ? 'contents' : 'none';
+    document.getElementById('view-sector').style.display     = activeTab === 'sector'     ? 'contents' : 'none';
   });
 });
 
-document.getElementById('date-from').addEventListener('change', fetchAndDraw);
-document.getElementById('date-to').addEventListener('change', fetchAndDraw);
-
-// ── Fetch & draw ──────────────────────────────────────────────────────────────
-async function fetchAndDraw() {
-  if (!selectedSyms.length) {
-    document.getElementById('empty-state').style.display = 'flex';
-    document.getElementById('perf-row').innerHTML = '';
-    if (chart) { chart.destroy(); chart = null; }
-    return;
-  }
-
-  document.getElementById('empty-state').style.display = 'none';
-  document.getElementById('loading').classList.add('visible');
-
-  const from = document.getElementById('date-from').value;
-  const to   = document.getElementById('date-to').value;
-  const url  = `/api/price?symbols=${selectedSyms.join(',')}&from=${from}&to=${to}`;
-
-  try {
-    const res  = await fetch(url);
-    const data = await res.json();
-    drawChart(data, from, to);
-  } catch(e) {
-    console.error(e);
-  } finally {
-    document.getElementById('loading').classList.remove('visible');
-  }
+// ── Date helpers ──────────────────────────────────────────────────────────────
+function setDates(fromId, toId, days) {
+  const to   = new Date();
+  const from = new Date();
+  if (days > 0) from.setDate(from.getDate() - days);
+  else from.setFullYear(2013);
+  document.getElementById(toId).value   = to.toISOString().split('T')[0];
+  document.getElementById(fromId).value = from.toISOString().split('T')[0];
 }
 
-function drawChart(data, from, to) {
-  const canvas = document.getElementById('chart');
+function initPresets(containerId, fromId, toId, onchange) {
+  document.querySelectorAll(`#${containerId} .preset`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`#${containerId} .preset`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setDates(fromId, toId, parseInt(btn.dataset.days));
+      onchange();
+    });
+  });
+  document.getElementById(fromId).addEventListener('change', onchange);
+  document.getElementById(toId).addEventListener('change', onchange);
+}
 
-  // Build datasets
-  const datasets = selectedSyms
-    .filter(sym => data[sym])
-    .map((sym, i) => ({
-      label:           sym,
-      data:            data[sym].rebased,
-      borderColor:     PALETTE[i % PALETTE.length],
-      backgroundColor: PALETTE[i % PALETTE.length] + '18',
-      borderWidth:     1.5,
-      pointRadius:     0,
-      pointHoverRadius:4,
-      tension:         0.1,
-      fill:            false,
-    }));
-
-  if (chart) { chart.destroy(); chart = null; }
-
-  chart = new Chart(canvas, {
+// ── Chart helpers ─────────────────────────────────────────────────────────────
+function makeChart(canvasId) {
+  return new Chart(document.getElementById(canvasId), {
     type: 'line',
-    data: { labels: datasets.length ? data[selectedSyms.filter(s=>data[s])[0]].dates : [], datasets },
+    data: { labels: [], datasets: [] },
     options: {
-      responsive:          true,
+      responsive: true,
       maintainAspectRatio: false,
-      animation:           { duration: 300 },
-      interaction:         { mode: 'index', intersect: false },
+      animation: { duration: 250 },
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
           backgroundColor: '#fff',
-          borderColor:     '#E8E8E6',
-          borderWidth:     1,
-          titleColor:      '#323935',
-          bodyColor:       '#606663',
-          padding:         10,
+          borderColor: '#E8E8E6',
+          borderWidth: 1,
+          titleColor: '#323935',
+          bodyColor: '#606663',
+          padding: 10,
           callbacks: {
-            label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(2) : '—'}`
+            label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) : '—'}`
           }
         }
       },
       scales: {
         x: {
-          type:   'category',
-          grid:   { display: false },
+          type: 'category',
+          grid: { display: false },
           border: { color: '#606663', width: 0.8 },
-          ticks:  {
+          ticks: {
             color: '#606663',
-            font:  { family: 'DM Mono', size: 10 },
+            font: { family: 'DM Mono, monospace', size: 10 },
             maxRotation: 0,
             maxTicksLimit: 8,
-            callback: function(val, idx) {
-              const label = this.getLabelForValue(val);
-              return label ? label.slice(0, 7) : '';
+            callback: function(val) {
+              const lbl = this.getLabelForValue(val);
+              return lbl ? lbl.slice(0, 7) : '';
             }
           }
         },
         y: {
-          grid:   { display: false },
+          grid: { display: false },
           border: { color: '#606663', width: 0.8 },
-          ticks:  {
-            color:    '#606663',
-            font:     { family: 'DM Mono', size: 10 },
+          ticks: {
+            color: '#606663',
+            font: { family: 'DM Mono, monospace', size: 10 },
             callback: v => v.toFixed(0)
           }
         }
       }
     }
   });
-
-  // Chart.js time scale needs adapter
-  updatePerfRow(data);
-  updateTitle(from, to);
 }
 
-function updatePerfRow(data) {
-  const el = document.getElementById('perf-row');
-  el.innerHTML = selectedSyms.filter(s => data[s]).map((sym, i) => {
-    const rebased = data[sym].rebased.filter(v => v != null);
-    const ret     = rebased.length ? rebased[rebased.length - 1] - 100 : null;
-    const cls     = ret === null ? '' : ret >= 0 ? 'perf-pos' : 'perf-neg';
-    const val     = ret === null ? '—' : `${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%`;
-    return `
-      <div class="perf-item">
-        <div class="perf-dot" style="background:${PALETTE[i % PALETTE.length]}"></div>
-        <span class="perf-sym">${sym}</span>
-        <span class="perf-val ${cls}">${val}</span>
-      </div>`;
+function updateChart(chart, data, keys) {
+  const firstKey = keys.find(k => data[k]);
+  if (!firstKey) return;
+  chart.data.labels   = data[firstKey].dates;
+  chart.data.datasets = keys.filter(k => data[k]).map((k, i) => ({
+    label:           k,
+    data:            data[k].rebased,
+    borderColor:     PAL[i % PAL.length],
+    backgroundColor: PAL[i % PAL.length] + '15',
+    borderWidth:     1.5,
+    pointRadius:     0,
+    pointHoverRadius: 4,
+    tension:         0.1,
+    fill:            false,
+  }));
+  chart.update();
+}
+
+function updatePerfRow(elId, data, keys) {
+  document.getElementById(elId).innerHTML = keys.filter(k => data[k]).map((k, i) => {
+    const r   = data[k].rebased;
+    const ret = r && r.length ? r[r.length - 1] - 100 : null;
+    const cls = ret === null ? '' : ret >= 0 ? 'pos' : 'neg';
+    const val = ret === null ? '—' : `${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%`;
+    return `<div class="perf-item">
+      <div class="perf-dot" style="background:${PAL[i%PAL.length]}"></div>
+      <span class="perf-sym">${k}</span>
+      <span class="perf-val ${cls}">${val}</span>
+    </div>`;
   }).join('');
 }
 
-function updateTitle(from, to) {
-  const syms = selectedSyms.join(' · ');
-  document.getElementById('chart-title').textContent = syms || 'Select assets';
-  document.getElementById('chart-subtitle').textContent =
-    `Rebased to 100  ·  ${from} → ${to}`;
-}
-
-// ── Save PNG ──────────────────────────────────────────────────────────────────
-document.getElementById('btn-save').addEventListener('click', () => {
+function savePNG(chart, name) {
   if (!chart) return;
-
-  // Draw to offscreen canvas at 12×5 inches @ 150dpi = 1800×750px
   const W = 1800, H = 750;
   const off = document.createElement('canvas');
-  off.width  = W;
-  off.height = H;
+  off.width = W; off.height = H;
   const ctx = off.getContext('2d');
-
-  // Background
   ctx.fillStyle = '#FAFAFA';
   ctx.fillRect(0, 0, W, H);
-
-  // Copy chart
   ctx.drawImage(chart.canvas, 40, 20, W - 80, H - 80);
-
-  // Source line
   ctx.fillStyle = '#606663';
-  ctx.font      = '500 18px DM Mono, monospace';
-  ctx.fillText('Source: CoinGecko Pro — Wintermute OTC', 40, H - 20);
+  ctx.font = '500 16px DM Mono, monospace';
+  ctx.fillText('Source: CoinGecko Pro — Wintermute OTC', 40, H - 18);
+  const a = document.createElement('a');
+  a.download = `${name}_${new Date().toISOString().split('T')[0]}.png`;
+  a.href = off.toDataURL('image/png');
+  a.click();
+}
 
-  // Download
-  const link = document.createElement('a');
-  const syms = selectedSyms.join('_');
-  const date = new Date().toISOString().split('T')[0];
-  link.download = `price_comparison_${syms}_${date}.png`;
-  link.href     = off.toDataURL('image/png');
-  link.click();
-});
+// ══════════════════════════════════════════════════════════════════════════════
+// INDIVIDUAL VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+let allAssets  = [];
+let indSelected = [];
+let indChart   = null;
 
-// ── Chart.js date adapter (inline, no CDN needed) ─────────────────────────────
-// Use built-in time scale with string dates
-Chart.register({
-  id: 'simpleTimeScale',
-});
+async function loadAssets() {
+  const res = await fetch('/api/assets');
+  allAssets = await res.json();
+  document.getElementById('db-count').textContent = `${allAssets.length} assets`;
+  renderIndList();
+}
+
+function renderIndList(q = '') {
+  const filtered = q
+    ? allAssets.filter(a => a.symbol.toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q))
+    : allAssets;
+  document.getElementById('ind-list').innerHTML = filtered.map(a => `
+    <div class="list-item ${indSelected.includes(a.symbol) ? 'active' : ''}"
+         onclick="toggleInd('${a.symbol}')">
+      <div class="item-dot"></div>
+      <span class="item-sym">${a.symbol}</span>
+      <span class="item-name">${a.name || ''}</span>
+    </div>`).join('');
+}
+
+function toggleInd(sym) {
+  if (indSelected.includes(sym)) {
+    indSelected = indSelected.filter(s => s !== sym);
+  } else {
+    if (indSelected.length >= 8) indSelected.shift();
+    indSelected.push(sym);
+  }
+  renderIndTags();
+  renderIndList(document.getElementById('ind-search').value.toLowerCase());
+  fetchInd();
+}
+
+function renderIndTags() {
+  const el = document.getElementById('ind-tags');
+  if (!indSelected.length) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:11px">None</span>';
+    return;
+  }
+  el.innerHTML = indSelected.map((s, i) => `
+    <span class="tag" style="background:${PAL[i%PAL.length]}">
+      ${s}<span class="tag-x" onclick="toggleInd('${s}')">×</span>
+    </span>`).join('');
+}
+
+async function fetchInd() {
+  if (!indSelected.length) {
+    document.getElementById('ind-empty').style.display = 'flex';
+    document.getElementById('ind-perf').innerHTML = '';
+    if (indChart) { indChart.data.labels = []; indChart.data.datasets = []; indChart.update(); }
+    return;
+  }
+  document.getElementById('ind-empty').style.display = 'none';
+  document.getElementById('ind-spin').classList.add('on');
+
+  const from = document.getElementById('ind-from').value;
+  const to   = document.getElementById('ind-to').value;
+  const url  = `/api/price?symbols=${indSelected.join(',')}&from=${from}&to=${to}`;
+
+  try {
+    const data = await (await fetch(url)).json();
+    if (!indChart) indChart = makeChart('ind-chart');
+    updateChart(indChart, data, indSelected);
+    updatePerfRow('ind-perf', data, indSelected);
+    document.getElementById('ind-title').textContent = indSelected.join(' · ');
+  } catch(e) { console.error(e); }
+  finally { document.getElementById('ind-spin').classList.remove('on'); }
+}
+
+document.getElementById('ind-search').addEventListener('input', e => renderIndList(e.target.value.toLowerCase()));
+document.getElementById('ind-save').addEventListener('click', () => savePNG(indChart, 'individual_' + indSelected.join('_')));
+initPresets('ind-presets', 'ind-from', 'ind-to', fetchInd);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SECTOR VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+let allSectors   = [];
+let secSelected  = [];
+let secChart     = null;
+
+async function loadSectors() {
+  const res = await fetch('/api/sectors');
+  allSectors = await res.json();
+  renderSecList();
+}
+
+function renderSecList() {
+  document.getElementById('sec-list').innerHTML = allSectors.map(s => `
+    <div class="list-item ${secSelected.includes(s.name) ? 'active' : ''}"
+         onclick="toggleSec('${s.name}')">
+      <div class="item-dot"></div>
+      <span class="item-sym" style="min-width:80px">${s.name}</span>
+      <span class="item-count">${s.count}</span>
+    </div>`).join('');
+}
+
+function toggleSec(name) {
+  if (secSelected.includes(name)) {
+    secSelected = secSelected.filter(s => s !== name);
+  } else {
+    if (secSelected.length >= 8) secSelected.shift();
+    secSelected.push(name);
+  }
+  renderSecTags();
+  renderSecList();
+  fetchSec();
+}
+
+function renderSecTags() {
+  const el = document.getElementById('sec-tags');
+  if (!secSelected.length) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:11px">None</span>';
+    return;
+  }
+  el.innerHTML = secSelected.map((s, i) => `
+    <span class="tag" style="background:${PAL[i%PAL.length]}">
+      ${s}<span class="tag-x" onclick="toggleSec('${s}')">×</span>
+    </span>`).join('');
+}
+
+async function fetchSec() {
+  if (!secSelected.length) {
+    document.getElementById('sec-empty').style.display = 'flex';
+    document.getElementById('sec-perf').innerHTML = '';
+    if (secChart) { secChart.data.labels = []; secChart.data.datasets = []; secChart.update(); }
+    return;
+  }
+  document.getElementById('sec-empty').style.display = 'none';
+  document.getElementById('sec-spin').classList.add('on');
+
+  const from = document.getElementById('sec-from').value;
+  const to   = document.getElementById('sec-to').value;
+  const url  = `/api/sector-price?sectors=${encodeURIComponent(secSelected.join(','))}&from=${from}&to=${to}`;
+
+  try {
+    const data = await (await fetch(url)).json();
+    if (!secChart) secChart = makeChart('sec-chart');
+    updateChart(secChart, data, secSelected);
+    updatePerfRow('sec-perf', data, secSelected);
+    document.getElementById('sec-title').textContent = secSelected.join(' · ');
+  } catch(e) { console.error(e); }
+  finally { document.getElementById('sec-spin').classList.remove('on'); }
+}
+
+document.getElementById('sec-save').addEventListener('click', () => savePNG(secChart, 'sector_' + secSelected.join('_')));
+initPresets('sec-presets', 'sec-from', 'sec-to', fetchSec);
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-initDates(180);
+setDates('ind-from', 'ind-to', 180);
+setDates('sec-from', 'sec-to', 180);
 loadAssets();
+loadSectors();
 </script>
-
-
-
 </body>
 </html>
