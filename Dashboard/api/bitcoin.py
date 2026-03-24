@@ -59,12 +59,12 @@ def handle_btc_epochs(params):
 def handle_btc_cycles(params):
     """BTC indexed to 100 at cycle peak, days since peak."""
     days_to_show = int(params.get("days", ["1000"])[0])
-    peak_2025    = params.get("peak2025", ["2025-01-20"])[0]
+    peak_2025    = params.get("peak2025", ["2025-10-06"])[0]
 
     PEAKS = {
         "2017/18 Bear": "2017-12-17",
         "2021/22 Bear": "2021-11-10",
-        "2025 Bear (ongoing)": peak_2025,
+        "2025 Bear (ongoing)": peak_2025,  # ATH ~$126k on 2025-10-06
     }
 
     conn   = get_conn()

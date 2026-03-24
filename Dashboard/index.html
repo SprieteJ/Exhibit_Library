@@ -546,6 +546,7 @@ let activeView = null;
 let granularity = 'daily';
 let alignMode   = 'own';
 let darkMode    = false;
+let logScale    = false;
 
 // ── Dark mode ─────────────────────────────────────────────────────────────────
 document.getElementById('dark-toggle').addEventListener('click', () => {
@@ -573,6 +574,18 @@ function updateChartTheme() {
   chart.options.plugins.tooltip.bodyColor        = darkMode ? '#888B88' : '#606663';
   chart.options.plugins.tooltip.borderColor      = darkMode ? '#2A2D2B' : '#E4E4E2';
 }
+
+// ── Log scale ────────────────────────────────────────────────────────────────
+document.getElementById('btn-log').addEventListener('click', () => {
+  logScale = !logScale;
+  document.getElementById('btn-log').style.background = logScale ? 'var(--graphite)' : '';
+  document.getElementById('btn-log').style.color      = logScale ? 'var(--bg)'       : '';
+  document.getElementById('btn-log').style.borderColor= logScale ? 'var(--graphite)' : '';
+  if (chart && chart.options.scales.y) {
+    chart.options.scales.y.type = logScale ? 'logarithmic' : 'linear';
+    chart.update();
+  }
+});
 
 // ── Granularity ───────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-gran]').forEach(btn => {
@@ -698,6 +711,12 @@ async function selectView(tab, key) {
   document.getElementById('chart-src').textContent   = `Source: ${viewDef.src}`;
 
   if (chart) { chart.destroy(); chart = null; }
+  logScale = false;
+  const logBtn = document.getElementById('btn-log');
+  if (logBtn) {
+    logBtn.style.display = '';
+    logBtn.style.background = ''; logBtn.style.color = ''; logBtn.style.borderColor = '';
+  }
   document.getElementById('chart-empty').style.display = 'flex';
   const isBtcAutoView = key === 'btc-epochs' || key === 'btc-cycles' || key === 'ana-bubble' || key === 'btc-tradfi';
   document.getElementById('empty-msg').textContent = isBtcAutoView ? 'Loading…' : 'Select items from the right panel';
@@ -1689,6 +1708,23 @@ async function fetchBtcChart(type, from, to, windowDays) {
       spanGaps:         true,
     }));
 
+    // Add 1x reference line for epochs chart only
+    if (type === 'epochs') {
+      datasets.push({
+        label:           '1x (halving price)',
+        data:            allDays.map(() => 1),
+        borderColor:     darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+        backgroundColor: 'transparent',
+        borderWidth:     1,
+        borderDash:      [4, 4],
+        pointRadius:     0,
+        pointHoverRadius:0,
+        tension:         0,
+        fill:            false,
+        spanGaps:        true,
+      });
+    }
+
     // All epochs/cycles share the same day-based x axis
     const maxDays  = Math.max(...labels.filter(l => data[l]?.days?.length).map(l => data[l].days[data[l].days.length - 1]));
     const allDays  = Array.from({length: maxDays + 1}, (_, i) => i);
@@ -1726,6 +1762,7 @@ async function fetchBtcChart(type, from, to, windowDays) {
             padding: 12,
             callbacks: {
               title: ctx => `Day ${ctx[0].label}`,
+              filter: item => item.dataset.label !== '1x (halving price)',
               label: ctx => {
                 const v = ctx.parsed.y;
                 if (v == null) return ` ${ctx.dataset.label}  —`;
@@ -2470,42 +2507,50 @@ async function fetchAltScatter(from, to, days) {
         }
       },
       plugins: [{
-        id: 'quadrantLines',
+        id: 'scatterOverlay',
         afterDatasetsDraw(ch) {
-          const pts  = ch.data.datasets[0].data;
-          if (!pts?.length) return;
-          const xVals = pts.map(p => p.x).filter(v => v != null).sort((a,b) => a-b);
-          const yVals = pts.map(p => p.y).filter(v => v != null).sort((a,b) => a-b);
-          const medX  = xVals[Math.floor(xVals.length/2)];
-          const medY  = yVals[Math.floor(yVals.length/2)];
           const ctx2  = ch.ctx;
-          const xPx   = ch.scales.x.getPixelForValue(medX);
-          const yPx   = ch.scales.y.getPixelForValue(medY);
-          const area  = ch.chartArea;
+          const ds    = ch.data.datasets[0];
+          const meta  = ch.getDatasetMeta(0);
+          const xAxis = ch.scales.x;
+          const yAxis = ch.scales.y;
+          const pts   = (ds?.data || []).filter(p => p && p.x != null && p.y != null);
+          if (!pts.length) return;
+
+          const sortX = pts.map(p => p.x).sort((a,b) => a-b);
+          const sortY = pts.map(p => p.y).sort((a,b) => a-b);
+          const medX  = sortX[Math.floor(sortX.length / 2)];
+          const medY  = sortY[Math.floor(sortY.length / 2)];
+          const mxPx  = xAxis.getPixelForValue(medX);
+          const myPx  = yAxis.getPixelForValue(medY);
+
           ctx2.save();
-          ctx2.setLineDash([4, 4]);
-          ctx2.strokeStyle = darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)';
-          ctx2.lineWidth   = 1;
-          // vertical median line
-          ctx2.beginPath(); ctx2.moveTo(xPx, area.top); ctx2.lineTo(xPx, area.bottom); ctx2.stroke();
-          // horizontal median line
-          ctx2.beginPath(); ctx2.moveTo(area.left, yPx); ctx2.lineTo(area.right, yPx); ctx2.stroke();
-          ctx2.restore();
-        }
-      },{
-        id: 'tickerLabels',
-        afterDatasetsDraw(ch) {
-          const ctx2 = ch.ctx;
-          const ds   = ch.data.datasets[0];
-          const meta = ch.getDatasetMeta(0);
-          ctx2.save();
-          ctx2.font = `500 11px DM Sans, sans-serif`;
+          ctx2.strokeStyle = darkMode ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)';
+          ctx2.lineWidth = 1;
+          ctx2.setLineDash([5, 5]);
+          ctx2.beginPath(); ctx2.moveTo(mxPx, yAxis.top);    ctx2.lineTo(mxPx, yAxis.bottom); ctx2.stroke();
+          ctx2.beginPath(); ctx2.moveTo(xAxis.left, myPx);   ctx2.lineTo(xAxis.right, myPx);  ctx2.stroke();
+          ctx2.setLineDash([]);
+
+          const qc = darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)';
+          ctx2.font = '400 10px DM Mono, monospace';
+          ctx2.fillStyle = qc;
+          ctx2.textAlign = 'right'; ctx2.textBaseline = 'top';
+          ctx2.fillText('outperform · low vol',    xAxis.left + 4,    yAxis.top + 6);
+          ctx2.textAlign = 'left';
+          ctx2.fillText('outperform · high vol',   xAxis.right - 4,   yAxis.top + 6);
+          ctx2.textAlign = 'right'; ctx2.textBaseline = 'bottom';
+          ctx2.fillText('underperform · low vol',  xAxis.left + 4,    yAxis.bottom - 6);
+          ctx2.textAlign = 'left';
+          ctx2.fillText('underperform · high vol', xAxis.right - 4,   yAxis.bottom - 6);
+
+          ctx2.font = '500 11px DM Sans, sans-serif';
           ctx2.textAlign = 'center';
           ctx2.textBaseline = 'bottom';
           meta.data.forEach((pt, i) => {
             const p = ds.data[i];
-            const perfColor = p.y >= 0 ? '#00D64A' : '#EC5B5B';
-            ctx2.fillStyle = perfColor;
+            if (!p) return;
+            ctx2.fillStyle = p.y >= 0 ? '#00D64A' : '#EC5B5B';
             ctx2.fillText(p.label, pt.x, pt.y - 4);
           });
           ctx2.restore();
