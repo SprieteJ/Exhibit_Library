@@ -402,7 +402,7 @@ input[type=number] { width: 70px; }
 <!-- Tab bar -->
 <div class="tabbar">
   <button class="tab active" data-tab="sector">Sector</button>
-  <button class="tab" data-tab="majors">Majors</button>
+  <button class="tab" data-tab="bitcoin">Bitcoin</button>
   <button class="tab" data-tab="altcoins">Altcoins</button>
   <button class="tab" data-tab="macro">Macro</button>
   <button class="tab" data-tab="analysis">Analysis</button>
@@ -489,11 +489,12 @@ const TABS = {
       ]},
     ]
   },
-  majors: {
-    label: "Majors",
+  bitcoin: {
+    label: "Bitcoin",
     groups: [
-      { label: "Price Action", children: [
-        { key:"maj-price", label:"Price comparison", sub:"BTC & ETH · Daily close · Rebased to 100", src:"CoinGecko Pro — Wintermute OTC" },
+      { label: "Cycle analysis", children: [
+        { key:"btc-epochs",  label:"Halving epochs",       sub:"X-fold from halving price · Log scale · Epochs 3, 4, 5", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-cycles",  label:"Bear market cycles",   sub:"Price indexed to cycle peak (peak = 100) · Days since peak", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
     ]
   },
@@ -711,14 +712,16 @@ async function selectView(tab, key) {
   // Load items for this tab
   if (tab === 'sector' || tab === 'marketcap') {
     allItems = allSectors;
+  } else if (tab === 'bitcoin') {
+    allItems = [];
   } else {
-    const res = await fetch(`/api/assets?tab=${tab}`);
+    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab}`);
     allItems  = await res.json();
   }
 
   buildRightPanel(tab, key);
-  // Bubble chart auto-fetches without selection
-  if (key === 'ana-bubble') {
+  // Views that auto-fetch without selection
+  if (key === 'ana-bubble' || key === 'btc-epochs' || key === 'btc-cycles') {
     setTimeout(fetchCurrent, 100);
   }
 }
@@ -743,6 +746,16 @@ function buildRightPanel(tab, key) {
     </div>`;
   }
 
+  if (isBtcView) {
+    // BTC views use days-to-show instead of date range
+    html += `<div class="rp-block">
+      <div class="rp-label">Days to show</div>
+      <div class="window-row">
+        <input type="number" id="rp-window" value="${key === 'btc-epochs' ? 1400 : 1000}" min="100" max="2000">
+        <label>days after event</label>
+      </div>
+    </div>`;
+  } else {
   html += `<div class="rp-block">
     <div class="rp-label">Period</div>
     <div class="date-grid">
@@ -781,11 +794,12 @@ function buildRightPanel(tab, key) {
     </div>`;
   }
 
+  if (!isBtcView) html += `</div>`; }
   html += `<div class="rp-block" style="flex-shrink:0">
     <div class="rp-label">Selected</div>
     <div class="tags" id="rp-tags"><span style="color:var(--muted);font-size:13px">None</span></div>
   </div>
-  ${key !== 'ana-bubble' ? `
+  ${key !== 'ana-bubble' && key !== 'btc-epochs' && key !== 'btc-cycles' ? `
   <div class="rp-block" style="padding:8px 14px 6px">
     <div class="rp-label">${tab === 'sector' || tab === 'marketcap' ? 'Sectors' : 'Assets'}</div>
   </div>
@@ -1046,7 +1060,7 @@ async function fetchCurrent() {
   const ph = document.getElementById('equity-ph');
   if (ph) ph.style.display = 'none';
 
-  // Bubble chart doesn't need selection
+  // Views that don't need selection
   if (activeView?.key === 'ana-bubble') {
     const from = document.getElementById('rp-from')?.value || '2024-01-01';
     const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
@@ -1097,6 +1111,26 @@ async function fetchCurrent() {
   } else if (key === 'ana-bubble') {
     url = null; // handled separately
     await fetchBubble(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'btc-epochs') {
+    url = null;
+    await fetchBtcEpochs(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'btc-cycles') {
+    url = null;
+    await fetchBtcCycles(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'btc-epochs') {
+    url = null;
+    await fetchBtcChart('epochs', from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'btc-cycles') {
+    url = null;
+    await fetchBtcChart('cycles', from, to, win);
     document.getElementById('chart-spin').classList.remove('on');
     return;
   } else if (key === 'mc-total') {
@@ -1254,6 +1288,136 @@ function hideDataView() {
   document.querySelector('.chart-src').style.display  = '';
 }
 
+async function fetchBtcChart(type, from, to, windowDays) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  const COLORS = { "Epoch 3 (2016)": "#00D64A", "Epoch 4 (2020)": "#2471CC", "Epoch 5 (2024)": "#746BE6",
+                   "2017/18 Bear": "#00D64A", "2021/22 Bear": "#2471CC", "2025 Bear (ongoing)": "#746BE6" };
+
+  try {
+    const days = windowDays || (type === 'epochs' ? 1400 : 1000);
+    const url  = type === 'epochs'
+      ? `/api/btc-epochs?days=${days}`
+      : `/api/btc-cycles?days=${days}`;
+
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const labels = Object.keys(data);
+    if (!labels.length) throw new Error('no data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    const datasets = labels.map(label => ({
+      label,
+      data:             data[label].values,
+      borderColor:      COLORS[label] || '#888',
+      backgroundColor:  'transparent',
+      borderWidth:      label.includes('ongoing') || label.includes('2024') ? 1.8 : 1.2,
+      pointRadius:      0,
+      pointHoverRadius: 4,
+      tension:          0.1,
+      fill:             false,
+      spanGaps:         true,
+    }));
+
+    // All epochs/cycles share the same day-based x axis
+    const maxDays  = Math.max(...labels.map(l => data[l].days[data[l].days.length - 1]));
+    const allDays  = Array.from({length: maxDays + 1}, (_, i) => i);
+
+    // Align values to full day array
+    const alignedDatasets = datasets.map((ds, i) => {
+      const label  = labels[i];
+      const daysArr = data[label].days;
+      const valsArr = data[label].values;
+      const map    = {};
+      daysArr.forEach((d, j) => map[d] = valsArr[j]);
+      return { ...ds, data: allDays.map(d => map[d] !== undefined ? map[d] : null) };
+    });
+
+    const isLog = type === 'epochs';
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'line',
+      data: { labels: allDays, datasets: alignedDatasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            padding: 12,
+            callbacks: {
+              title: ctx => `Day ${ctx[0].label}`,
+              label: ctx => {
+                const v = ctx.parsed.y;
+                if (v == null) return ` ${ctx.dataset.label}  —`;
+                return type === 'epochs'
+                  ? ` ${ctx.dataset.label}  ${v.toFixed(2)}x`
+                  : ` ${ctx.dataset.label}  ${v.toFixed(1)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'category',
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              maxRotation: 0, maxTicksLimit: 10,
+              callback: (val, idx) => allDays[idx] % 200 === 0 ? `d${allDays[idx]}` : ''
+            }
+          },
+          y: {
+            type: isLog ? 'logarithmic' : 'linear',
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => isLog ? `${v}x` : `${v.toFixed(0)}`
+            }
+          }
+        }
+      }
+    });
+
+    // Perf row
+    document.getElementById('perf-row').innerHTML = labels.map(label => {
+      const vals = data[label].values.filter(v => v != null);
+      const last = vals[vals.length - 1];
+      const col  = COLORS[label] || '#888';
+      const fmt  = type === 'epochs'
+        ? `${last ? last.toFixed(2) + 'x' : '—'}`
+        : `${last ? last.toFixed(1) : '—'}`;
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${col}"></div>
+        <span class="perf-sym">${label}</span>
+        <span class="perf-val neu">${fmt}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent =
+      type === 'epochs' ? 'BTC halving epochs' : 'BTC bear market cycles';
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
 async function fetchBubble(from, to, window) {
   // Bubble chart uses Chart.js scatter with bubble type
   if (chart) { chart.destroy(); chart = null; }
@@ -1370,6 +1534,169 @@ async function fetchBubble(from, to, window) {
 
     document.getElementById('chart-title').textContent = 'Momentum vs autocorrelation';
 
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBtcEpochs(from, to, window) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+  try {
+    const res  = await fetch(`/api/btc-epochs?window=${window}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const PAL_BTC = ['#00D64A','#2471CC','#746BE6'];
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+    const keys = Object.keys(data);
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'line',
+      data: {
+        datasets: keys.map((k, i) => ({
+          label: k,
+          data:  data[k].x.map((x, j) => ({ x, y: data[k].y[j] })),
+          borderColor: PAL_BTC[i % PAL_BTC.length],
+          backgroundColor: 'transparent',
+          borderWidth: i === keys.length - 1 ? 1.8 : 1.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.1,
+          spanGaps: true,
+        }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor: darkMode ? '#888B88' : '#606663', padding: 12,
+            callbacks: {
+              title: ctx => `Day ${ctx[0].parsed.x}`,
+              label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y.toFixed(2)}x`
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'Days since halving', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 } }
+          },
+          y: {
+            type: 'logarithmic',
+            title: { display: true, text: 'X-fold from halving price (log)', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => `${v}x`
+            }
+          }
+        }
+      }
+    });
+
+    document.getElementById('perf-row').innerHTML = keys.map((k, i) => {
+      const last = data[k].y[data[k].y.length - 1];
+      const col  = PAL_BTC[i % PAL_BTC.length];
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${col}"></div>
+        <span class="perf-sym">${k}</span>
+        <span class="perf-val neu">${last ? last.toFixed(2) + 'x' : '—'}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent = 'BTC halving epochs';
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBtcCycles(from, to, window) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+  try {
+    const res  = await fetch(`/api/btc-cycles`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const PAL_BTC = ['#00D64A','#2471CC','#746BE6'];
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+    const keys = Object.keys(data);
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'line',
+      data: {
+        datasets: keys.map((k, i) => ({
+          label: k,
+          data:  data[k].x.map((x, j) => ({ x, y: data[k].y[j] })),
+          borderColor: PAL_BTC[i % PAL_BTC.length],
+          backgroundColor: 'transparent',
+          borderWidth: i === keys.length - 1 ? 1.8 : 1.3,
+          pointRadius: 0, pointHoverRadius: 4,
+          tension: 0.1, spanGaps: true,
+        }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor: darkMode ? '#888B88' : '#606663', padding: 12,
+            callbacks: {
+              title: ctx => `Day ${ctx[0].parsed.x}`,
+              label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y.toFixed(1)}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'Days since peak', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 } }
+          },
+          y: {
+            title: { display: true, text: 'Indexed to peak (peak = 100)', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(0) }
+          }
+        }
+      }
+    });
+
+    document.getElementById('perf-row').innerHTML = keys.map((k, i) => {
+      const last = data[k].y[data[k].y.length - 1];
+      const col  = PAL_BTC[i % PAL_BTC.length];
+      const cls  = last !== null ? (last >= 100 ? 'pos' : 'neg') : 'neu';
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${col}"></div>
+        <span class="perf-sym">${k}</span>
+        <span class="perf-val ${cls}">${last ? last.toFixed(1) : '—'}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent = 'BTC bear market cycles';
   } catch(e) {
     document.getElementById('chart-empty').style.display = 'flex';
     document.getElementById('empty-msg').textContent = `Error: ${e.message}`;

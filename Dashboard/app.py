@@ -117,7 +117,7 @@ def handle_assets(params):
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    if tab == "majors":
+    if tab in ("majors", "bitcoin"):
         cur.execute("""
             SELECT DISTINCT p.symbol, r.coingecko_name as name
             FROM price_daily p LEFT JOIN asset_registry r ON p.coingecko_id = r.coingecko_id
@@ -697,6 +697,234 @@ def handle_sector_mcap_view(params):
     conn.close()
     return result
 
+
+# ── BTC halving epochs ────────────────────────────────────────────────────────
+def handle_btc_epochs(params):
+    """
+    BTC price as x-fold from halving price, indexed to 1.0 at halving date.
+    Epoch 3 (2016-07-09), Epoch 4 (2020-05-11), Epoch 5 (2024-04-20)
+    """
+    days_to_show = int(params.get("days", ["1400"])[0])
+
+    HALVINGS = {
+        "Epoch 3 (2016)": "2016-07-09",
+        "Epoch 4 (2020)": "2020-05-11",
+        "Epoch 5 (2024)": "2024-04-20",
+    }
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for label, halving_date in HALVINGS.items():
+        cur.execute("""
+            SELECT timestamp::date as date, price_usd
+            FROM price_daily
+            WHERE symbol = 'BTC'
+              AND timestamp::date >= %s::date
+              AND timestamp::date <= (%s::date + INTERVAL '%s days')
+              AND price_usd > 0
+            ORDER BY timestamp
+        """, (halving_date, halving_date, days_to_show))
+        rows = cur.fetchall()
+        if not rows: continue
+
+        # Find halving price (first row on or after halving date)
+        halving_price = float(rows[0]["price_usd"])
+        if halving_price == 0: continue
+
+        days_list  = []
+        xfold_list = []
+        for row in rows:
+            from datetime import datetime
+            d    = row["date"]
+            days = (d - datetime.strptime(halving_date, "%Y-%m-%d").date()).days
+            if 0 <= days <= days_to_show:
+                days_list.append(days)
+                xfold_list.append(round(float(row["price_usd"]) / halving_price, 6))
+
+        if days_list:
+            result[label] = {
+                "days":    days_list,
+                "values":  xfold_list,
+                "halving_price": halving_price,
+            }
+
+    conn.close()
+    return result
+
+
+# ── BTC bear market cycles ────────────────────────────────────────────────────
+def handle_btc_cycles(params):
+    """
+    BTC price indexed to 100 at cycle peak, days since peak.
+    2017/18 peak: 2017-12-17, 2021/22 peak: 2021-11-10, 2025 peak: user-adjustable
+    """
+    days_to_show = int(params.get("days", ["1000"])[0])
+    peak_2025    = params.get("peak2025", ["2025-01-20"])[0]
+
+    PEAKS = {
+        "2017/18 Bear": "2017-12-17",
+        "2021/22 Bear": "2021-11-10",
+        "2025 Bear (ongoing)": peak_2025,
+    }
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for label, peak_date in PEAKS.items():
+        cur.execute("""
+            SELECT timestamp::date as date, price_usd
+            FROM price_daily
+            WHERE symbol = 'BTC'
+              AND timestamp::date >= %s::date
+              AND timestamp::date <= (%s::date + INTERVAL '%s days')
+              AND price_usd > 0
+            ORDER BY timestamp
+        """, (peak_date, peak_date, days_to_show))
+        rows = cur.fetchall()
+        if not rows: continue
+
+        peak_price = float(rows[0]["price_usd"])
+        if peak_price == 0: continue
+
+        days_list    = []
+        indexed_list = []
+        for row in rows:
+            from datetime import datetime
+            d    = row["date"]
+            days = (d - datetime.strptime(peak_date, "%Y-%m-%d").date()).days
+            if 0 <= days <= days_to_show:
+                days_list.append(days)
+                indexed_list.append(round(float(row["price_usd"]) / peak_price * 100, 4))
+
+        if days_list:
+            result[label] = {
+                "days":       days_list,
+                "values":     indexed_list,
+                "peak_price": peak_price,
+                "peak_date":  peak_date,
+            }
+
+    conn.close()
+    return result
+
+
+# ── BTC Halving Epochs ────────────────────────────────────────────────────────
+def handle_btc_epochs(params):
+    """
+    Returns x-fold performance from halving date for Epochs 3, 4, 5.
+    x = days since halving, y = price / halving_price (x-fold)
+    Uses price_daily table.
+    """
+    from datetime import datetime, timedelta
+
+    HALVINGS = {
+        "Epoch 3 (2016)": datetime(2016, 7, 9),
+        "Epoch 4 (2020)": datetime(2020, 5, 11),
+        "Epoch 5 (2024)": datetime(2024, 4, 20),
+    }
+    DAYS = 1400
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for label, halving_date in HALVINGS.items():
+        date_from = (halving_date - timedelta(days=2)).strftime("%Y-%m-%d")
+        date_to   = min(halving_date + timedelta(days=DAYS+2), datetime.today()).strftime("%Y-%m-%d")
+
+        cur.execute("""
+            SELECT timestamp::date as date, price_usd
+            FROM price_daily
+            WHERE coingecko_id = 'bitcoin'
+              AND timestamp >= %s AND timestamp <= %s
+              AND price_usd > 0
+            ORDER BY timestamp
+        """, (date_from, date_to))
+        rows = cur.fetchall()
+        if not rows: continue
+
+        dates  = [r["date"] for r in rows]
+        prices = [float(r["price_usd"]) for r in rows]
+
+        # Find halving price (closest date)
+        import bisect
+        idx = bisect.bisect_left(dates, halving_date.date())
+        idx = min(idx, len(prices) - 1)
+        halving_price = prices[idx]
+        if not halving_price: continue
+
+        # Days since halving + x-fold
+        x_vals, y_vals = [], []
+        for d, p in zip(dates, prices):
+            day = (d - halving_date.date()).days
+            if 0 <= day <= DAYS:
+                x_vals.append(day)
+                y_vals.append(round(p / halving_price, 4))
+
+        result[label] = {"x": x_vals, "y": y_vals}
+
+    conn.close()
+    return result
+
+
+# ── BTC Bear Market Cycles ────────────────────────────────────────────────────
+def handle_btc_cycles(params):
+    """
+    Returns price indexed to peak (peak=100) for each bear cycle.
+    x = days since peak, y = indexed price
+    """
+    from datetime import datetime, timedelta
+
+    PEAKS = {
+        "2017/18 Bear": datetime(2017, 12, 17),
+        "2021/22 Bear": datetime(2021, 11, 10),
+        "2025 Bear (ongoing)": datetime(2025, 10, 6),
+    }
+    DAYS = 1000
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for label, peak_date in PEAKS.items():
+        date_from = (peak_date - timedelta(days=2)).strftime("%Y-%m-%d")
+        date_to   = min(peak_date + timedelta(days=DAYS+2), datetime.today()).strftime("%Y-%m-%d")
+
+        cur.execute("""
+            SELECT timestamp::date as date, price_usd
+            FROM price_daily
+            WHERE coingecko_id = 'bitcoin'
+              AND timestamp >= %s AND timestamp <= %s
+              AND price_usd > 0
+            ORDER BY timestamp
+        """, (date_from, date_to))
+        rows = cur.fetchall()
+        if not rows: continue
+
+        dates  = [r["date"] for r in rows]
+        prices = [float(r["price_usd"]) for r in rows]
+
+        import bisect
+        idx = bisect.bisect_left(dates, peak_date.date())
+        idx = min(idx, len(prices) - 1)
+        peak_price = prices[idx]
+        if not peak_price: continue
+
+        x_vals, y_vals = [], []
+        for d, p in zip(dates, prices):
+            day = (d - peak_date.date()).days
+            if 0 <= day <= DAYS:
+                x_vals.append(day)
+                y_vals.append(round(p / peak_price * 100, 4))
+
+        result[label] = {"x": x_vals, "y": y_vals}
+
+    conn.close()
+    return result
+
 # ── Handler ───────────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
@@ -738,6 +966,10 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/sector-intra-corr":  self.send_json(handle_intra_corr(params))
             elif p == "/api/sector-btc-corr":    self.send_json(handle_btc_corr(params))
             elif p == "/api/db-status":           self.send_json(handle_db_status())
+            elif p == "/api/btc-epochs":           self.send_json(handle_btc_epochs(params))
+            elif p == "/api/btc-cycles":           self.send_json(handle_btc_cycles(params))
+            elif p == "/api/btc-epochs":            self.send_json(handle_btc_epochs(params))
+            elif p == "/api/btc-cycles":            self.send_json(handle_btc_cycles(params))
             elif p == "/api/sector-bubble":         self.send_json(handle_sector_bubble(params))
             elif p == "/api/sector-mcap-view":      self.send_json(handle_sector_mcap_view(params))
             elif p.startswith("/static/"):       self.send_file(BASE_DIR/p[8:])
