@@ -506,7 +506,10 @@ const TABS = {
     label: "Altcoins",
     groups: [
       { label: "Price Action", children: [
-        { key:"alt-price", label:"Price comparison", sub:"Altcoin price · Rebased to 100", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-price",   label:"Price comparison",  sub:"Altcoin price · Rebased to 100",                                    src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Relative Performance", children: [
+        { key:"alt-scatter", label:"Performance vs BTC", sub:"Scatter · Y = % vs BTC · X = volatility vs BTC · period-adjusted", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
     ]
   },
@@ -728,7 +731,7 @@ function buildRightPanel(tab, key) {
   const isTradFi   = key === 'btc-tradfi';
   const isBubble    = key === 'ana-bubble';
   const needsSearch = tab !== 'sector' && !isBtcView;
-  const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble';
+  const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble' || key === 'alt-scatter';
   const needsVersus = key === 'sec-vs';
   const showList    = !isBubble && !isBtcView && !isTradFi;
 
@@ -827,6 +830,20 @@ function buildRightPanel(tab, key) {
     </div>`;
   }
 
+  // TopN selector for alt-scatter
+  if (key === 'alt-scatter') {
+    html += `<div class="rp-block">
+      <div class="rp-label">Universe</div>
+      <select id="rp-topn" style="width:100%;background:var(--input-bg);border:1px solid transparent;border-radius:var(--radius);padding:7px 9px;font-family:var(--mono);font-size:13px;color:var(--graphite);outline:none">
+        <option value="10">Top 10</option>
+        <option value="25">Top 25</option>
+        <option value="50" selected>Top 50</option>
+        <option value="100">Top 100</option>
+        <option value="250">Top 250</option>
+      </select>
+    </div>`;
+  }
+
   // Versus selector
   if (needsVersus) {
     html += `<div class="rp-block">
@@ -866,7 +883,9 @@ function buildRightPanel(tab, key) {
   if (needsSearch) {
     document.getElementById('rp-search')?.addEventListener('input', e => renderRPList(e.target.value.toLowerCase()));
   }
-  const winEl = document.getElementById('rp-window');
+  const winEl  = document.getElementById('rp-window');
+  const topnEl = document.getElementById('rp-topn');
+  if (topnEl) topnEl.addEventListener('change', fetchCurrent);
   if (winEl) winEl.addEventListener('change', fetchCurrent);
   ['rp-perf-win','rp-corr-win','rp-smooth-win'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', fetchCurrent);
@@ -1070,7 +1089,8 @@ function drawChart(data, keys, isCorr = false, isMom = false, isZscore = false, 
   const c = getOrMakeChart(isCorr, isMom, isZscore, isMcap);
   c.data.labels   = data[firstKey].dates;
   c.data.datasets = keys.filter(k => data[k]).map((k, i) => {
-    const col = data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length];
+    const isBtcSymbol = k === 'BTC' && activeView?.tab === 'bitcoin';
+    const col = isBtcSymbol ? '#F7931A' : (data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length]);
     return {
       label:            k,
       data:             data[k].rebased,
@@ -1127,6 +1147,23 @@ async function fetchCurrent() {
     const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
     const win  = document.getElementById('rp-window')?.value || '30';
     await fetchBubble(from, to, win);
+    return;
+  }
+
+  if (activeView?.key === 'btc-gold') {
+    const from = document.getElementById('rp-from')?.value || '2020-01-01';
+    const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
+    await fetchBtcGold(from, to);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
+  if (activeView?.key === 'alt-scatter') {
+    const from = document.getElementById('rp-from')?.value || '2024-01-01';
+    const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
+    const win  = document.getElementById('rp-window')?.value || '7';
+    await fetchAltScatter(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
     return;
   }
 
@@ -1214,6 +1251,16 @@ async function fetchCurrent() {
   } else if (key === 'sec-zscore') {
     url = `/api/sector-zscore?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}`;
     isZscore = true;
+  } else if (key === 'btc-gold') {
+    url = null;
+    await fetchBtcGold(from, to);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'alt-scatter') {
+    url = null;
+    await fetchAltScatter(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
   } else {
     url = `/api/price?symbols=${selected.join(',')}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
   }
@@ -1638,14 +1685,17 @@ async function fetchBtcChart(type, from, to, windowDays) {
     }));
 
     // All epochs/cycles share the same day-based x axis
-    const maxDays  = Math.max(...labels.map(l => data[l].days[data[l].days.length - 1]));
+    const maxDays  = Math.max(...labels.filter(l => data[l]?.days?.length).map(l => data[l].days[data[l].days.length - 1]));
     const allDays  = Array.from({length: maxDays + 1}, (_, i) => i);
 
     // Align values to full day array
-    const alignedDatasets = datasets.map((ds, i) => {
-      const label  = labels[i];
-      const daysArr = data[label].days;
-      const valsArr = data[label].values;
+    const validLabels = labels.filter(l => data[l]?.days?.length && data[l]?.values?.length);
+    if (!validLabels.length) throw new Error('no data returned from API');
+    const alignedDatasets = datasets.filter((ds, i) => data[labels[i]]?.days?.length).map((ds, i) => {
+      const li = labels.indexOf(ds.label);
+      const label  = ds.label;
+      const daysArr = data[label]?.days || [];
+      const valsArr = data[label]?.values || [];
       const map    = {};
       daysArr.forEach((d, j) => map[d] = valsArr[j]);
       return { ...ds, data: allDays.map(d => map[d] !== undefined ? map[d] : null) };
@@ -2045,28 +2095,24 @@ async function fetchBubble(from, to, window) {
     });
 
     // Draw sector labels on bubbles
-    const plugin = {
-      id: 'bubbleLabels',
-      afterDatasetsDraw(chart) {
-        const ctx = chart.ctx;
-        chart.data.datasets.forEach((ds, i) => {
-          const meta = chart.getDatasetMeta(i);
-          if (!meta.visible) return;
-          meta.data.forEach(point => {
-            ctx.save();
-            ctx.fillStyle = darkMode ? '#E8EAE8' : '#323935';
-            ctx.font = '500 11px DM Sans, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(ds.label, point.x, point.y);
-            ctx.restore();
-          });
-        });
-      }
-    };
-    chart.options.plugins.bubbleLabels = {};
-    Chart.register(plugin);
+    // Draw sector labels directly on canvas (not via plugin registration)
     chart.update();
+    setTimeout(() => {
+      const ctx2 = chart.canvas.getContext('2d');
+      chart.data.datasets.forEach((ds, i) => {
+        const meta = chart.getDatasetMeta(i);
+        if (!meta.visible) return;
+        meta.data.forEach(point => {
+          ctx2.save();
+          ctx2.fillStyle = darkMode ? '#E8EAE8' : '#323935';
+          ctx2.font = '500 11px DM Sans, sans-serif';
+          ctx2.textAlign = 'center';
+          ctx2.textBaseline = 'middle';
+          ctx2.fillText(ds.label, point.x, point.y);
+          ctx2.restore();
+        });
+      });
+    }, 50);
 
     // Perf row
     document.getElementById('perf-row').innerHTML = sectors.map(s => {
@@ -2245,6 +2291,222 @@ async function fetchBtcCycles(from, to, window) {
     }).join('');
 
     document.getElementById('chart-title').textContent = 'BTC bear market cycles';
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBtcGold(from, to) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  try {
+    const [btcRes, goldRes] = await Promise.all([
+      fetch(`/api/price?symbols=BTC&from=${from}&to=${to}&granularity=daily&align=own`),
+      fetch(`/api/macro-price?symbols=GLD&from=${from}&to=${to}&granularity=daily&align=own`)
+    ]);
+    const btcData  = await btcRes.json();
+    const goldData = await goldRes.json();
+
+    if (!btcData.BTC?.dates?.length) throw new Error('No BTC data');
+    if (!goldData.GLD?.dates?.length) throw new Error('No Gold data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'line',
+      data: {
+        labels: btcData.BTC.dates,
+        datasets: [
+          {
+            label: 'BTC',
+            data: btcData.BTC.prices,
+            borderColor: '#F7931A',
+            backgroundColor: 'transparent',
+            borderWidth: 1.8,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            tension: 0.1,
+            yAxisID: 'yBTC',
+            spanGaps: true,
+          },
+          {
+            label: 'Gold (GLD)',
+            data: (() => {
+              const goldMap = {};
+              goldData.GLD.dates.forEach((d, i) => goldMap[d] = goldData.GLD.prices[i]);
+              return btcData.BTC.dates.map(d => goldMap[d] || null);
+            })(),
+            borderColor: '#FFB800',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            tension: 0.1,
+            yAxisID: 'yGold',
+            spanGaps: true,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            padding: 12,
+            callbacks: {
+              label: ctx => {
+                const v = ctx.parsed.y;
+                if (v == null) return ` ${ctx.dataset.label}  —`;
+                return ctx.dataset.label === 'BTC'
+                  ? ` BTC  $${v.toLocaleString()}`
+                  : ` Gold  $${v.toFixed(2)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'category', grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              maxRotation: 0, maxTicksLimit: 8,
+              callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; }
+            }
+          },
+          yBTC: {
+            type: 'linear', position: 'left',
+            grid: { display: false }, border: { color: '#F7931A', width: 0.8 },
+            ticks: {
+              color: '#F7931A', font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => `$${v >= 1000 ? (v/1000).toFixed(0)+'k' : v.toFixed(0)}`
+            }
+          },
+          yGold: {
+            type: 'linear', position: 'right',
+            grid: { display: false }, border: { color: '#FFB800', width: 0.8 },
+            ticks: {
+              color: '#FFB800', font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => `$${v.toFixed(0)}`
+            }
+          }
+        }
+      }
+    });
+
+    // Perf row
+    const btcLast = btcData.BTC.prices.filter(v => v != null).slice(-1)[0];
+    const goldLast = goldData.GLD.prices.filter(v => v != null).slice(-1)[0];
+    document.getElementById('perf-row').innerHTML = `
+      <div class="perf-item"><div class="perf-dot" style="background:#F7931A"></div><span class="perf-sym">BTC</span><span class="perf-val neu">$${btcLast?.toLocaleString() || '—'}</span></div>
+      <div class="perf-item"><div class="perf-dot" style="background:#FFB800"></div><span class="perf-sym">Gold (GLD)</span><span class="perf-val neu">$${goldLast?.toFixed(2) || '—'}</span></div>`;
+    document.getElementById('chart-title').textContent = 'Bitcoin vs Gold';
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchAltScatter(from, to, days) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  const topN = parseInt(document.getElementById('rp-topn')?.value || '50');
+
+  try {
+    const res  = await fetch(`/api/alt-scatter?from=${from}&to=${to}&days=${days}&topn=${topN}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.points?.length) throw new Error('no data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Altcoins',
+          data: data.points.map(p => ({ x: p.vol, y: p.perf, label: p.symbol })),
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, padding: 10,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            callbacks: {
+              title: ctx => ctx[0].raw.label,
+              label: ctx => [` Perf vs BTC: ${ctx.raw.y >= 0 ? '+' : ''}${ctx.raw.y.toFixed(1)}%`, ` Vol vs BTC: ${ctx.raw.x.toFixed(1)}%`]
+            }
+          }
+        },
+        scales: {
+          x: {
+            reverse: true,
+            title: { display: true, text: 'Volatility vs BTC (%) ← high vol   low vol →', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => `${v.toFixed(0)}%` }
+          },
+          y: {
+            title: { display: true, text: '% performance vs BTC', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => `${v >= 0 ? '+' : ''}${v.toFixed(0)}%` }
+          }
+        }
+      },
+      plugins: [{
+        id: 'tickerLabels',
+        afterDatasetsDraw(ch) {
+          const ctx2 = ch.ctx;
+          const ds   = ch.data.datasets[0];
+          const meta = ch.getDatasetMeta(0);
+          ctx2.save();
+          ctx2.font = `500 11px DM Sans, sans-serif`;
+          ctx2.textAlign = 'center';
+          ctx2.textBaseline = 'bottom';
+          meta.data.forEach((pt, i) => {
+            const p = ds.data[i];
+            const perfColor = p.y >= 0 ? '#00D64A' : '#EC5B5B';
+            ctx2.fillStyle = perfColor;
+            ctx2.fillText(p.label, pt.x, pt.y - 4);
+          });
+          ctx2.restore();
+        }
+      }]
+    });
+
+    // Zero lines
+    chart.options.plugins.annotation = {};
+
+    document.getElementById('chart-title').textContent = `Top ${topN} altcoins — performance vs BTC`;
+    document.getElementById('perf-row').innerHTML = `
+      <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">${data.points.length} assets · ${days}d window</span>`;
+
   } catch(e) {
     document.getElementById('chart-empty').style.display = 'flex';
     document.getElementById('empty-msg').textContent = `Error: ${e.message}`;

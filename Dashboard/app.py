@@ -1178,6 +1178,99 @@ def handle_btc_tradfi(params):
         "smooth_win":  smooth_win,
     }
 
+
+# ── Altcoin scatter: performance vs BTC + volatility vs BTC ──────────────────
+def handle_alt_scatter(params):
+    """
+    For top N altcoins (by market cap, excluding BTC/ETH):
+      y = % return vs BTC over window
+      x = volatility of daily returns relative to BTC volatility
+    Returns list of {symbol, perf, vol} points.
+    """
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    days      = int(params.get("days", ["7"])[0])
+    topn      = int(params.get("topn", ["50"])[0])
+
+    from datetime import datetime, timedelta
+    try:
+        dt_to   = datetime.strptime(date_to, "%Y-%m-%d")
+        dt_from = (dt_to - timedelta(days=days + 5)).strftime("%Y-%m-%d")
+    except:
+        dt_from = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Get top N altcoins by market cap (exclude BTC, ETH)
+    cur.execute("""
+        SELECT DISTINCT ON (p.symbol) p.symbol, p.coingecko_id, m.market_cap_usd
+        FROM price_daily p
+        JOIN marketcap_daily m ON p.coingecko_id = m.coingecko_id
+            AND p.timestamp::date = m.timestamp::date
+        WHERE p.symbol NOT IN ('BTC', 'ETH')
+          AND m.market_cap_usd > 0
+        ORDER BY p.symbol, m.timestamp DESC
+    """)
+    all_assets = cur.fetchall()
+    # Sort by market cap, take top N
+    all_assets = sorted(all_assets, key=lambda r: r["market_cap_usd"] or 0, reverse=True)[:topn]
+    symbols    = [r["symbol"] for r in all_assets]
+
+    # Get daily prices for BTC + all altcoins over window
+    symbols_with_btc = ["BTC"] + symbols
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = ANY(%s)
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY symbol, timestamp
+    """, (symbols_with_btc, dt_from, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    # Build price series per symbol
+    prices = {}
+    for row in rows:
+        sym = row["symbol"]
+        if sym not in prices: prices[sym] = {}
+        prices[sym][str(row["date"])] = float(row["price_usd"])
+
+    if "BTC" not in prices or len(prices["BTC"]) < 2:
+        return {"error": "insufficient BTC data", "points": []}
+
+    btc_dates = sorted(prices["BTC"].keys())
+
+    # Compute BTC return and vol over window
+    btc_vals = [prices["BTC"][d] for d in btc_dates if d in prices["BTC"]]
+    btc_return = (btc_vals[-1] / btc_vals[0] - 1) * 100 if len(btc_vals) >= 2 else 0
+
+    btc_rets = [(btc_vals[i] / btc_vals[i-1] - 1) * 100 for i in range(1, len(btc_vals))]
+    btc_mean = sum(btc_rets) / len(btc_rets) if btc_rets else 0
+    btc_vol  = math.sqrt(sum((r - btc_mean)**2 for r in btc_rets) / len(btc_rets)) if btc_rets else 1
+
+    points = []
+    for sym in symbols:
+        if sym not in prices or len(prices[sym]) < 2: continue
+        sym_vals = [prices[sym][d] for d in sorted(prices[sym].keys())]
+        sym_return = (sym_vals[-1] / sym_vals[0] - 1) * 100
+
+        sym_rets = [(sym_vals[i] / sym_vals[i-1] - 1) * 100 for i in range(1, len(sym_vals))]
+        sym_mean = sum(sym_rets) / len(sym_rets) if sym_rets else 0
+        sym_vol  = math.sqrt(sum((r - sym_mean)**2 for r in sym_rets) / len(sym_rets)) if sym_rets else 0
+
+        perf_vs_btc = sym_return - btc_return
+        vol_vs_btc  = sym_vol - btc_vol if btc_vol > 0 else sym_vol
+
+        points.append({
+            "symbol": sym,
+            "perf":   round(perf_vs_btc, 2),
+            "vol":    round(vol_vs_btc, 2),
+        })
+
+    return {"points": points, "btc_return": round(btc_return, 2)}
+
 # ── Handler ───────────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
@@ -1222,9 +1315,11 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/sector-zscore":          self.send_json(handle_sector_zscore(params))
             elif p == "/api/db-status":           self.send_json(handle_db_status())
             elif p == "/api/btc-tradfi":           self.send_json(handle_btc_tradfi(params))
+            elif p == "/api/alt-scatter":          self.send_json(handle_alt_scatter(params))
             elif p == "/api/btc-epochs":           self.send_json(handle_btc_epochs(params))
             elif p == "/api/btc-cycles":           self.send_json(handle_btc_cycles(params))
             elif p == "/api/btc-tradfi":           self.send_json(handle_btc_tradfi(params))
+            elif p == "/api/alt-scatter":          self.send_json(handle_alt_scatter(params))
             elif p == "/api/btc-epochs":            self.send_json(handle_btc_epochs(params))
             elif p == "/api/btc-cycles":            self.send_json(handle_btc_cycles(params))
             elif p == "/api/sector-bubble":         self.send_json(handle_sector_bubble(params))
