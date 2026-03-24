@@ -2,7 +2,7 @@
 api/assets.py — asset list + DB status endpoints
 """
 from datetime import datetime, timezone
-from .shared import get_conn, MAJORS, MACRO_TICKERS
+from api.shared import get_conn, MAJORS, MACRO_TICKERS
 import psycopg2.extras
 
 

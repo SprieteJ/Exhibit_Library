@@ -3,7 +3,7 @@ api/altcoins.py — altcoin price comparison + performance vs BTC scatter
 """
 import math
 from datetime import datetime, timedelta
-from .shared import get_conn, rebase_series, price_table, ts_cast
+from api.shared import get_conn, rebase_series, price_table, ts_cast
 import psycopg2.extras
 
 

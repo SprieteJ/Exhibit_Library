@@ -2,7 +2,7 @@
 api/bitcoin.py — Bitcoin-specific endpoints
 """
 from datetime import datetime
-from .shared import get_conn, rebase_series, macro_table
+from api.shared import get_conn, rebase_series, macro_table
 import psycopg2.extras
 
 

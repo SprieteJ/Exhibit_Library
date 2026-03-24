@@ -3,7 +3,7 @@ api/sector.py — sector price, correlation, momentum, bubble, mcap
 """
 import math
 from datetime import datetime, timedelta
-from .shared import (get_conn, SECTORS, SECTOR_COLORS,
+from api.shared import (get_conn, SECTORS, SECTOR_COLORS,
                      rebase_series, rolling_corr, fetch_sector_index,
                      price_table, ts_cast)
 import psycopg2.extras

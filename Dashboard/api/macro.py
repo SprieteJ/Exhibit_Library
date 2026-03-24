@@ -1,7 +1,7 @@
 """
 api/macro.py — macro asset price endpoint
 """
-from .shared import get_conn, rebase_series, macro_table, ts_cast
+from api.shared import get_conn, rebase_series, macro_table, ts_cast
 import psycopg2.extras
 
 
