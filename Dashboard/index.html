@@ -471,10 +471,15 @@ const TABS = {
       { label: "Price Action", children: [
         { key:"sec-equal", label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",         src:"CoinGecko Pro — Wintermute OTC" },
         { key:"sec-mcap",  label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",     src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-mom",   label:"Momentum",           sub:"Rolling N-day return of equal-weighted sector index",  src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Correlation", children: [
         { key:"sec-intra", label:"Intracorrelation",   sub:"Rolling pairwise correlation between sectors",          src:"CoinGecko Pro — Rolling Pearson" },
         { key:"sec-vs",    label:"vs BTC / ETH / Alts",sub:"Rolling correlation of sectors vs reference asset",     src:"CoinGecko Pro — Rolling Pearson" },
+      ]},
+      { label: "Momentum", children: [
+        { key:"sec-mom",   label:"30d Rolling return",  sub:"Rolling N-day return of equal-weighted sector index",  src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-zscore",label:"Z-score of returns",  sub:"Z-score of daily returns vs rolling window — unusually strong/weak momentum",  src:"CoinGecko Pro — Wintermute OTC" },
       ]},
     ]
   },
@@ -664,6 +669,8 @@ async function selectView(tab, key) {
   document.getElementById('chart-src').textContent   = `Source: ${viewDef.src}`;
 
   if (chart) { chart.destroy(); chart = null; }
+  // Add zero reference line for momentum/zscore
+  const showZeroLine = isMom || isZscore;
   document.getElementById('chart-empty').style.display = 'flex';
   document.getElementById('empty-msg').textContent = 'Select items from the right panel';
   document.getElementById('perf-row').innerHTML = '';
@@ -683,7 +690,7 @@ async function selectView(tab, key) {
 function buildRightPanel(tab, key) {
   const rp = document.getElementById('right-panel');
   const needsSearch  = tab !== 'sector';
-  const needsWindow  = key === 'sec-intra' || key === 'sec-vs';
+  const needsWindow  = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom';
   const needsVersus  = key === 'sec-vs';
   const isMacro      = tab === 'macro';
 
@@ -872,15 +879,17 @@ function setVersus(v) {
 }
 
 // ── Y-axis formatter ──────────────────────────────────────────────────────────
-function yAxisFormatter(v, isCorr) {
-  if (isCorr) return v.toFixed(2);
+function yAxisFormatter(v, isCorr, isMom, isZscore) {
+  if (isCorr)   return v.toFixed(2);
+  if (isZscore) return `${v.toFixed(1)}σ`;
+  if (isMom)    return `${v >= 0 ? '+' : ''}${v.toFixed(0)}%`;
   const delta = v - 100;
   if (Math.abs(delta) < 200) return `${delta >= 0 ? '+' : ''}${delta.toFixed(0)}%`;
   return `${(v/100).toFixed(1)}x`;
 }
 
 // ── Chart ─────────────────────────────────────────────────────────────────────
-function getOrMakeChart(isCorr = false) {
+function getOrMakeChart(isCorr = false, isMom = false) {
   if (chart) return chart;
   const tc = darkMode ? '#E8EAE8' : '#606663';
   chart = new Chart(document.getElementById('main-chart'), {
@@ -904,6 +913,7 @@ function getOrMakeChart(isCorr = false) {
               const v = ctx.parsed.y;
               if (v == null) return ` ${ctx.dataset.label}  —`;
               if (isCorr) return ` ${ctx.dataset.label}  ${v.toFixed(3)}`;
+              if (isMom)  return ` ${ctx.dataset.label}  ${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
               const delta = v - 100;
               const pct = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
               return ` ${ctx.dataset.label}  ${pct}`;
@@ -925,10 +935,11 @@ function getOrMakeChart(isCorr = false) {
           }
         },
         y: {
-          grid: { display: false }, border: { color: tc, width: 0.8 },
+          grid: isMom ? { color: tc + '30', drawBorder: false, lineWidth: 0.8 } : { display: false },
+          border: { color: tc, width: 0.8 },
           ticks: {
             color: tc, font: { family: 'DM Mono, monospace', size: 11 },
-            callback: v => yAxisFormatter(v, isCorr)
+            callback: v => isMom ? `${v >= 0 ? '+' : ''}${v.toFixed(1)}%` : yAxisFormatter(v, isCorr)
           }
         }
       }
@@ -937,12 +948,12 @@ function getOrMakeChart(isCorr = false) {
   return chart;
 }
 
-function drawChart(data, keys, isCorr = false) {
+function drawChart(data, keys, isCorr = false, isMom = false) {
   const firstKey = keys.find(k => data[k]);
   if (!firstKey) return;
 
   if (chart) { chart.destroy(); chart = null; }
-  const c = getOrMakeChart(isCorr);
+  const c = getOrMakeChart(isCorr, isMom);
   c.data.labels   = data[firstKey].dates;
   c.data.datasets = keys.filter(k => data[k]).map((k, i) => {
     const col = data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length];
@@ -962,7 +973,7 @@ function drawChart(data, keys, isCorr = false) {
   c.update();
 }
 
-function updatePerf(data, keys, isCorr = false) {
+function updatePerf(data, keys, isCorr = false, isMom = false) {
   document.getElementById('perf-row').innerHTML = keys.filter(k => data[k]).map((k, i) => {
     const r    = (data[k].rebased || []).filter(v => v != null);
     const last = r.length ? r[r.length - 1] : null;
@@ -971,6 +982,9 @@ function updatePerf(data, keys, isCorr = false) {
     if (isCorr) {
       const cls = last === null ? 'neu' : last >= 0.5 ? 'pos' : last <= -0.2 ? 'neg' : 'neu';
       valHtml = `<span class="perf-val ${cls}">${last !== null ? last.toFixed(3) : '—'}</span>`;
+    } else if (isMom) {
+      const cls = last === null ? 'neu' : last >= 0 ? 'pos' : 'neg';
+      valHtml = `<span class="perf-val ${cls}">${last !== null ? (last >= 0 ? '+' : '') + last.toFixed(1) + '%' : '—'}</span>`;
     } else {
       const ret = last !== null ? last - 100 : null;
       const cls = ret === null ? '' : ret >= 0 ? 'pos' : 'neg';
@@ -1009,7 +1023,7 @@ async function fetchCurrent() {
   const g       = granularity;
   const a       = alignMode;
 
-  let url, isCorr = false, chartKeys = selected;
+  let url, isCorr = false, isMom = false, chartKeys = selected;
 
   if (tab === 'macro') {
     url = `/api/macro-price?symbols=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
@@ -1029,6 +1043,9 @@ async function fetchCurrent() {
   } else if (key === 'sec-vs') {
     url = `/api/sector-btc-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}&versus=${versus}&granularity=${g}`;
     isCorr = true;
+  } else if (key === 'sec-mom') {
+    url = `/api/sector-momentum?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}`;
+    isMom = true;
   } else {
     url = `/api/price?symbols=${selected.join(',')}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
   }
@@ -1036,9 +1053,9 @@ async function fetchCurrent() {
   try {
     const data = await (await fetch(url)).json();
     if (data.error) throw new Error(data.error);
-    chartKeys = isCorr ? Object.keys(data) : selected;
-    drawChart(data, chartKeys, isCorr);
-    updatePerf(data, chartKeys, isCorr);
+    chartKeys = (isCorr || isMom) ? Object.keys(data) : selected;
+    drawChart(data, chartKeys, isCorr, isMom);
+    updatePerf(data, chartKeys, isCorr, isMom);
     document.getElementById('chart-title').textContent = selected.join(' · ');
   } catch(e) {
     console.error(e);

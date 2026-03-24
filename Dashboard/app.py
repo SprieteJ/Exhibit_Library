@@ -338,6 +338,143 @@ def handle_btc_corr(params):
     conn.close()
     return result
 
+# ── Sector momentum ──────────────────────────────────────────────────────────
+def handle_sector_momentum(params):
+    """
+    Rolling N-day return of the equal-weighted sector index.
+    momentum[i] = (index[i] / index[i-window]) - 1, expressed as %
+    """
+    sectors   = [s.strip() for s in params.get("sectors",[""])[0].split(",") if s.strip()]
+    date_from = params.get("from",["2024-01-01"])[0]
+    date_to   = params.get("to",  ["2099-01-01"])[0]
+    window    = int(params.get("window",["30"])[0])
+
+    # Fetch extra history before date_from so rolling window is populated at start
+    from datetime import datetime, timedelta
+    try:
+        dt_from = datetime.strptime(date_from, "%Y-%m-%d")
+        dt_from_ext = (dt_from - timedelta(days=window + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector in sectors:
+        if sector not in SECTORS: continue
+        index, dates = fetch_sector_index(cur, SECTORS[sector], dt_from_ext, date_to, 'equal', 'daily')
+        if not dates or len(dates) < window + 1: continue
+
+        # Compute rolling N-day return
+        mom_dates  = []
+        mom_values = []
+        idx_vals   = [index[d] for d in dates]
+
+        for i in range(window, len(dates)):
+            prev = idx_vals[i - window]
+            curr = idx_vals[i]
+            if prev and prev > 0:
+                ret = round((curr / prev - 1) * 100, 4)
+                mom_dates.append(dates[i])
+                mom_values.append(ret)
+
+        # Trim to requested date_from
+        trimmed_dates  = []
+        trimmed_values = []
+        for d, v in zip(mom_dates, mom_values):
+            if d >= date_from:
+                trimmed_dates.append(d)
+                trimmed_values.append(v)
+
+        if not trimmed_dates: continue
+
+        result[sector] = {
+            "dates":   trimmed_dates,
+            "rebased": trimmed_values,  # reusing rebased field for chart compat
+            "count":   len(SECTORS[sector]),
+            "color":   SECTOR_COLORS.get(sector),
+        }
+
+    conn.close()
+    return result
+
+
+# ── Sector z-score momentum ──────────────────────────────────────────────────
+def handle_sector_zscore(params):
+    """
+    Z-score of daily returns vs rolling window.
+    z[i] = (r[i] - mean(r[i-w:i])) / std(r[i-w:i])
+    Tells you how unusual today's return is vs recent history.
+    """
+    sectors   = [s.strip() for s in params.get("sectors",[""])[0].split(",") if s.strip()]
+    date_from = params.get("from",["2024-01-01"])[0]
+    date_to   = params.get("to",  ["2099-01-01"])[0]
+    window    = int(params.get("window",["30"])[0])
+
+    from datetime import datetime, timedelta
+    try:
+        dt_from     = datetime.strptime(date_from, "%Y-%m-%d")
+        dt_from_ext = (dt_from - timedelta(days=window * 2)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector in sectors:
+        if sector not in SECTORS: continue
+        index, dates = fetch_sector_index(cur, SECTORS[sector], dt_from_ext, date_to, 'equal', 'daily')
+        if not dates or len(dates) < window + 2: continue
+
+        idx_vals = [index[d] for d in dates]
+
+        # Daily returns
+        returns = [None]
+        for i in range(1, len(idx_vals)):
+            prev = idx_vals[i-1]
+            curr = idx_vals[i]
+            if prev and prev > 0:
+                returns.append((curr / prev - 1) * 100)
+            else:
+                returns.append(None)
+
+        # Rolling z-score of returns
+        z_dates  = []
+        z_values = []
+
+        for i in range(window, len(dates)):
+            window_rets = [r for r in returns[i-window:i] if r is not None]
+            if len(window_rets) < window // 2: continue
+            curr_ret = returns[i]
+            if curr_ret is None: continue
+
+            mean = sum(window_rets) / len(window_rets)
+            var  = sum((r - mean)**2 for r in window_rets) / len(window_rets)
+            std  = math.sqrt(var) if var > 0 else None
+
+            if std and std > 0:
+                z_dates.append(dates[i])
+                z_values.append(round((curr_ret - mean) / std, 4))
+
+        # Trim to requested date_from
+        trimmed_dates  = [d for d in z_dates  if d >= date_from]
+        trimmed_values = [v for d, v in zip(z_dates, z_values) if d >= date_from]
+
+        if not trimmed_dates: continue
+
+        result[sector] = {
+            "dates":   trimmed_dates,
+            "rebased": trimmed_values,
+            "count":   len(SECTORS[sector]),
+            "color":   SECTOR_COLORS.get(sector),
+        }
+
+    conn.close()
+    return result
+
+
 # ── Handler ───────────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
