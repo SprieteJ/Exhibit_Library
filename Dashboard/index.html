@@ -497,8 +497,12 @@ const TABS = {
     label: "Bitcoin",
     groups: [
       { label: "Cycle analysis", children: [
-        { key:"btc-epochs",  label:"Halving epochs",       sub:"X-fold from halving price · Log scale · Epochs 3, 4, 5", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-cycles",  label:"Bear market cycles",   sub:"Price indexed to cycle peak (peak = 100) · Days since peak", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-epochs", label:"Halving epochs",      sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5",    src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-cycles", label:"Bear market cycles",  sub:"BTC indexed to peak (peak = 100) · Days since peak",             src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Price Action", children: [
+        { key:"maj-price",  label:"Price comparison",    sub:"BTC & ETH · Daily close · Rebased to 100",                      src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-gold",   label:"Bitcoin vs Gold",     sub:"BTC (left axis, orange) overlaid with Gold/GLD (right axis)",   src:"CoinGecko Pro + yfinance" },
       ]},
     ]
   },
@@ -521,14 +525,7 @@ const TABS = {
       ]},
     ]
   },
-  analysis: {
-    label: "Analysis",
-    groups: [
-      { label: "Cross-sector", children: [
-        { key:"ana-bubble", label:"Momentum vs correlation", sub:"Bubble chart · Y = momentum · X = autocorrelation · Size = market cap", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-    ]
-  },
+
 
   equity: {
     label: "Equity",
@@ -717,7 +714,7 @@ async function selectView(tab, key) {
 
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
-  if (key === 'ana-bubble' || key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi') {
+  if (key === 'ana-bubble' || key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi' || key === 'alt-scatter' || key === 'btc-gold') {
     document.getElementById('chart-empty').style.display = 'none';
     document.getElementById('empty-msg').textContent = 'Loading…';
     setTimeout(fetchCurrent, 100);
@@ -730,10 +727,11 @@ function buildRightPanel(tab, key) {
   const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi';
   const isTradFi   = key === 'btc-tradfi';
   const isBubble    = key === 'ana-bubble';
-  const needsSearch = tab !== 'sector' && !isBtcView;
+  const needsSearch = tab !== 'sector' && !isBtcView && key !== 'alt-scatter' && key !== 'btc-gold';
   const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble' || key === 'alt-scatter';
   const needsVersus = key === 'sec-vs';
-  const showList    = !isBubble && !isBtcView && !isTradFi;
+  const isAutoView  = isBubble || isBtcView || key === 'alt-scatter' || key === 'btc-gold';
+  const showList    = !isAutoView;
 
   let html = '';
 
