@@ -1144,7 +1144,7 @@ async function fetchCurrent() {
   const g       = granularity;
   const a       = alignMode;
 
-  let url, isCorr = false, isMom = false, chartKeys = selected;
+  let url, isCorr = false, isMom = false, isZscore = false, isMcap = false, chartKeys = selected;
 
   if (tab === 'macro') {
     url = `/api/macro-price?symbols=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
@@ -1198,12 +1198,19 @@ async function fetchCurrent() {
   } else if (key === 'sec-mom') {
     url = `/api/sector-momentum?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}`;
     isMom = true;
+  } else if (key === 'sec-zscore') {
+    url = `/api/sector-zscore?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}`;
+    isZscore = true;
   } else {
     url = `/api/price?symbols=${selected.join(',')}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
   }
 
   try {
-    const data = await (await fetch(url)).json();
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    if (!text) throw new Error('empty response');
+    const data = JSON.parse(text);
     if (data.error) throw new Error(data.error);
     chartKeys = (isCorr || isMom) ? Object.keys(data) : selected;
     drawChart(data, chartKeys, isCorr, isMom);
