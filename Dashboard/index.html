@@ -700,7 +700,8 @@ async function selectView(tab, key) {
 
   if (chart) { chart.destroy(); chart = null; }
   document.getElementById('chart-empty').style.display = 'flex';
-  document.getElementById('empty-msg').textContent = 'Select items from the right panel';
+  const isBtcAutoView = key === 'btc-epochs' || key === 'btc-cycles' || key === 'ana-bubble';
+  document.getElementById('empty-msg').textContent = isBtcAutoView ? 'Loading…' : 'Select items from the right panel';
   document.getElementById('perf-row').innerHTML = '';
 
   // Load items for this tab
@@ -714,6 +715,8 @@ async function selectView(tab, key) {
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   if (key === 'ana-bubble' || key === 'btc-epochs' || key === 'btc-cycles') {
+    document.getElementById('chart-empty').style.display = 'none';
+    document.getElementById('empty-msg').textContent = 'Loading…';
     setTimeout(fetchCurrent, 100);
   }
 }
