@@ -1710,7 +1710,11 @@ async function fetchBtcChart(type, from, to, windowDays) {
       spanGaps:         true,
     }));
 
-    // Add 1x reference line for epochs chart only
+    // All epochs/cycles share the same day-based x axis
+    const maxDays  = Math.max(...labels.filter(l => data[l]?.days?.length).map(l => data[l].days[data[l].days.length - 1]));
+    const allDays  = Array.from({length: maxDays + 1}, (_, i) => i);
+
+    // Add 1x reference line for epochs chart only (after allDays is defined)
     if (type === 'epochs') {
       datasets.push({
         label:           '1x (halving price)',
@@ -1726,10 +1730,6 @@ async function fetchBtcChart(type, from, to, windowDays) {
         spanGaps:        true,
       });
     }
-
-    // All epochs/cycles share the same day-based x axis
-    const maxDays  = Math.max(...labels.filter(l => data[l]?.days?.length).map(l => data[l].days[data[l].days.length - 1]));
-    const allDays  = Array.from({length: maxDays + 1}, (_, i) => i);
 
     // Align values to full day array
     const validLabels = labels.filter(l => data[l]?.days?.length && data[l]?.values?.length);
