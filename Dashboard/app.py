@@ -559,6 +559,144 @@ def handle_db_status():
     conn.close()
     return result
 
+
+# ── Sector bubble (momentum + autocorr + mcap) ────────────────────────────────
+def handle_sector_bubble(params):
+    """
+    Returns per-sector snapshot for bubble chart:
+      x = autocorrelation (lag-1 of daily returns over window)
+      y = rolling N-day momentum (%)
+      r = total market cap of sector (sum of constituent mcaps)
+    """
+    date_to   = params.get("to",  ["2099-01-01"])[0]
+    window    = int(params.get("window", ["30"])[0])
+
+    from datetime import datetime, timedelta
+    try:
+        dt_to     = datetime.strptime(date_to, "%Y-%m-%d")
+        dt_from   = (dt_to - timedelta(days=window * 3)).strftime("%Y-%m-%d")
+    except:
+        dt_from   = "2024-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector, cg_ids in SECTORS.items():
+        if not cg_ids: continue
+
+        # Get sector index
+        index, dates = fetch_sector_index(cur, cg_ids, dt_from, date_to, 'equal', 'daily')
+        if not dates or len(dates) < window + 2: continue
+
+        idx_vals = [index[d] for d in dates]
+
+        # Daily returns
+        returns = []
+        for i in range(1, len(idx_vals)):
+            prev = idx_vals[i-1]
+            if prev and prev > 0:
+                returns.append((idx_vals[i] / prev - 1) * 100)
+            else:
+                returns.append(None)
+
+        # Momentum: return over last N days
+        if len(idx_vals) >= window + 1:
+            prev_val = idx_vals[-(window+1)]
+            curr_val = idx_vals[-1]
+            momentum = round((curr_val / prev_val - 1) * 100, 4) if prev_val and prev_val > 0 else None
+        else:
+            momentum = None
+
+        # Autocorrelation (lag-1) over window
+        rets = [r for r in returns[-window:] if r is not None]
+        autocorr = None
+        if len(rets) >= window // 2:
+            pairs = [(rets[i], rets[i+1]) for i in range(len(rets)-1)]
+            if pairs:
+                xa = sum(p[0] for p in pairs) / len(pairs)
+                ya = sum(p[1] for p in pairs) / len(pairs)
+                num = sum((p[0]-xa)*(p[1]-ya) for p in pairs)
+                dx  = math.sqrt(sum((p[0]-xa)**2 for p in pairs))
+                dy  = math.sqrt(sum((p[1]-ya)**2 for p in pairs))
+                if dx > 0 and dy > 0:
+                    autocorr = round(num / (dx * dy), 4)
+
+        # Total market cap (sum of latest mcap per asset)
+        cur.execute("""
+            SELECT SUM(latest_mcap) as total_mcap FROM (
+                SELECT DISTINCT ON (coingecko_id)
+                    market_cap_usd as latest_mcap
+                FROM marketcap_daily
+                WHERE coingecko_id = ANY(%s)
+                  AND market_cap_usd > 0
+                ORDER BY coingecko_id, timestamp DESC
+            ) sub
+        """, (cg_ids,))
+        mcap_row = cur.fetchone()
+        total_mcap = float(mcap_row["total_mcap"]) if mcap_row and mcap_row["total_mcap"] else 0
+
+        result[sector] = {
+            "x":     autocorr,
+            "y":     momentum,
+            "mcap":  total_mcap,
+            "color": SECTOR_COLORS.get(sector, "#888888"),
+            "count": len(cg_ids),
+        }
+
+    conn.close()
+    return result
+
+
+# ── Sector market cap ─────────────────────────────────────────────────────────
+def handle_sector_mcap_view(params):
+    """
+    Returns time series of total and median market cap per sector.
+    type = total | median
+    """
+    sectors   = [s.strip() for s in params.get("sectors",[""])[0].split(",") if s.strip()]
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    mcap_type = params.get("type", ["total"])[0]  # total | median
+
+    if not sectors: return {"error": "no sectors"}
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector in sectors:
+        if sector not in SECTORS: continue
+        cg_ids = SECTORS[sector]
+        if not cg_ids: continue
+
+        cur.execute("""
+            SELECT timestamp::date as date,
+                   SUM(market_cap_usd) as total_mcap,
+                   PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY market_cap_usd) as median_mcap
+            FROM marketcap_daily
+            WHERE coingecko_id = ANY(%s)
+              AND timestamp >= %s AND timestamp <= %s
+              AND market_cap_usd > 0
+            GROUP BY timestamp::date
+            ORDER BY timestamp::date
+        """, (cg_ids, date_from, date_to))
+        rows = cur.fetchall()
+        if not rows: continue
+
+        dates  = [str(r["date"]) for r in rows]
+        values = [float(r["total_mcap"] if mcap_type == "total" else r["median_mcap"]) for r in rows]
+
+        result[sector] = {
+            "dates":   dates,
+            "rebased": values,   # raw USD values, not rebased
+            "color":   SECTOR_COLORS.get(sector),
+            "count":   len(cg_ids),
+        }
+
+    conn.close()
+    return result
+
 # ── Handler ───────────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
@@ -600,6 +738,8 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/sector-intra-corr":  self.send_json(handle_intra_corr(params))
             elif p == "/api/sector-btc-corr":    self.send_json(handle_btc_corr(params))
             elif p == "/api/db-status":           self.send_json(handle_db_status())
+            elif p == "/api/sector-bubble":         self.send_json(handle_sector_bubble(params))
+            elif p == "/api/sector-mcap-view":      self.send_json(handle_sector_mcap_view(params))
             elif p.startswith("/static/"):       self.send_file(BASE_DIR/p[8:])
             else:
                 self.send_response(404); self.end_headers()
