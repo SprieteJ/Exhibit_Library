@@ -637,6 +637,24 @@ async function selectView(tab, key) {
   if (!viewDef) return;
 
   activeView = { tab, key, def: viewDef };
+  // Disable hourly for sector tab (too expensive + not meaningful)
+  const hourlyBtn = document.getElementById('gran-hourly');
+  if (tab === 'sector') {
+    hourlyBtn.disabled = true;
+    hourlyBtn.title = 'Hourly not available for sector views';
+    hourlyBtn.style.opacity = '0.35';
+    hourlyBtn.style.cursor = 'not-allowed';
+    if (granularity === 'hourly') {
+      granularity = 'daily';
+      document.getElementById('gran-daily').classList.add('active');
+      hourlyBtn.classList.remove('active');
+    }
+  } else {
+    hourlyBtn.disabled = false;
+    hourlyBtn.title = '';
+    hourlyBtn.style.opacity = '';
+    hourlyBtn.style.cursor = '';
+  }
   selected   = [];
   buildTree(tab);
 
