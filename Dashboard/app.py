@@ -925,6 +925,259 @@ def handle_btc_cycles(params):
     conn.close()
     return result
 
+
+# ── BTC vs TradFi ─────────────────────────────────────────────────────────────
+def handle_btc_tradfi(params):
+    """
+    Two-panel data for BTC vs a TradFi asset:
+      - Rolling N-day return for both
+      - Rolling M-day correlation of daily returns
+    Returns from price_daily (BTC) and macro_daily (TradFi assets).
+    """
+    asset       = params.get("asset",   ["QQQ"])[0]
+    perf_window = int(params.get("perf",  ["14"])[0])
+    corr_window = int(params.get("corr",  ["14"])[0])
+    smooth_win  = int(params.get("smooth",["60"])[0])
+    date_from   = params.get("from", ["2023-01-01"])[0]
+    date_to     = params.get("to",   ["2099-01-01"])[0]
+
+    # Extend date_from back by max window to populate rolling calcs
+    from datetime import datetime, timedelta
+    try:
+        dt_from = datetime.strptime(date_from, "%Y-%m-%d")
+        dt_ext  = (dt_from - timedelta(days=max(perf_window, corr_window, smooth_win) + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_ext = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Fetch BTC daily prices
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC' AND timestamp >= %s AND timestamp <= %s
+        ORDER BY timestamp
+    """, (dt_ext, date_to))
+    btc_rows = {str(r["date"]): float(r["price_usd"]) for r in cur.fetchall()}
+
+    # Fetch TradFi asset from macro_daily
+    cur.execute("""
+        SELECT timestamp::date as date, close
+        FROM macro_daily
+        WHERE ticker = %s AND timestamp >= %s AND timestamp <= %s AND close IS NOT NULL
+        ORDER BY timestamp
+    """, (asset, dt_ext, date_to))
+    asset_rows = {str(r["date"]): float(r["close"]) for r in cur.fetchall()}
+
+    conn.close()
+
+    if not btc_rows or not asset_rows:
+        return {"error": f"no data for BTC or {asset}"}
+
+    # Align on common dates
+    common_dates = sorted(set(btc_rows.keys()) & set(asset_rows.keys()))
+    if len(common_dates) < corr_window + 2:
+        return {"error": "insufficient overlapping data"}
+
+    btc_prices   = [btc_rows[d]   for d in common_dates]
+    asset_prices = [asset_rows[d] for d in common_dates]
+
+    # Daily returns
+    def daily_returns(prices):
+        rets = [None]
+        for i in range(1, len(prices)):
+            if prices[i-1] and prices[i-1] > 0:
+                rets.append((prices[i] / prices[i-1] - 1) * 100)
+            else:
+                rets.append(None)
+        return rets
+
+    btc_rets   = daily_returns(btc_prices)
+    asset_rets = daily_returns(asset_prices)
+
+    # Rolling N-day performance (cumulative return over window)
+    def rolling_perf(prices, window):
+        result = [None] * len(prices)
+        for i in range(window, len(prices)):
+            prev = prices[i - window]
+            curr = prices[i]
+            if prev and prev > 0:
+                result[i] = round((curr / prev - 1) * 100, 4)
+        return result
+
+    btc_perf   = rolling_perf(btc_prices, perf_window)
+    asset_perf = rolling_perf(asset_prices, perf_window)
+
+    # Rolling correlation of daily returns
+    def rolling_corr_series(r1, r2, window):
+        result = [None] * len(r1)
+        for i in range(window, len(r1)):
+            x = r1[i-window:i]; y = r2[i-window:i]
+            pairs = [(a,b) for a,b in zip(x,y) if a is not None and b is not None]
+            if len(pairs) < window // 2: continue
+            xa = sum(p[0] for p in pairs)/len(pairs)
+            ya = sum(p[1] for p in pairs)/len(pairs)
+            num = sum((p[0]-xa)*(p[1]-ya) for p in pairs)
+            dx  = math.sqrt(sum((p[0]-xa)**2 for p in pairs))
+            dy  = math.sqrt(sum((p[1]-ya)**2 for p in pairs))
+            if dx > 0 and dy > 0:
+                result[i] = round(num/(dx*dy), 4)
+        return result
+
+    corr_series   = rolling_corr_series(btc_rets, asset_rets, corr_window)
+
+    # Smooth correlation
+    def rolling_mean(series, window):
+        result = [None] * len(series)
+        for i in range(window, len(series)):
+            vals = [v for v in series[i-window:i] if v is not None]
+            if vals: result[i] = round(sum(vals)/len(vals), 4)
+        return result
+
+    corr_smooth = rolling_mean(corr_series, smooth_win)
+
+    # Trim to requested date_from
+    trim_idx = next((i for i,d in enumerate(common_dates) if d >= date_from), 0)
+    dates    = common_dates[trim_idx:]
+
+    return {
+        "dates":       dates,
+        "btc_perf":    btc_perf[trim_idx:],
+        "asset_perf":  asset_perf[trim_idx:],
+        "corr":        corr_series[trim_idx:],
+        "corr_smooth": corr_smooth[trim_idx:],
+        "asset":       asset,
+        "perf_window": perf_window,
+        "corr_window": corr_window,
+        "smooth_win":  smooth_win,
+    }
+
+
+# ── BTC vs TradFi ─────────────────────────────────────────────────────────────
+def handle_btc_tradfi(params):
+    """
+    Dual panel: rolling return + rolling correlation between BTC and a macro asset.
+    Returns both series aligned on common dates.
+    """
+    asset      = params.get("asset",   ["QQQ"])[0].upper()
+    perf_win   = int(params.get("perf_win",  ["14"])[0])
+    corr_win   = int(params.get("corr_win",  ["14"])[0])
+    smooth_win = int(params.get("smooth_win",["60"])[0])
+    date_from  = params.get("from", ["2023-01-01"])[0]
+    date_to    = params.get("to",   ["2099-01-01"])[0]
+
+    from datetime import datetime, timedelta
+    # Fetch extra history for rolling windows
+    try:
+        dt_from = datetime.strptime(date_from, "%Y-%m-%d")
+        dt_ext  = (dt_from - timedelta(days=max(perf_win, corr_win, smooth_win) + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_ext  = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # BTC daily prices
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC' AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY timestamp
+    """, (dt_ext, date_to))
+    btc_rows = {str(r["date"]): float(r["price_usd"]) for r in cur.fetchall()}
+
+    # Macro asset prices
+    cur.execute("""
+        SELECT timestamp::date as date, close as price
+        FROM macro_daily
+        WHERE ticker = %s AND timestamp >= %s AND timestamp <= %s AND close IS NOT NULL
+        ORDER BY timestamp
+    """, (asset, dt_ext, date_to))
+    mac_rows = {str(r["date"]): float(r["price"]) for r in cur.fetchall()}
+
+    conn.close()
+
+    if not btc_rows or not mac_rows:
+        return {"error": f"No data for BTC or {asset}"}
+
+    # Common dates
+    common_dates = sorted(set(btc_rows.keys()) & set(mac_rows.keys()))
+    if len(common_dates) < max(perf_win, corr_win) + 2:
+        return {"error": "Insufficient overlapping data"}
+
+    btc_prices = [btc_rows[d] for d in common_dates]
+    mac_prices = [mac_rows[d] for d in common_dates]
+
+    # Daily returns
+    def daily_rets(prices):
+        rets = [None]
+        for i in range(1, len(prices)):
+            p, c = prices[i-1], prices[i]
+            rets.append((c / p - 1) * 100 if p > 0 else None)
+        return rets
+
+    btc_rets = daily_rets(btc_prices)
+    mac_rets = daily_rets(mac_prices)
+
+    # Rolling N-day return: (price[i] / price[i-N]) - 1
+    def rolling_perf(prices, window):
+        result = [None] * len(prices)
+        for i in range(window, len(prices)):
+            prev = prices[i - window]
+            curr = prices[i]
+            if prev and prev > 0:
+                result[i] = round((curr / prev - 1) * 100, 4)
+        return result
+
+    # Rolling correlation
+    def rolling_corr_series(rets_a, rets_b, window):
+        result = [None] * len(rets_a)
+        for i in range(window, len(rets_a)):
+            xa = [r for r in rets_a[i-window:i] if r is not None]
+            xb = [r for r in rets_b[i-window:i] if r is not None]
+            pairs = [(a, b) for a, b in zip(xa, xb)]
+            if len(pairs) < window // 2: continue
+            ma = sum(p[0] for p in pairs) / len(pairs)
+            mb = sum(p[1] for p in pairs) / len(pairs)
+            num = sum((p[0]-ma)*(p[1]-mb) for p in pairs)
+            da  = math.sqrt(sum((p[0]-ma)**2 for p in pairs))
+            db  = math.sqrt(sum((p[1]-mb)**2 for p in pairs))
+            if da > 0 and db > 0:
+                result[i] = round(num / (da * db), 4)
+        return result
+
+    # Rolling average (smooth)
+    def rolling_avg(series, window):
+        result = [None] * len(series)
+        for i in range(window - 1, len(series)):
+            vals = [v for v in series[i-window+1:i+1] if v is not None]
+            if vals: result[i] = round(sum(vals) / len(vals), 4)
+        return result
+
+    btc_perf  = rolling_perf(btc_prices, perf_win)
+    mac_perf  = rolling_perf(mac_prices, perf_win)
+    corr      = rolling_corr_series(btc_rets, mac_rets, corr_win)
+    corr_smooth = rolling_avg(corr, smooth_win)
+
+    # Trim to requested date_from
+    trim_dates   = [d for d in common_dates if d >= date_from]
+    trim_start   = common_dates.index(trim_dates[0]) if trim_dates else 0
+
+    def trim(lst): return [lst[i] for i in range(trim_start, len(common_dates))]
+
+    return {
+        "dates":       trim(common_dates),
+        "btc_perf":    trim(btc_perf),
+        "asset_perf":  trim(mac_perf),
+        "corr":        trim(corr),
+        "corr_smooth": trim(corr_smooth),
+        "asset":       asset,
+        "perf_win":    perf_win,
+        "corr_win":    corr_win,
+        "smooth_win":  smooth_win,
+    }
+
 # ── Handler ───────────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
@@ -966,8 +1219,12 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/sector-intra-corr":  self.send_json(handle_intra_corr(params))
             elif p == "/api/sector-btc-corr":    self.send_json(handle_btc_corr(params))
             elif p == "/api/db-status":           self.send_json(handle_db_status())
+            elif p == "/api/btc-tradfi":           self.send_json(handle_btc_tradfi(params))
+            elif p == "/api/btc-tradfi":           self.send_json(handle_btc_tradfi(params))
             elif p == "/api/btc-epochs":           self.send_json(handle_btc_epochs(params))
             elif p == "/api/btc-cycles":           self.send_json(handle_btc_cycles(params))
+            elif p == "/api/btc-tradfi":           self.send_json(handle_btc_tradfi(params))
+            elif p == "/api/btc-tradfi":           self.send_json(handle_btc_tradfi(params))
             elif p == "/api/btc-epochs":            self.send_json(handle_btc_epochs(params))
             elif p == "/api/btc-cycles":            self.send_json(handle_btc_cycles(params))
             elif p == "/api/sector-bubble":         self.send_json(handle_sector_bubble(params))
