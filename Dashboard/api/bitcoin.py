@@ -108,6 +108,41 @@ def handle_btc_cycles(params):
     return result
 
 
+def handle_btc_rolling(params):
+    """BTC rolling N-day return (%)."""
+    date_from = params.get("from", ["2020-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    window    = int(params.get("window", ["7"])[0])
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC'
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY timestamp
+    """, (date_from, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        return {"dates": [], "values": [], "window": window}
+
+    dates  = [str(r["date"]) for r in rows]
+    prices = [float(r["price_usd"]) for r in rows]
+
+    values = []
+    for i, p in enumerate(prices):
+        if i < window:
+            values.append(None)
+        else:
+            values.append(round((p / prices[i - window] - 1) * 100, 4))
+
+    return {"dates": dates, "values": values, "window": window}
+
+
 def handle_btc_gold(params):
     """BTC price + Gold (GLD) price for dual-axis chart."""
     date_from   = params.get("from", ["2020-01-01"])[0]

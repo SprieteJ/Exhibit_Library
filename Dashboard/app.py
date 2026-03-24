@@ -12,7 +12,7 @@ from api.assets   import handle_assets, handle_db_status
 from api.sector   import (handle_sectors, handle_sector_price, handle_intra_corr,
                            handle_btc_corr, handle_sector_momentum, handle_sector_zscore,
                            handle_sector_bubble, handle_sector_mcap_view)
-from api.bitcoin  import handle_btc_epochs, handle_btc_cycles, handle_btc_gold
+from api.bitcoin  import handle_btc_epochs, handle_btc_cycles, handle_btc_gold, handle_btc_rolling
 from api.altcoins import handle_price, handle_alt_scatter
 from api.macro    import handle_macro_price
 
@@ -75,6 +75,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/btc-epochs":        self.send_json(handle_btc_epochs(params))
             elif p == "/api/btc-cycles":        self.send_json(handle_btc_cycles(params))
             elif p == "/api/btc-gold":          self.send_json(handle_btc_gold(params))
+            elif p == "/api/btc-rolling":       self.send_json(handle_btc_rolling(params))
 
             elif p == "/api/alt-scatter":       self.send_json(handle_alt_scatter(params))
 
