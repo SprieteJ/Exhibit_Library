@@ -405,7 +405,6 @@ input[type=number] { width: 70px; }
   <button class="tab" data-tab="bitcoin">Bitcoin</button>
   <button class="tab" data-tab="altcoins">Altcoins</button>
   <button class="tab" data-tab="macro">Macro</button>
-  <button class="tab" data-tab="analysis">Analysis</button>
   <button class="tab" data-tab="marketcap">Market cap</button>
   <button class="tab" data-tab="equity">Equity</button>
   <button class="tab" data-tab="data">
@@ -703,8 +702,6 @@ async function selectView(tab, key) {
   document.getElementById('chart-src').textContent   = `Source: ${viewDef.src}`;
 
   if (chart) { chart.destroy(); chart = null; }
-  // Add zero reference line for momentum/zscore
-  const showZeroLine = isMom || isZscore;
   document.getElementById('chart-empty').style.display = 'flex';
   document.getElementById('empty-msg').textContent = 'Select items from the right panel';
   document.getElementById('perf-row').innerHTML = '';
@@ -712,8 +709,6 @@ async function selectView(tab, key) {
   // Load items for this tab
   if (tab === 'sector' || tab === 'marketcap') {
     allItems = allSectors;
-  } else if (tab === 'bitcoin') {
-    allItems = [];
   } else {
     const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab}`);
     allItems  = await res.json();
@@ -731,7 +726,7 @@ function buildRightPanel(tab, key) {
   const rp          = document.getElementById('right-panel');
   const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles';
   const isBubble    = key === 'ana-bubble';
-  const needsSearch = tab !== 'sector' && tab !== 'marketcap' && tab !== 'analysis' && !isBtcView;
+  const needsSearch = tab !== 'sector' && tab !== 'marketcap' && !isBtcView;
   const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble';
   const needsVersus = key === 'sec-vs';
   const showList    = !isBubble && !isBtcView;
