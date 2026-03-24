@@ -1,32 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wintermute — Market Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:        #FAFAFA;
-  --surface:   #FFFFFF;
-  --border:    #E4E4E2;
-  --spine:     #606663;
-  --graphite:  #323935;
-  --muted:     #888B88;
-  --input-bg:  #F0F0EE;
-  --tag-bg:    #EAEAE8;
-  --nav-w:     52px;
-  --side-w:    280px;
-  --radius:    6px;
-  --font:      'DM Sans', 'Helvetica Neue', sans-serif;
-  --mono:      'DM Mono', 'Courier New', monospace;
-  --c0:#00D64A; --c1:#2471CC; --c2:#746BE6;
-  --c3:#DB33CB; --c4:#EC5B5B; --c5:#F7931A; --c6:#26A17B; --c7:#FFB800;
+  --bg:       #FAFAFA;
+  --surface:  #FFFFFF;
+  --border:   #E4E4E2;
+  --spine:    #606663;
+  --graphite: #323935;
+  --muted:    #888B88;
+  --input-bg: #F0F0EE;
+  --tag-bg:   #EAEAE8;
+  --font:     'DM Sans', 'Helvetica Neue', sans-serif;
+  --mono:     'DM Mono', 'Courier New', monospace;
+  --radius:   6px;
+  --side-w:   268px;
 }
 
-*  { box-sizing: border-box; margin: 0; padding: 0; }
+[data-theme="dark"] {
+  --bg:       #0F1110;
+  --surface:  #1A1D1B;
+  --border:   #2A2D2B;
+  --spine:    #606663;
+  --graphite: #E8EAE8;
+  --muted:    #666968;
+  --input-bg: #1E221F;
+  --tag-bg:   #1E221F;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
   background: var(--bg);
   color: var(--graphite);
@@ -35,28 +44,19 @@ body {
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: var(--nav-w) var(--side-w) 1fr var(--side-w);
-  grid-template-rows: 52px 1fr;
+  grid-template-rows: 52px 40px 1fr;
+  grid-template-columns: var(--side-w) 1fr var(--side-w);
 }
 
-/* ── Header ── */
+/* ── Top header row ── */
 .header {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  padding: 0 20px 0 0;
+  padding: 0 20px;
   border-bottom: 1px solid var(--border);
-  gap: 0;
-}
-
-.header-logo {
-  width: var(--nav-w);
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-right: 1px solid var(--border);
-  flex-shrink: 0;
+  gap: 12px;
+  background: var(--bg);
 }
 
 .logo-mark {
@@ -64,249 +64,189 @@ body {
   background: var(--graphite);
   border-radius: 5px;
   display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
 
 .logo-mark svg { width: 14px; height: 14px; }
 
-.header-name {
-  padding: 0 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--graphite);
-  letter-spacing: -0.02em;
-  border-right: 1px solid var(--border);
-  height: 100%;
-  display: flex;
-  align-items: center;
+.logo-name {
+  font-size: 14px; font-weight: 600;
+  color: var(--graphite); letter-spacing: -0.02em;
   flex-shrink: 0;
 }
 
-.breadcrumb {
-  padding: 0 16px;
-  font-size: 13px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.breadcrumb-sep { color: var(--border); }
-.breadcrumb-active { color: var(--graphite); font-weight: 500; }
-
-.header-spacer { flex: 1; }
+.header-divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+.header-spacer  { flex: 1; }
 
 .header-pill {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-  background: var(--tag-bg);
-  padding: 4px 10px;
-  border-radius: 20px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); background: var(--tag-bg);
+  padding: 4px 10px; border-radius: 20px;
 }
 
-/* ── Left nav (VS Code style) ── */
-.nav {
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 0;
-  gap: 2px;
-  overflow: hidden;
-}
-
-.nav-item {
-  width: 36px; height: 36px;
+/* Dark mode toggle */
+.dark-toggle {
+  width: 32px; height: 32px;
   border-radius: var(--radius);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  position: relative;
-  transition: background 0.12s;
+  border: 1px solid var(--border);
+  background: var(--surface);
   color: var(--muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.dark-toggle:hover { border-color: var(--spine); color: var(--graphite); }
+.dark-toggle svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; }
+
+/* ── Tab bar row ── */
+.tabbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  gap: 2px;
 }
 
-.nav-item:hover { background: var(--tag-bg); color: var(--graphite); }
-.nav-item.active { background: var(--graphite); color: white; }
-.nav-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-
-.nav-tooltip {
-  position: absolute;
-  left: calc(100% + 8px);
-  background: var(--graphite);
-  color: white;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 4px;
+.tab {
+  padding: 0 14px;
+  height: 40px;
+  display: flex; align-items: center;
+  font-size: 13px; font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
   white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s;
-  z-index: 100;
+  background: none; border-top: none; border-left: none; border-right: none;
+  font-family: var(--font);
 }
 
-.nav-item:hover .nav-tooltip { opacity: 1; }
+.tab:hover { color: var(--graphite); }
+.tab.active { color: var(--graphite); border-bottom-color: var(--graphite); }
 
-.nav-divider {
-  width: 24px;
-  height: 1px;
-  background: var(--border);
-  margin: 4px 0;
+.tab-spacer { flex: 1; }
+
+/* Granularity + align toggles in tabbar */
+.toggle-group {
+  display: flex; gap: 3px;
+  align-items: center;
 }
 
-/* ── Left sidebar (view tree) ── */
+.tgl-btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid var(--border); background: none;
+  color: var(--muted); cursor: pointer; transition: all 0.12s;
+}
+.tgl-btn:hover { border-color: var(--spine); color: var(--graphite); }
+.tgl-btn.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
+[data-theme="dark"] .tgl-btn.active { background: #E8EAE8; color: #0F1110; }
+
+.tgl-sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; }
+
+/* ── Content row ── */
+/* Left panel */
 .left-panel {
   border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg);
 }
 
-.panel-header {
-  padding: 14px 16px 10px;
+.panel-hdr {
+  padding: 12px 16px 8px;
   border-bottom: 1px solid var(--border);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.07em;
+  text-transform: uppercase; flex-shrink: 0;
 }
 
-.view-tree {
-  flex: 1;
-  overflow-y: auto;
-  padding: 6px 0;
-}
-
+.view-tree { flex: 1; overflow-y: auto; padding: 4px 0; }
 .view-tree::-webkit-scrollbar { width: 3px; }
 .view-tree::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 .tree-group { margin-bottom: 2px; }
 
-.tree-group-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--muted);
-  cursor: pointer;
-  user-select: none;
+.tree-grp-hdr {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 16px; font-size: 13px; font-weight: 500;
+  color: var(--muted); cursor: pointer; user-select: none;
   transition: color 0.1s;
 }
+.tree-grp-hdr:hover { color: var(--graphite); }
 
-.tree-group-header:hover { color: var(--graphite); }
-
-.tree-chevron {
-  width: 14px; height: 14px;
+.chevron {
+  width: 13px; height: 13px;
   stroke: currentColor; fill: none; stroke-width: 2;
   stroke-linecap: round; stroke-linejoin: round;
-  transition: transform 0.15s;
-  flex-shrink: 0;
+  transition: transform 0.15s; flex-shrink: 0;
 }
-
-.tree-group.open .tree-chevron { transform: rotate(90deg); }
-
+.tree-group.open .chevron { transform: rotate(90deg); }
 .tree-children { display: none; }
 .tree-group.open .tree-children { display: block; }
 
 .tree-leaf {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px 6px 34px;
-  font-size: 14px;
-  color: var(--muted);
-  cursor: pointer;
-  border-left: 2px solid transparent;
-  transition: all 0.1s;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 16px 7px 34px;
+  font-size: 14px; color: var(--muted); cursor: pointer;
+  border-left: 2px solid transparent; transition: all 0.1s;
 }
-
 .tree-leaf:hover { color: var(--graphite); background: var(--tag-bg); }
+.tree-leaf.active { color: var(--graphite); border-left-color: var(--graphite); background: var(--tag-bg); font-weight: 500; }
 
-.tree-leaf.active {
-  color: var(--graphite);
-  border-left-color: var(--graphite);
-  background: var(--tag-bg);
-  font-weight: 500;
-}
+.tree-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.tree-leaf.active .tree-dot { background: #00D64A; }
 
-.tree-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--border);
-  flex-shrink: 0;
-}
-
-.tree-leaf.active .tree-dot { background: var(--c0); }
-
-/* ── Main chart area ── */
+/* Main chart */
 .main {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
+  display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+  background: var(--bg);
 }
 
-.chart-header {
-  padding: 18px 24px 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-shrink: 0;
+.chart-hdr {
+  padding: 16px 22px 0;
+  display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0;
 }
-
-.chart-title  { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
-.chart-sub    { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.chart-title { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+.chart-sub   { font-size: 13px; color: var(--muted); margin-top: 3px; }
 
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
   font-family: var(--font); font-size: 13px; font-weight: 500;
   padding: 7px 14px; border-radius: var(--radius);
   border: 1px solid var(--border); background: var(--surface);
-  color: var(--graphite); cursor: pointer; transition: all 0.1s;
-  white-space: nowrap;
+  color: var(--graphite); cursor: pointer; transition: all 0.1s; white-space: nowrap;
 }
 .btn:hover { border-color: var(--spine); }
 .btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
-.perf-row {
-  padding: 10px 24px 4px;
-  display: flex; gap: 14px; flex-wrap: wrap;
-  min-height: 32px; flex-shrink: 0;
-}
-
-.perf-item  { display: flex; align-items: center; gap: 6px; }
-.perf-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.perf-sym   { font-family: var(--mono); font-size: 13px; font-weight: 500; }
-.perf-val   { font-family: var(--mono); font-size: 12px; padding: 2px 7px; border-radius: 10px; }
+.perf-row { padding: 10px 22px 2px; display: flex; gap: 12px; flex-wrap: wrap; min-height: 30px; flex-shrink: 0; }
+.perf-item { display: flex; align-items: center; gap: 5px; }
+.perf-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.perf-sym  { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.perf-val  { font-family: var(--mono); font-size: 12px; padding: 2px 7px; border-radius: 10px; }
 .pos { background: #E6F9EE; color: #0A6E2A; }
 .neg { background: #FDEAEA; color: #9B2020; }
 .neu { background: var(--tag-bg); color: var(--muted); }
+[data-theme="dark"] .pos { background: #0A2E15; color: #4AE07A; }
+[data-theme="dark"] .neg { background: #2E0A0A; color: #E07A7A; }
 
-.chart-area {
-  flex: 1; padding: 4px 24px 0;
-  position: relative; min-height: 0;
-}
-
+.chart-area { flex: 1; padding: 4px 22px 0; position: relative; min-height: 0; }
 canvas { display: block; width: 100% !important; height: 100% !important; }
 
 .empty {
   position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   color: var(--muted); gap: 10px;
 }
-.empty svg { width: 32px; height: 32px; stroke: var(--border); fill: none; stroke-width: 1; }
+.empty svg { width: 30px; height: 30px; stroke: var(--border); fill: none; stroke-width: 1; }
 .empty p { font-size: 14px; }
 
 .spinner-wrap {
   position: absolute; inset: 0; display: none;
   align-items: center; justify-content: center;
-  background: rgba(250,250,250,0.85);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
 }
 .spinner-wrap.on { display: flex; }
 .spinner {
@@ -316,39 +256,27 @@ canvas { display: block; width: 100% !important; height: 100% !important; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.chart-source {
-  padding: 6px 24px 14px;
-  font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.06em;
-  flex-shrink: 0;
+.chart-src {
+  padding: 5px 22px 12px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; flex-shrink: 0;
 }
 
-/* ── Right sidebar (controls + list) ── */
+/* Right panel */
 .right-panel {
   border-left: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg);
 }
 
-.rp-block {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
+.rp-block { padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.rp-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; }
 
-.rp-label {
-  font-size: 11px; font-weight: 600;
-  color: var(--muted); letter-spacing: 0.07em;
-  text-transform: uppercase; margin-bottom: 8px;
-}
-
-/* Search */
 .search-wrap { position: relative; }
 .search-wrap svg {
   position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-  width: 14px; height: 14px; stroke: var(--muted); fill: none; stroke-width: 1.5;
-  pointer-events: none;
+  width: 14px; height: 14px; stroke: var(--muted); fill: none; stroke-width: 1.5; pointer-events: none;
 }
+
 input[type=text] {
   width: 100%; background: var(--input-bg); border: 1px solid transparent;
   border-radius: var(--radius); padding: 8px 10px 8px 32px;
@@ -376,47 +304,12 @@ input[type=date]:focus, input[type=number]:focus { border-color: var(--spine); }
   background: none; color: var(--muted); cursor: pointer; transition: all 0.12s;
 }
 .preset:hover { border-color: var(--spine); color: var(--graphite); }
-.preset.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
+.preset.active { background: var(--graphite); border-color: var(--graphite); color: var(--bg); }
 
-/* Window input */
 .window-row { display: flex; align-items: center; gap: 8px; }
 .window-row label { font-size: 13px; color: var(--muted); white-space: nowrap; }
 input[type=number] { width: 70px; }
 
-/* Scroll list */
-.rp-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
-.rp-list::-webkit-scrollbar { width: 3px; }
-.rp-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-.list-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 8px; border-radius: var(--radius);
-  cursor: pointer; transition: background 0.1s;
-}
-.list-item:hover { background: var(--tag-bg); }
-.list-item.active { background: var(--graphite); }
-.list-item.active .item-sym,
-.list-item.active .item-name,
-.list-item.active .item-count { color: white; }
-.list-item.active .item-name { opacity: 0.6; }
-.list-item.active .item-dot { background: var(--c0); }
-
-.item-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
-.item-sym  { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--graphite); min-width: 60px; }
-.item-name { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item-count { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: auto; flex-shrink: 0; }
-
-/* Tags */
-.tags { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; }
-.tag {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-family: var(--mono); font-size: 11px; font-weight: 500;
-  padding: 3px 8px 3px 10px; border-radius: 20px; color: #fff;
-}
-.tag-x { cursor: pointer; opacity: 0.7; font-size: 14px; line-height: 1; }
-.tag-x:hover { opacity: 1; }
-
-/* Versus selector */
 .versus-row { display: flex; gap: 6px; }
 .versus-btn {
   flex: 1; padding: 6px 0; border-radius: var(--radius);
@@ -425,58 +318,98 @@ input[type=number] { width: 70px; }
   color: var(--muted); cursor: pointer; transition: all 0.12s; text-align: center;
 }
 .versus-btn:hover { border-color: var(--spine); color: var(--graphite); }
-.versus-btn.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
+.versus-btn.active { background: var(--graphite); border-color: var(--graphite); color: var(--bg); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 3px 8px 3px 9px; border-radius: 20px; color: #fff;
+}
+.tag-x { cursor: pointer; opacity: 0.7; font-size: 14px; line-height: 1; }
+.tag-x:hover { opacity: 1; }
+
+.rp-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
+.rp-list::-webkit-scrollbar { width: 3px; }
+.rp-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.list-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: var(--radius); cursor: pointer; transition: background 0.1s;
+}
+.list-item:hover { background: var(--tag-bg); }
+.list-item.active { background: var(--graphite); }
+.list-item.active .item-sym,
+.list-item.active .item-name,
+.list-item.active .item-count { color: var(--bg) !important; }
+.list-item.active .item-dot { background: #00D64A !important; }
+
+.item-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.item-sym  { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--graphite); min-width: 60px; }
+.item-name { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-count { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: auto; flex-shrink: 0; }
+
+/* Equity placeholder */
+.coming-soon {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--muted); gap: 12px; padding: 40px;
+}
+.coming-soon svg { width: 40px; height: 40px; stroke: var(--border); fill: none; stroke-width: 1; }
+.coming-soon h3 { font-size: 16px; font-weight: 500; color: var(--graphite); }
+.coming-soon p { font-size: 14px; text-align: center; line-height: 1.6; max-width: 280px; }
 </style>
 </head>
 <body>
 
-<!-- ── Header ── -->
+<!-- Header -->
 <header class="header">
-  <div class="header-logo">
-    <div class="logo-mark">
-      <svg viewBox="0 0 14 14" fill="none">
-        <polyline points="1,11 5,6 8,8 13,2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
+  <div class="logo-mark">
+    <svg viewBox="0 0 14 14" fill="none">
+      <polyline points="1,11 5,6 8,8 13,2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </div>
-  <div class="header-name">Wintermute</div>
-  <div class="breadcrumb">
-    <span id="bc-section">Sector</span>
-    <span class="breadcrumb-sep">/</span>
-    <span class="breadcrumb-active" id="bc-view">Equal-weighted</span>
-  </div>
+  <span class="logo-name">Wintermute</span>
+  <div class="header-divider"></div>
+  <span style="font-size:13px;color:var(--muted)" id="bc-view">—</span>
   <div class="header-spacer"></div>
   <span class="header-pill" id="db-count">—</span>
+  <button class="dark-toggle" id="dark-toggle" title="Toggle dark mode">
+    <svg viewBox="0 0 24 24" id="dark-icon">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  </button>
 </header>
 
-<!-- ── Left nav ── -->
-<nav class="nav">
-  <div class="nav-item active" data-section="sector" title="">
-    <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
-    <span class="nav-tooltip">Sector</span>
+<!-- Tab bar -->
+<div class="tabbar">
+  <button class="tab active" data-tab="sector">Sector</button>
+  <button class="tab" data-tab="majors">Majors</button>
+  <button class="tab" data-tab="altcoins">Altcoins</button>
+  <button class="tab" data-tab="macro">Macro</button>
+  <button class="tab" data-tab="equity">Equity</button>
+  <div class="tab-spacer"></div>
+  <div class="toggle-group">
+    <button class="tgl-btn active" data-gran="daily" id="gran-daily">Daily</button>
+    <button class="tgl-btn" data-gran="hourly" id="gran-hourly">Hourly</button>
   </div>
-  <div class="nav-item" data-section="individual" title="">
-    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    <span class="nav-tooltip">Individual</span>
+  <div class="tgl-sep"></div>
+  <div class="toggle-group">
+    <button class="tgl-btn active" data-align="own" id="align-own">Own start</button>
+    <button class="tgl-btn" data-align="common" id="align-common">Common start</button>
   </div>
-  <div class="nav-divider"></div>
-  <div class="nav-item" data-section="settings" title="">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    <span class="nav-tooltip">Settings</span>
-  </div>
-</nav>
+</div>
 
-<!-- ── Left panel (view tree) ── -->
+<!-- Content -->
 <aside class="left-panel">
-  <div class="panel-header">Views</div>
+  <div class="panel-hdr">Views</div>
   <div class="view-tree" id="view-tree"></div>
 </aside>
 
-<!-- ── Main chart area ── -->
 <main class="main">
-  <div class="chart-header">
+  <div class="chart-hdr">
     <div>
-      <div class="chart-title" id="chart-title">Select sectors to compare</div>
+      <div class="chart-title" id="chart-title">—</div>
       <div class="chart-sub" id="chart-sub">—</div>
     </div>
     <button class="btn" id="btn-save">
@@ -493,270 +426,345 @@ input[type=number] { width: 70px; }
     </div>
     <div class="spinner-wrap" id="chart-spin"><div class="spinner"></div></div>
   </div>
-  <div class="chart-source" id="chart-source">Source: CoinGecko Pro — Wintermute OTC</div>
+  <div class="chart-src" id="chart-src">Source: CoinGecko Pro — Wintermute OTC</div>
 </main>
 
-<!-- ── Right panel (controls + list) ── -->
-<aside class="right-panel" id="right-panel">
-  <!-- injected dynamically -->
-</aside>
+<aside class="right-panel" id="right-panel"></aside>
 
 <script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+const SECTOR_COLORS = {
+  "Memecoins":   "#F7931A",
+  "Layer 1":     "#2471CC",
+  "Layer 2":     "#746BE6",
+  "DeFi":        "#00D64A",
+  "DePIN":       "#DB33CB",
+  "Gaming":      "#EC5B5B",
+  "AI":          "#26A17B",
+  "Stablecoins": "#888B88",
+};
 const PAL = ['#00D64A','#2471CC','#746BE6','#DB33CB','#EC5B5B','#F7931A','#26A17B','#FFB800'];
+
+// ── View definitions ──────────────────────────────────────────────────────────
+const TABS = {
+  sector: {
+    label: "Sector",
+    groups: [
+      { label: "Price Action", children: [
+        { key:"sec-equal", label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",         src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-mcap",  label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",     src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Correlation", children: [
+        { key:"sec-intra", label:"Intracorrelation",   sub:"Rolling pairwise correlation between sectors",          src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"sec-vs",    label:"vs BTC / ETH / Alts",sub:"Rolling correlation of sectors vs reference asset",     src:"CoinGecko Pro — Rolling Pearson" },
+      ]},
+    ]
+  },
+  majors: {
+    label: "Majors",
+    groups: [
+      { label: "Price Action", children: [
+        { key:"maj-price", label:"Price comparison", sub:"BTC & ETH · Daily close · Rebased to 100", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+    ]
+  },
+  altcoins: {
+    label: "Altcoins",
+    groups: [
+      { label: "Price Action", children: [
+        { key:"alt-price", label:"Price comparison", sub:"Altcoin price · Rebased to 100", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+    ]
+  },
+  macro: {
+    label: "Macro",
+    groups: [
+      { label: "Price Action", children: [
+        { key:"mac-price", label:"Price comparison", sub:"Macro assets · Rebased to 100", src:"Yahoo Finance via yfinance" },
+      ]},
+    ]
+  },
+  equity: {
+    label: "Equity",
+    groups: []
+  },
+};
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let chart      = null;
-let allAssets  = [];
+let allItems   = [];
 let allSectors = [];
-let selected   = [];   // current selected items
-let activeView = null; // {section, view, key}
+let selected   = [];
+let activeTab  = 'sector';
+let activeView = null;
+let granularity = 'daily';
+let alignMode   = 'own';
+let darkMode    = false;
 
-// ── View tree definition ──────────────────────────────────────────────────────
-const TREE = {
-  sector: {
-    label: "Sector",
-    icon: `<path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>`,
-    groups: [
-      {
-        label: "Price Action",
-        children: [
-          { key: "sector-equal",    label: "Equal-weighted",     sub: "Equal-weighted daily price index · Rebased to 100", source: "CoinGecko Pro — Wintermute OTC" },
-          { key: "sector-mcap",     label: "Marketcap-weighted", sub: "Marketcap-weighted daily price index · Rebased to 100", source: "CoinGecko Pro — Wintermute OTC" },
-        ]
-      },
-      {
-        label: "Correlation",
-        children: [
-          { key: "sector-intra",    label: "Intracorrelation",   sub: "Rolling pairwise correlation between selected sectors", source: "CoinGecko Pro — Wintermute OTC · Rolling Pearson" },
-          { key: "sector-vs",       label: "vs BTC / ETH / Alts",sub: "Rolling correlation of sectors vs reference asset", source: "CoinGecko Pro — Wintermute OTC · Rolling Pearson" },
-        ]
-      }
-    ]
-  },
-  individual: {
-    label: "Individual",
-    icon: `<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`,
-    groups: [
-      {
-        label: "Price Action",
-        children: [
-          { key: "ind-price",       label: "Price comparison",   sub: "Daily close · Rebased to 100 at period start", source: "CoinGecko Pro — Wintermute OTC" },
-        ]
-      }
-    ]
+// ── Dark mode ─────────────────────────────────────────────────────────────────
+document.getElementById('dark-toggle').addEventListener('click', () => {
+  darkMode = !darkMode;
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  if (chart) {
+    updateChartTheme();
+    chart.update();
   }
-};
+});
 
-// ── Build view tree ───────────────────────────────────────────────────────────
-function buildTree(section) {
-  const def = TREE[section];
-  if (!def) return;
+function themeColor() {
+  return darkMode ? '#E8EAE8' : '#323935';
+}
+
+function updateChartTheme() {
+  if (!chart) return;
+  const tc = darkMode ? '#E8EAE8' : '#606663';
+  chart.options.scales.x.ticks.color   = tc;
+  chart.options.scales.x.border.color  = tc;
+  chart.options.scales.y.ticks.color   = tc;
+  chart.options.scales.y.border.color  = tc;
+  chart.options.plugins.tooltip.backgroundColor = darkMode ? '#1A1D1B' : '#fff';
+  chart.options.plugins.tooltip.titleColor       = darkMode ? '#E8EAE8' : '#323935';
+  chart.options.plugins.tooltip.bodyColor        = darkMode ? '#888B88' : '#606663';
+  chart.options.plugins.tooltip.borderColor      = darkMode ? '#2A2D2B' : '#E4E4E2';
+}
+
+// ── Granularity ───────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-gran]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    granularity = btn.dataset.gran;
+    document.querySelectorAll('[data-gran]').forEach(b => b.classList.toggle('active', b.dataset.gran === granularity));
+    // Limit hourly to 90 days max
+    if (granularity === 'hourly') {
+      const fromEl = document.getElementById('rp-from');
+      const toEl   = document.getElementById('rp-to');
+      if (fromEl && toEl) {
+        const to   = new Date();
+        const from = new Date();
+        from.setDate(from.getDate() - 90);
+        const fromStr = from.toISOString().split('T')[0];
+        if (fromEl.value < fromStr) fromEl.value = fromStr;
+        fromEl.min = fromStr;
+      }
+    } else {
+      const fromEl = document.getElementById('rp-from');
+      if (fromEl) fromEl.min = '';
+    }
+    fetchCurrent();
+  });
+});
+
+// ── Align mode ────────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-align]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    alignMode = btn.dataset.align;
+    document.querySelectorAll('[data-align]').forEach(b => b.classList.toggle('active', b.dataset.align === alignMode));
+    fetchCurrent();
+  });
+});
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === activeTab));
+    selected = [];
+    if (activeTab === 'equity') {
+      showEquityPlaceholder();
+    } else {
+      const firstGroup = TABS[activeTab]?.groups[0];
+      const firstView  = firstGroup?.children[0];
+      if (firstView) selectView(activeTab, firstView.key);
+    }
+  });
+});
+
+// ── Build tree ────────────────────────────────────────────────────────────────
+function buildTree(tab) {
+  const def = TABS[tab];
+  if (!def || !def.groups.length) {
+    document.getElementById('view-tree').innerHTML = '';
+    return;
+  }
   document.getElementById('view-tree').innerHTML = def.groups.map((g, gi) => `
     <div class="tree-group open" data-gi="${gi}">
-      <div class="tree-group-header" onclick="toggleGroup(${gi})">
-        <svg class="tree-chevron" viewBox="0 0 16 16"><polyline points="4,6 8,10 12,6"/></svg>
+      <div class="tree-grp-hdr" onclick="this.parentElement.classList.toggle('open')">
+        <svg class="chevron" viewBox="0 0 16 16"><polyline points="4,6 8,10 12,6"/></svg>
         ${g.label}
       </div>
       <div class="tree-children">
         ${g.children.map(c => `
-          <div class="tree-leaf ${activeView && activeView.key === c.key ? 'active' : ''}"
-               data-key="${c.key}" onclick="selectView('${section}','${c.key}')">
-            <div class="tree-dot"></div>
-            ${c.label}
+          <div class="tree-leaf ${activeView?.key === c.key ? 'active' : ''}" data-key="${c.key}"
+               onclick="selectView('${tab}','${c.key}')">
+            <div class="tree-dot"></div>${c.label}
           </div>`).join('')}
       </div>
     </div>`).join('');
 }
 
-function toggleGroup(gi) {
-  const group = document.querySelector(`.tree-group[data-gi="${gi}"]`);
-  group.classList.toggle('open');
+// ── Select view ───────────────────────────────────────────────────────────────
+async function selectView(tab, key) {
+  let viewDef = null;
+  for (const g of (TABS[tab]?.groups || []))
+    for (const c of g.children)
+      if (c.key === key) viewDef = c;
+  if (!viewDef) return;
+
+  activeView = { tab, key, def: viewDef };
+  selected   = [];
+  buildTree(tab);
+
+  document.getElementById('bc-view').textContent = `${TABS[tab].label} / ${viewDef.label}`;
+  document.getElementById('chart-title').textContent = viewDef.label;
+  document.getElementById('chart-sub').textContent   = viewDef.sub;
+  document.getElementById('chart-src').textContent   = `Source: ${viewDef.src}`;
+
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'flex';
+  document.getElementById('empty-msg').textContent = 'Select items from the right panel';
+  document.getElementById('perf-row').innerHTML = '';
+
+  // Load items for this tab
+  if (tab === 'sector') {
+    allItems = allSectors;
+  } else {
+    const res = await fetch(`/api/assets?tab=${tab}`);
+    allItems  = await res.json();
+  }
+
+  buildRightPanel(tab, key);
 }
 
-// ── Right panel templates ─────────────────────────────────────────────────────
-function rpSectorList(extraBlocks = '') {
-  return `
-    <div class="rp-block">
-      <div class="rp-label">Period</div>
-      <div class="date-grid">
-        <div><label>From</label><input type="date" id="rp-from"></div>
-        <div><label>To</label><input type="date" id="rp-to"></div>
-      </div>
-      <div class="presets" id="rp-presets">
-        <button class="preset" data-days="7">1W</button>
-        <button class="preset" data-days="30">1M</button>
-        <button class="preset" data-days="90">3M</button>
-        <button class="preset active" data-days="180">6M</button>
-        <button class="preset" data-days="365">1Y</button>
-        <button class="preset" data-days="1095">3Y</button>
-        <button class="preset" data-days="0">All</button>
-      </div>
-    </div>
-    ${extraBlocks}
-    <div class="rp-block" style="flex-shrink:0">
-      <div class="rp-label">Selected</div>
-      <div class="tags" id="rp-tags"><span style="color:var(--muted);font-size:13px">None</span></div>
-    </div>
-    <div class="rp-block" style="padding: 8px;">
-      <div class="rp-label" style="margin-bottom:4px">Sectors</div>
-    </div>
-    <div class="rp-list" id="rp-list"></div>`;
-}
+// ── Right panel ───────────────────────────────────────────────────────────────
+function buildRightPanel(tab, key) {
+  const rp = document.getElementById('right-panel');
+  const needsSearch  = tab !== 'sector';
+  const needsWindow  = key === 'sec-intra' || key === 'sec-vs';
+  const needsVersus  = key === 'sec-vs';
+  const isMacro      = tab === 'macro';
 
-function rpIndList() {
-  return `
-    <div class="rp-block">
+  let html = '';
+
+  if (needsSearch) {
+    html += `<div class="rp-block">
       <div class="rp-label">Search</div>
       <div class="search-wrap">
         <svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
         <input type="text" id="rp-search" placeholder="Ticker or name…">
       </div>
+    </div>`;
+  }
+
+  html += `<div class="rp-block">
+    <div class="rp-label">Period</div>
+    <div class="date-grid">
+      <div><label>From</label><input type="date" id="rp-from"></div>
+      <div><label>To</label><input type="date" id="rp-to"></div>
     </div>
-    <div class="rp-block">
-      <div class="rp-label">Period</div>
-      <div class="date-grid">
-        <div><label>From</label><input type="date" id="rp-from"></div>
-        <div><label>To</label><input type="date" id="rp-to"></div>
+    <div class="presets" id="rp-presets">
+      <button class="preset" data-days="7">1W</button>
+      <button class="preset" data-days="30">1M</button>
+      <button class="preset" data-days="90">3M</button>
+      <button class="preset active" data-days="180">6M</button>
+      <button class="preset" data-days="365">1Y</button>
+      <button class="preset" data-days="1095">3Y</button>
+      <button class="preset" data-days="0">All</button>
+    </div>
+  </div>`;
+
+  if (needsWindow) {
+    html += `<div class="rp-block">
+      <div class="rp-label">Rolling window</div>
+      <div class="window-row">
+        <input type="number" id="rp-window" value="30" min="7" max="365">
+        <label>days</label>
       </div>
-      <div class="presets" id="rp-presets">
-        <button class="preset" data-days="7">1W</button>
-        <button class="preset" data-days="30">1M</button>
-        <button class="preset" data-days="90">3M</button>
-        <button class="preset active" data-days="180">6M</button>
-        <button class="preset" data-days="365">1Y</button>
-        <button class="preset" data-days="1095">3Y</button>
-        <button class="preset" data-days="0">All</button>
+    </div>`;
+  }
+
+  if (needsVersus) {
+    html += `<div class="rp-block">
+      <div class="rp-label">Compare versus</div>
+      <div class="versus-row">
+        <button class="versus-btn active" data-v="BTC" onclick="setVersus('BTC')">BTC</button>
+        <button class="versus-btn" data-v="ETH" onclick="setVersus('ETH')">ETH</button>
+        <button class="versus-btn" data-v="ALTS" onclick="setVersus('ALTS')">Alts</button>
       </div>
-    </div>
-    <div class="rp-block" style="flex-shrink:0">
-      <div class="rp-label">Selected</div>
-      <div class="tags" id="rp-tags"><span style="color:var(--muted);font-size:13px">None</span></div>
-    </div>
-    <div class="rp-block" style="padding: 8px;">
-      <div class="rp-label" style="margin-bottom:4px">Assets</div>
-    </div>
-    <div class="rp-list" id="rp-list"></div>`;
-}
+    </div>`;
+  }
 
-// ── Select view ───────────────────────────────────────────────────────────────
-function selectView(section, key) {
-  const def   = TREE[section];
-  let viewDef = null;
-  for (const g of def.groups)
-    for (const c of g.children)
-      if (c.key === key) viewDef = c;
+  html += `<div class="rp-block" style="flex-shrink:0">
+    <div class="rp-label">Selected</div>
+    <div class="tags" id="rp-tags"><span style="color:var(--muted);font-size:13px">None</span></div>
+  </div>
+  <div class="rp-block" style="padding:8px 14px 6px">
+    <div class="rp-label">${tab === 'sector' ? 'Sectors' : isMacro ? 'Assets' : 'Assets'}</div>
+  </div>
+  <div class="rp-list" id="rp-list"></div>`;
 
-  if (!viewDef) return;
+  rp.innerHTML = html;
 
-  activeView = { section, key, def: viewDef };
-  selected   = [];
+  initDates('rp-from', 'rp-to', 180);
+  initPresets();
+  renderRPList();
 
-  // Update nav
-  document.querySelectorAll('.nav-item[data-section]').forEach(el => {
-    el.classList.toggle('active', el.dataset.section === section);
-  });
-
-  // Update breadcrumb
-  document.getElementById('bc-section').textContent = def.label;
-  document.getElementById('bc-view').textContent    = viewDef.label;
-
-  // Rebuild tree
-  buildTree(section);
-
-  // Update chart header
-  document.getElementById('chart-title').textContent = `Select ${section === 'sector' ? 'sectors' : 'assets'} to compare`;
-  document.getElementById('chart-sub').textContent   = viewDef.sub;
-  document.getElementById('chart-source').textContent = `Source: ${viewDef.source}`;
-
-  // Clear chart
-  if (chart) { chart.destroy(); chart = null; }
-  document.getElementById('chart-empty').style.display = 'flex';
-  document.getElementById('empty-msg').textContent = `Select items from the right panel`;
-  document.getElementById('perf-row').innerHTML = '';
-
-  // Build right panel
-  const rp = document.getElementById('right-panel');
-
-  if (section === 'individual') {
-    rp.innerHTML = rpIndList();
-    initDates('rp-from', 'rp-to', 180);
-    initPresets('rp-presets', 'rp-from', 'rp-to', fetchCurrent);
-    renderRPList();
-    document.getElementById('rp-search').addEventListener('input', e =>
-      renderRPList(e.target.value.toLowerCase()));
-
-  } else if (key === 'sector-equal' || key === 'sector-mcap') {
-    rp.innerHTML = rpSectorList();
-    initDates('rp-from', 'rp-to', 180);
-    initPresets('rp-presets', 'rp-from', 'rp-to', fetchCurrent);
-    renderRPList();
-
-  } else if (key === 'sector-intra') {
-    rp.innerHTML = rpSectorList(`
-      <div class="rp-block">
-        <div class="rp-label">Rolling window</div>
-        <div class="window-row">
-          <input type="number" id="rp-window" value="30" min="7" max="365">
-          <label>days</label>
-        </div>
-      </div>`);
-    initDates('rp-from', 'rp-to', 365);
-    initPresets('rp-presets', 'rp-from', 'rp-to', fetchCurrent);
+  if (needsSearch) {
+    document.getElementById('rp-search').addEventListener('input', e => renderRPList(e.target.value.toLowerCase()));
+  }
+  if (needsWindow) {
     document.getElementById('rp-window').addEventListener('change', fetchCurrent);
-    renderRPList();
-
-  } else if (key === 'sector-vs') {
-    rp.innerHTML = rpSectorList(`
-      <div class="rp-block">
-        <div class="rp-label">Rolling window</div>
-        <div class="window-row">
-          <input type="number" id="rp-window" value="30" min="7" max="365">
-          <label>days</label>
-        </div>
-      </div>
-      <div class="rp-block">
-        <div class="rp-label">Compare versus</div>
-        <div class="versus-row">
-          <button class="versus-btn active" data-v="BTC" onclick="setVersus('BTC')">BTC</button>
-          <button class="versus-btn" data-v="ETH" onclick="setVersus('ETH')">ETH</button>
-          <button class="versus-btn" data-v="ALTS" onclick="setVersus('ALTS')">Alts</button>
-        </div>
-      </div>`);
-    initDates('rp-from', 'rp-to', 365);
-    initPresets('rp-presets', 'rp-from', 'rp-to', fetchCurrent);
-    document.getElementById('rp-window').addEventListener('change', fetchCurrent);
-    renderRPList();
   }
 }
 
-function setVersus(v) {
-  document.querySelectorAll('.versus-btn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
-  fetchCurrent();
+function showEquityPlaceholder() {
+  document.getElementById('view-tree').innerHTML = '';
+  document.getElementById('chart-title').textContent = 'Equity';
+  document.getElementById('chart-sub').textContent   = 'Coming soon';
+  document.getElementById('bc-view').textContent     = 'Equity';
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('perf-row').innerHTML = '';
+
+  document.getElementById('right-panel').innerHTML = '';
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-area') && (document.getElementById('chart-area').style.display = 'none');
+
+  // Show placeholder in main
+  const main = document.querySelector('.main');
+  let ph = document.getElementById('equity-ph');
+  if (!ph) {
+    ph = document.createElement('div');
+    ph.id = 'equity-ph';
+    ph.className = 'coming-soon';
+    ph.innerHTML = `
+      <svg viewBox="0 0 40 40"><polyline points="2,32 12,20 20,26 28,12 38,18"/><rect x="2" y="2" width="36" height="36" rx="3"/></svg>
+      <h3>Equity coming soon</h3>
+      <p>Add your equity watchlist and asset definitions, then come back to enable this tab.</p>`;
+    main.appendChild(ph);
+  }
+  ph.style.display = 'flex';
 }
 
-// ── Render right panel list ───────────────────────────────────────────────────
+// ── Render list ───────────────────────────────────────────────────────────────
 function renderRPList(q = '') {
   const el = document.getElementById('rp-list');
   if (!el) return;
 
-  if (activeView.section === 'individual') {
-    const items = q
-      ? allAssets.filter(a => a.symbol.toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q))
-      : allAssets;
+  const items = q
+    ? allItems.filter(a => (a.symbol||a.name||'').toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q))
+    : allItems;
+
+  if (activeView?.tab === 'sector') {
+    el.innerHTML = items.map(s => `
+      <div class="list-item ${selected.includes(s.name) ? 'active' : ''}" onclick="toggleItem('${s.name}')">
+        <div class="item-dot" style="${!selected.includes(s.name) ? `background:${s.color}30;border:1px solid ${s.color}` : ''}"></div>
+        <span class="item-sym" style="min-width:90px">${s.name}</span>
+        <span class="item-count">${s.count}</span>
+      </div>`).join('');
+  } else {
     el.innerHTML = items.map(a => `
-      <div class="list-item ${selected.includes(a.symbol) ? 'active' : ''}"
-           onclick="toggleItem('${a.symbol}')">
+      <div class="list-item ${selected.includes(a.symbol) ? 'active' : ''}" onclick="toggleItem('${a.symbol}')">
         <div class="item-dot"></div>
         <span class="item-sym">${a.symbol}</span>
         <span class="item-name">${a.name || ''}</span>
-      </div>`).join('');
-  } else {
-    el.innerHTML = allSectors.map(s => `
-      <div class="list-item ${selected.includes(s.name) ? 'active' : ''}"
-           onclick="toggleItem('${s.name}')">
-        <div class="item-dot"></div>
-        <span class="item-sym" style="min-width:90px">${s.name}</span>
-        <span class="item-count">${s.count}</span>
       </div>`).join('');
   }
 }
@@ -780,10 +788,10 @@ function renderTags() {
     el.innerHTML = '<span style="color:var(--muted);font-size:13px">None</span>';
     return;
   }
-  el.innerHTML = selected.map((s, i) => `
-    <span class="tag" style="background:${PAL[i%PAL.length]}">
-      ${s}<span class="tag-x" onclick="toggleItem('${s}')">×</span>
-    </span>`).join('');
+  el.innerHTML = selected.map((s, i) => {
+    const col = activeView?.tab === 'sector' ? (SECTOR_COLORS[s] || PAL[i%PAL.length]) : PAL[i%PAL.length];
+    return `<span class="tag" style="background:${col}">${s}<span class="tag-x" onclick="toggleItem('${s}')">×</span></span>`;
+  }).join('');
 }
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -791,26 +799,45 @@ function initDates(fromId, toId, days) {
   const to = new Date(), from = new Date();
   if (days > 0) from.setDate(from.getDate() - days);
   else from.setFullYear(2013);
+  // Cap hourly at 90 days
+  if (granularity === 'hourly') {
+    const cap = new Date(); cap.setDate(cap.getDate() - 90);
+    if (from < cap) from.setTime(cap.getTime());
+  }
   document.getElementById(toId).value   = to.toISOString().split('T')[0];
   document.getElementById(fromId).value = from.toISOString().split('T')[0];
 }
 
-function initPresets(cid, fid, tid, cb) {
-  document.querySelectorAll(`#${cid} .preset`).forEach(btn => {
+function initPresets() {
+  document.querySelectorAll('#rp-presets .preset').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll(`#${cid} .preset`).forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#rp-presets .preset').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      initDates(fid, tid, parseInt(btn.dataset.days));
-      cb();
+      initDates('rp-from', 'rp-to', parseInt(btn.dataset.days));
+      fetchCurrent();
     });
   });
-  document.getElementById(fid)?.addEventListener('change', cb);
-  document.getElementById(tid)?.addEventListener('change', cb);
+  document.getElementById('rp-from')?.addEventListener('change', fetchCurrent);
+  document.getElementById('rp-to')?.addEventListener('change', fetchCurrent);
+}
+
+function setVersus(v) {
+  document.querySelectorAll('.versus-btn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  fetchCurrent();
+}
+
+// ── Y-axis formatter ──────────────────────────────────────────────────────────
+function yAxisFormatter(v, isCorr) {
+  if (isCorr) return v.toFixed(2);
+  const delta = v - 100;
+  if (Math.abs(delta) < 200) return `${delta >= 0 ? '+' : ''}${delta.toFixed(0)}%`;
+  return `${(v/100).toFixed(1)}x`;
 }
 
 // ── Chart ─────────────────────────────────────────────────────────────────────
-function getOrCreateChart() {
+function getOrMakeChart(isCorr = false) {
   if (chart) return chart;
+  const tc = darkMode ? '#E8EAE8' : '#606663';
   chart = new Chart(document.getElementById('main-chart'), {
     type: 'line',
     data: { labels: [], datasets: [] },
@@ -821,24 +848,43 @@ function getOrCreateChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#fff', borderColor: '#E4E4E2', borderWidth: 1,
-          titleColor: '#323935', bodyColor: '#606663', padding: 12,
-          callbacks: { label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(2) : '—'}` }
+          backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+          borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+          borderWidth: 1,
+          titleColor: darkMode ? '#E8EAE8' : '#323935',
+          bodyColor:  darkMode ? '#888B88' : '#606663',
+          padding: 12,
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              if (v == null) return ` ${ctx.dataset.label}  —`;
+              if (isCorr) return ` ${ctx.dataset.label}  ${v.toFixed(3)}`;
+              const delta = v - 100;
+              const pct = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
+              return ` ${ctx.dataset.label}  ${pct}`;
+            }
+          }
         }
       },
       scales: {
         x: {
           type: 'category', grid: { display: false },
-          border: { color: '#606663', width: 0.8 },
+          border: { color: tc, width: 0.8 },
           ticks: {
-            color: '#606663', font: { family: 'DM Mono, monospace', size: 11 },
+            color: tc, font: { family: 'DM Mono, monospace', size: 11 },
             maxRotation: 0, maxTicksLimit: 8,
-            callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; }
+            callback: function(val) {
+              const l = this.getLabelForValue(val);
+              return l ? (granularity === 'hourly' ? l.slice(0,10) : l.slice(0,7)) : '';
+            }
           }
         },
         y: {
-          grid: { display: false }, border: { color: '#606663', width: 0.8 },
-          ticks: { color: '#606663', font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) }
+          grid: { display: false }, border: { color: tc, width: 0.8 },
+          ticks: {
+            color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+            callback: v => yAxisFormatter(v, isCorr)
+          }
         }
       }
     }
@@ -846,95 +892,108 @@ function getOrCreateChart() {
   return chart;
 }
 
-function drawChart(data, keys) {
+function drawChart(data, keys, isCorr = false) {
   const firstKey = keys.find(k => data[k]);
   if (!firstKey) return;
 
-  const c = getOrCreateChart();
+  if (chart) { chart.destroy(); chart = null; }
+  const c = getOrMakeChart(isCorr);
   c.data.labels   = data[firstKey].dates;
-  c.data.datasets = keys.filter(k => data[k]).map((k, i) => ({
-    label:            k,
-    data:             data[k].rebased,
-    borderColor:      PAL[i % PAL.length],
-    backgroundColor:  PAL[i % PAL.length] + '14',
-    borderWidth:      1.8,
-    pointRadius:      0,
-    pointHoverRadius: 4,
-    tension:          0.1,
-    fill:             false,
-    spanGaps:         true,
-  }));
+  c.data.datasets = keys.filter(k => data[k]).map((k, i) => {
+    const col = data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length];
+    return {
+      label:            k,
+      data:             data[k].rebased,
+      borderColor:      col,
+      backgroundColor:  col + '12',
+      borderWidth:      1.8,
+      pointRadius:      0,
+      pointHoverRadius: 4,
+      tension:          0.1,
+      fill:             false,
+      spanGaps:         true,
+    };
+  });
   c.update();
 }
 
 function updatePerf(data, keys, isCorr = false) {
   document.getElementById('perf-row').innerHTML = keys.filter(k => data[k]).map((k, i) => {
-    const r   = (data[k].rebased || []).filter(v => v != null);
+    const r    = (data[k].rebased || []).filter(v => v != null);
     const last = r.length ? r[r.length - 1] : null;
-
+    const col  = data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length];
     let valHtml;
     if (isCorr) {
-      const cls = last === null ? 'neu' : last >= 0.7 ? 'pos' : last <= -0.3 ? 'neg' : 'neu';
-      valHtml = `<span class="perf-val ${cls}">${last !== null ? last.toFixed(2) : '—'}</span>`;
+      const cls = last === null ? 'neu' : last >= 0.5 ? 'pos' : last <= -0.2 ? 'neg' : 'neu';
+      valHtml = `<span class="perf-val ${cls}">${last !== null ? last.toFixed(3) : '—'}</span>`;
     } else {
       const ret = last !== null ? last - 100 : null;
       const cls = ret === null ? '' : ret >= 0 ? 'pos' : 'neg';
-      valHtml = `<span class="perf-val ${cls}">${ret !== null ? (ret >= 0 ? '+' : '') + ret.toFixed(1) + '%' : '—'}</span>`;
+      const fmt = ret !== null ? (Math.abs(ret) >= 200 ? `${(ret/100+1).toFixed(1)}x` : `${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%`) : '—';
+      valHtml = `<span class="perf-val ${cls}">${fmt}</span>`;
     }
-
     return `<div class="perf-item">
-      <div class="perf-dot" style="background:${PAL[i%PAL.length]}"></div>
-      <span class="perf-sym">${k}</span>
-      ${valHtml}
+      <div class="perf-dot" style="background:${col}"></div>
+      <span class="perf-sym">${k}</span>${valHtml}
     </div>`;
   }).join('');
 }
 
-// ── Fetch dispatcher ──────────────────────────────────────────────────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchCurrent() {
+  // Hide equity placeholder if visible
+  const ph = document.getElementById('equity-ph');
+  if (ph) ph.style.display = 'none';
+
   if (!activeView || !selected.length) {
     document.getElementById('chart-empty').style.display = 'flex';
     document.getElementById('perf-row').innerHTML = '';
-    if (chart) { chart.data.labels = []; chart.data.datasets = []; chart.update(); }
+    if (chart) { chart.destroy(); chart = null; }
     return;
   }
 
   document.getElementById('chart-empty').style.display = 'none';
   document.getElementById('chart-spin').classList.add('on');
 
-  const from   = document.getElementById('rp-from')?.value || '2024-01-01';
-  const to     = document.getElementById('rp-to')?.value   || '2099-01-01';
-  const window_ = document.getElementById('rp-window')?.value || '30';
-  const versus = document.querySelector('.versus-btn.active')?.dataset.v || 'BTC';
-  const key    = activeView.key;
+  const from    = document.getElementById('rp-from')?.value || '2024-01-01';
+  const to      = document.getElementById('rp-to')?.value   || '2099-01-01';
+  const win     = document.getElementById('rp-window')?.value || '30';
+  const versus  = document.querySelector('.versus-btn.active')?.dataset.v || 'BTC';
+  const key     = activeView.key;
+  const tab     = activeView.tab;
+  const g       = granularity;
+  const a       = alignMode;
 
-  let url, isCorr = false;
+  let url, isCorr = false, chartKeys = selected;
 
-  if (key === 'ind-price') {
-    url = `/api/price?symbols=${selected.join(',')}&from=${from}&to=${to}`;
-  } else if (key === 'sector-equal') {
-    url = `/api/sector-price?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
-  } else if (key === 'sector-mcap') {
-    url = `/api/sector-mcap?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
-  } else if (key === 'sector-intra') {
+  if (tab === 'macro') {
+    url = `/api/macro-price?symbols=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
+  } else if (key === 'sec-equal') {
+    url = `/api/sector-price?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
+  } else if (key === 'sec-mcap') {
+    url = `/api/sector-mcap?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
+  } else if (key === 'sec-intra') {
     if (selected.length < 2) {
       document.getElementById('chart-spin').classList.remove('on');
       document.getElementById('chart-empty').style.display = 'flex';
       document.getElementById('empty-msg').textContent = 'Select at least 2 sectors';
       return;
     }
-    url = `/api/sector-intra-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${window_}`;
+    url = `/api/sector-intra-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}&granularity=${g}`;
     isCorr = true;
-  } else if (key === 'sector-vs') {
-    url = `/api/sector-btc-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${window_}&versus=${versus}`;
+  } else if (key === 'sec-vs') {
+    url = `/api/sector-btc-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}&versus=${versus}&granularity=${g}`;
     isCorr = true;
+  } else {
+    url = `/api/price?symbols=${selected.join(',')}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
   }
 
   try {
     const data = await (await fetch(url)).json();
     if (data.error) throw new Error(data.error);
-    drawChart(data, selected.length && key.startsWith('sector-intra') ? Object.keys(data) : selected);
-    updatePerf(data, key.startsWith('sector-intra') ? Object.keys(data) : selected, isCorr);
+    chartKeys = isCorr ? Object.keys(data) : selected;
+    drawChart(data, chartKeys, isCorr);
+    updatePerf(data, chartKeys, isCorr);
     document.getElementById('chart-title').textContent = selected.join(' · ');
   } catch(e) {
     console.error(e);
@@ -945,17 +1004,6 @@ async function fetchCurrent() {
   }
 }
 
-// ── Nav section switching ─────────────────────────────────────────────────────
-document.querySelectorAll('.nav-item[data-section]').forEach(el => {
-  el.addEventListener('click', () => {
-    const section = el.dataset.section;
-    if (section === 'settings') return;
-    const firstGroup = TREE[section]?.groups[0];
-    const firstView  = firstGroup?.children[0];
-    if (firstView) selectView(section, firstView.key);
-  });
-});
-
 // ── Save PNG ──────────────────────────────────────────────────────────────────
 document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
@@ -963,25 +1011,26 @@ document.getElementById('btn-save').addEventListener('click', () => {
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const ctx = off.getContext('2d');
-  ctx.fillStyle = '#FAFAFA';
+  ctx.fillStyle = darkMode ? '#0F1110' : '#FAFAFA';
   ctx.fillRect(0, 0, W, H);
   ctx.drawImage(chart.canvas, 40, 20, W - 80, H - 80);
   ctx.fillStyle = '#606663';
   ctx.font = '500 16px DM Mono, monospace';
-  ctx.fillText(`Source: ${document.getElementById('chart-source').textContent}`, 40, H - 18);
+  ctx.fillText(document.getElementById('chart-src').textContent, 40, H - 18);
   const a = document.createElement('a');
-  a.download = `${activeView?.key || 'chart'}_${selected.join('_')}_${new Date().toISOString().split('T')[0]}.png`;
+  a.download = `${activeView?.key}_${selected.join('_')}_${new Date().toISOString().split('T')[0]}.png`;
   a.href = off.toDataURL('image/png');
   a.click();
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function boot() {
-  const [ar, sr] = await Promise.all([fetch('/api/assets'), fetch('/api/sectors')]);
-  allAssets  = await ar.json();
-  allSectors = await sr.json();
-  document.getElementById('db-count').textContent = `${allAssets.length} assets`;
-  selectView('sector', 'sector-equal');
+  const sr    = await fetch('/api/sectors');
+  allSectors  = await sr.json();
+  const ar    = await fetch('/api/assets?tab=individual');
+  const all   = await ar.json();
+  document.getElementById('db-count').textContent = `${all.length} assets`;
+  selectView('sector', 'sec-equal');
 }
 
 boot();
