@@ -475,6 +475,90 @@ def handle_sector_zscore(params):
     return result
 
 
+
+# ── DB status ─────────────────────────────────────────────────────────────────
+def handle_db_status():
+    """
+    Returns metadata for each table: row count, min/max timestamp, last ingested_at.
+    Used by the Data tab to show freshness and coverage.
+    """
+    from datetime import datetime, timezone, timedelta
+
+    TABLES = [
+        {"key": "price_daily",          "label": "Price",             "granularity": "Daily",    "source": "CoinGecko",      "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "price_hourly",          "label": "Price",             "granularity": "Hourly",   "source": "CoinGecko",      "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "marketcap_daily",       "label": "Market cap",        "granularity": "Daily",    "source": "CoinGecko",      "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "volume_daily",          "label": "Volume",            "granularity": "Daily",    "source": "CoinGecko",      "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "funding_8h",            "label": "Funding rate",      "granularity": "8h",       "source": "Binance/Bybit",  "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "open_interest_daily",   "label": "Open interest",     "granularity": "Daily",    "source": "Binance/Bybit",  "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "open_interest_hourly",  "label": "Open interest",     "granularity": "Hourly",   "source": "Binance/Bybit",  "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "long_short_ratio",      "label": "Long/short ratio",  "granularity": "Daily/1h", "source": "Binance/Bybit",  "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "macro_daily",           "label": "Macro assets",      "granularity": "Daily",    "source": "yfinance",       "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "macro_hourly",          "label": "Macro assets",      "granularity": "Hourly",   "source": "yfinance",       "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "asset_registry",        "label": "GMCI asset classification", "granularity": "Static", "source": "Internal", "asset_col": "symbol",      "ts_col": None},
+    ]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    now  = datetime.now(timezone.utc)
+    result = []
+
+    for t in TABLES:
+        try:
+            if t["ts_col"]:
+                cur.execute(f"""
+                    SELECT
+                        COUNT(*) as rows,
+                        COUNT(DISTINCT {t["asset_col"]}) as assets,
+                        MIN({t["ts_col"]})::date as date_from,
+                        MAX({t["ts_col"]})::date as date_to,
+                        MAX(ingested_at) as last_updated
+                    FROM {t["key"]}
+                """)
+            else:
+                cur.execute(f"""
+                    SELECT
+                        COUNT(*) as rows,
+                        COUNT(DISTINCT {t["asset_col"]}) as assets,
+                        NULL as date_from,
+                        NULL as date_to,
+                        NULL as last_updated
+                    FROM {t["key"]}
+                """)
+            row = cur.fetchone()
+
+            # Determine freshness
+            last_updated = row["last_updated"]
+            if last_updated is None:
+                status = "manual"
+            else:
+                if last_updated.tzinfo is None:
+                    last_updated = last_updated.replace(tzinfo=timezone.utc)
+                age_hours = (now - last_updated).total_seconds() / 3600
+                status = "live" if age_hours <= 48 else "stale"
+
+            result.append({
+                "label":       t["label"],
+                "granularity": t["granularity"],
+                "source":      t["source"],
+                "rows":        int(row["rows"]),
+                "assets":      int(row["assets"]),
+                "date_from":   str(row["date_from"]) if row["date_from"] else "—",
+                "date_to":     str(row["date_to"])   if row["date_to"]   else "—",
+                "last_updated": last_updated.strftime("%Y-%m-%d %H:%M") if last_updated else "—",
+                "status":      status,
+            })
+        except Exception as e:
+            result.append({
+                "label": t["label"], "granularity": t["granularity"],
+                "source": t["source"], "rows": 0, "assets": 0,
+                "date_from": "—", "date_to": "—", "last_updated": "—",
+                "status": "error", "error": str(e),
+            })
+
+    conn.close()
+    return result
+
 # ── Handler ───────────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
@@ -515,6 +599,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/sector-mcap":        self.send_json(handle_sector_price(params,"mcap"))
             elif p == "/api/sector-intra-corr":  self.send_json(handle_intra_corr(params))
             elif p == "/api/sector-btc-corr":    self.send_json(handle_btc_corr(params))
+            elif p == "/api/db-status":           self.send_json(handle_db_status())
             elif p.startswith("/static/"):       self.send_file(BASE_DIR/p[8:])
             else:
                 self.send_response(404); self.end_headers()

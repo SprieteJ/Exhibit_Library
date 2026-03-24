@@ -406,6 +406,10 @@ input[type=number] { width: 70px; }
   <button class="tab" data-tab="altcoins">Altcoins</button>
   <button class="tab" data-tab="macro">Macro</button>
   <button class="tab" data-tab="equity">Equity</button>
+  <button class="tab" data-tab="data">
+    <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-right:4px;vertical-align:-2px" viewBox="0 0 16 16"><ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v4c0 1.1 2.69 2 6 2s6-.9 6-2V4"/><path d="M2 8v4c0 1.1 2.69 2 6 2s6-.9 6-2V8"/></svg>
+    Data
+  </button>
   <div class="tab-spacer"></div>
   <div class="toggle-group">
     <button class="tgl-btn active" data-gran="daily" id="gran-daily">Daily</button>
@@ -511,6 +515,10 @@ const TABS = {
     label: "Equity",
     groups: []
   },
+  data: {
+    label: "Data",
+    groups: []
+  },
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -601,8 +609,12 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn => {
     document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === activeTab));
     selected = [];
     if (activeTab === 'equity') {
+      hideDataView();
       showEquityPlaceholder();
+    } else if (activeTab === 'data') {
+      showDataView();
     } else {
+      hideDataView();
       const firstGroup = TABS[activeTab]?.groups[0];
       const firstView  = firstGroup?.children[0];
       if (firstView) selectView(activeTab, firstView.key);
@@ -1086,6 +1098,112 @@ document.getElementById('btn-save').addEventListener('click', () => {
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+async function showDataView() {
+  selected = [];
+  activeView = null;
+  document.getElementById('view-tree').innerHTML = '';
+  document.getElementById('right-panel').innerHTML = '';
+  document.getElementById('bc-view').textContent = 'Data';
+  document.getElementById('perf-row').innerHTML = '';
+  if (chart) { chart.destroy(); chart = null; }
+
+  // Hide normal chart area, show data table
+  const main = document.querySelector('.main');
+
+  // Remove old data view if exists
+  let dv = document.getElementById('data-view');
+  if (dv) dv.remove();
+
+  // Hide chart elements
+  document.querySelector('.chart-hdr').style.display  = 'none';
+  document.querySelector('.chart-area').style.display = 'none';
+  document.querySelector('.chart-src').style.display  = 'none';
+
+  dv = document.createElement('div');
+  dv.id = 'data-view';
+  dv.style.cssText = 'flex:1;overflow-y:auto;padding:20px 24px;';
+  dv.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px" id="dv-summary">
+      <div style="background:var(--tag-bg);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Tables</div>
+        <div style="font-size:22px;font-weight:600" id="dv-tables">—</div>
+      </div>
+      <div style="background:var(--tag-bg);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Total rows</div>
+        <div style="font-size:22px;font-weight:600" id="dv-rows">—</div>
+      </div>
+      <div style="background:var(--tag-bg);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Assets tracked</div>
+        <div style="font-size:22px;font-weight:600">584</div>
+      </div>
+      <div style="background:var(--tag-bg);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Earliest data</div>
+        <div style="font-size:22px;font-weight:600" id="dv-earliest">—</div>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px" id="dv-table">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Dataset</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Granularity</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Source</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">From</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">To</th>
+          <th style="text-align:right;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Assets</th>
+          <th style="text-align:right;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Rows</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Last updated</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Status</th>
+        </tr>
+      </thead>
+      <tbody id="dv-body"><tr><td colspan="9" style="padding:20px 10px;color:var(--muted);font-size:13px">Loading…</td></tr></tbody>
+    </table>`;
+  main.appendChild(dv);
+
+  // Fetch data
+  try {
+    const res  = await fetch('/api/db-status');
+    const data = await res.json();
+
+    const totalRows = data.reduce((s, r) => s + r.rows, 0);
+    const earliest  = data.filter(r => r.date_from !== '—').map(r => r.date_from).sort()[0] || '—';
+    document.getElementById('dv-tables').textContent   = data.length;
+    document.getElementById('dv-rows').textContent     = totalRows >= 1e6 ? (totalRows/1e6).toFixed(1)+'M' : (totalRows/1e3).toFixed(0)+'k';
+    document.getElementById('dv-earliest').textContent = earliest.slice(0,4);
+
+    const statusBadge = (s) => {
+      if (s === 'live')    return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:#E6F9EE;color:#0A6E2A"><span style="width:6px;height:6px;border-radius:50%;background:#0A6E2A;display:inline-block"></span>Live</span>`;
+      if (s === 'stale')   return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:#FAEEDA;color:#633806"><span style="width:6px;height:6px;border-radius:50%;background:#633806;display:inline-block"></span>Stale</span>`;
+      if (s === 'manual')  return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:#F1EFE8;color:#5F5E5A"><span style="width:6px;height:6px;border-radius:50%;background:#5F5E5A;display:inline-block"></span>Manual</span>`;
+      return `<span style="font-size:11px;color:var(--muted)">${s}</span>`;
+    };
+
+    const fmtRows = (n) => n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(0)+'k' : n;
+
+    document.getElementById('dv-body').innerHTML = data.map(r => `
+      <tr style="border-bottom:0.5px solid var(--border)">
+        <td style="padding:9px 10px;font-weight:500">${r.label}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.granularity}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.source}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.date_from}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.date_to}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--mono);font-size:12px">${r.assets}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--mono);font-size:12px">${fmtRows(r.rows)}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.last_updated}</td>
+        <td style="padding:9px 10px">${statusBadge(r.status)}</td>
+      </tr>`).join('');
+  } catch(e) {
+    document.getElementById('dv-body').innerHTML = `<tr><td colspan="9" style="padding:20px 10px;color:var(--muted)">Error loading data status</td></tr>`;
+  }
+}
+
+function hideDataView() {
+  const dv = document.getElementById('data-view');
+  if (dv) dv.remove();
+  document.querySelector('.chart-hdr').style.display  = '';
+  document.querySelector('.chart-area').style.display = '';
+  document.querySelector('.chart-src').style.display  = '';
+}
+
 async function boot() {
   const sr    = await fetch('/api/sectors');
   allSectors  = await sr.json();
