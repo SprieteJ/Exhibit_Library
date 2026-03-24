@@ -728,14 +728,17 @@ async function selectView(tab, key) {
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 function buildRightPanel(tab, key) {
-  const rp = document.getElementById('right-panel');
-  const needsSearch  = tab !== 'sector';
-  const needsWindow  = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom';
-  const needsVersus  = key === 'sec-vs';
-  const isMacro      = tab === 'macro';
+  const rp          = document.getElementById('right-panel');
+  const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles';
+  const isBubble    = key === 'ana-bubble';
+  const needsSearch = tab !== 'sector' && tab !== 'marketcap' && tab !== 'analysis' && !isBtcView;
+  const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble';
+  const needsVersus = key === 'sec-vs';
+  const showList    = !isBubble && !isBtcView;
 
   let html = '';
 
+  // Search
   if (needsSearch) {
     html += `<div class="rp-block">
       <div class="rp-label">Search</div>
@@ -746,8 +749,8 @@ function buildRightPanel(tab, key) {
     </div>`;
   }
 
+  // Period / days control
   if (isBtcView) {
-    // BTC views use days-to-show instead of date range
     html += `<div class="rp-block">
       <div class="rp-label">Days to show</div>
       <div class="window-row">
@@ -756,23 +759,25 @@ function buildRightPanel(tab, key) {
       </div>
     </div>`;
   } else {
-  html += `<div class="rp-block">
-    <div class="rp-label">Period</div>
-    <div class="date-grid">
-      <div><label>From</label><input type="date" id="rp-from"></div>
-      <div><label>To</label><input type="date" id="rp-to"></div>
-    </div>
-    <div class="presets" id="rp-presets">
-      <button class="preset" data-days="7">1W</button>
-      <button class="preset" data-days="30">1M</button>
-      <button class="preset" data-days="90">3M</button>
-      <button class="preset active" data-days="180">6M</button>
-      <button class="preset" data-days="365">1Y</button>
-      <button class="preset" data-days="1095">3Y</button>
-      <button class="preset" data-days="0">All</button>
-    </div>
-  </div>`;
+    html += `<div class="rp-block">
+      <div class="rp-label">Period</div>
+      <div class="date-grid">
+        <div><label>From</label><input type="date" id="rp-from"></div>
+        <div><label>To</label><input type="date" id="rp-to"></div>
+      </div>
+      <div class="presets" id="rp-presets">
+        <button class="preset" data-days="7">1W</button>
+        <button class="preset" data-days="30">1M</button>
+        <button class="preset" data-days="90">3M</button>
+        <button class="preset active" data-days="180">6M</button>
+        <button class="preset" data-days="365">1Y</button>
+        <button class="preset" data-days="1095">3Y</button>
+        <button class="preset" data-days="0">All</button>
+      </div>
+    </div>`;
+  }
 
+  // Rolling window
   if (needsWindow) {
     html += `<div class="rp-block">
       <div class="rp-label">Rolling window</div>
@@ -783,6 +788,7 @@ function buildRightPanel(tab, key) {
     </div>`;
   }
 
+  // Versus selector
   if (needsVersus) {
     html += `<div class="rp-block">
       <div class="rp-label">Compare versus</div>
@@ -794,29 +800,35 @@ function buildRightPanel(tab, key) {
     </div>`;
   }
 
-  if (!isBtcView) html += `</div>`; }
+  // Selected tags (always shown)
   html += `<div class="rp-block" style="flex-shrink:0">
     <div class="rp-label">Selected</div>
     <div class="tags" id="rp-tags"><span style="color:var(--muted);font-size:13px">None</span></div>
-  </div>
-  ${key !== 'ana-bubble' && key !== 'btc-epochs' && key !== 'btc-cycles' ? `
-  <div class="rp-block" style="padding:8px 14px 6px">
-    <div class="rp-label">${tab === 'sector' || tab === 'marketcap' ? 'Sectors' : 'Assets'}</div>
-  </div>
-  <div class="rp-list" id="rp-list"></div>` : '<div style="padding:12px 14px;font-size:13px;color:var(--muted)">All sectors shown automatically</div>'}`;
+  </div>`;
+
+  // Asset/sector list
+  if (showList) {
+    html += `<div class="rp-block" style="padding:8px 14px 6px">
+      <div class="rp-label">${tab === 'sector' || tab === 'marketcap' ? 'Sectors' : 'Assets'}</div>
+    </div>
+    <div class="rp-list" id="rp-list"></div>`;
+  } else if (isBubble) {
+    html += `<div style="padding:12px 14px;font-size:13px;color:var(--muted)">All sectors shown automatically</div>`;
+  }
 
   rp.innerHTML = html;
 
-  initDates('rp-from', 'rp-to', 180);
-  initPresets();
-  renderRPList();
+  if (!isBtcView) {
+    initDates('rp-from', 'rp-to', 180);
+    initPresets();
+  }
+  if (showList) renderRPList();
 
   if (needsSearch) {
-    document.getElementById('rp-search').addEventListener('input', e => renderRPList(e.target.value.toLowerCase()));
+    document.getElementById('rp-search')?.addEventListener('input', e => renderRPList(e.target.value.toLowerCase()));
   }
-  if (needsWindow) {
-    document.getElementById('rp-window').addEventListener('change', fetchCurrent);
-  }
+  const winEl = document.getElementById('rp-window');
+  if (winEl) winEl.addEventListener('change', fetchCurrent);
 }
 
 function showEquityPlaceholder() {
