@@ -6,349 +6,290 @@
 <title>Wintermute — Market Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:       #FAFAFA;
-  --surface:  #FFFFFF;
-  --border:   #E8E8E6;
-  --spine:    #606663;
-  --graphite: #323935;
-  --ash:      #606663;
-  --muted:    #888B88;
-  --input-bg: #F2F2F0;
-  --tag-bg:   #EEEEED;
-  --radius:   6px;
-  --font:     'DM Sans', 'Helvetica Neue', sans-serif;
-  --mono:     'DM Mono', 'Courier New', monospace;
-  --c0: #00D64A; --c1: #2471CC; --c2: #746BE6;
-  --c3: #DB33CB; --c4: #EC5B5B; --c5: #F7931A;
-  --c6: #26A17B; --c7: #FFB800;
+  --bg:        #FAFAFA;
+  --surface:   #FFFFFF;
+  --border:    #E4E4E2;
+  --spine:     #606663;
+  --graphite:  #323935;
+  --muted:     #888B88;
+  --input-bg:  #F0F0EE;
+  --tag-bg:    #EAEAE8;
+  --nav-w:     52px;
+  --side-w:    280px;
+  --radius:    6px;
+  --font:      'DM Sans', 'Helvetica Neue', sans-serif;
+  --mono:      'DM Mono', 'Courier New', monospace;
+  --c0:#00D64A; --c1:#2471CC; --c2:#746BE6;
+  --c3:#DB33CB; --c4:#EC5B5B; --c5:#F7931A; --c6:#26A17B; --c7:#FFB800;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
+*  { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: var(--bg);
   color: var(--graphite);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 16px;
   height: 100vh;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: var(--nav-w) var(--side-w) 1fr var(--side-w);
+  grid-template-rows: 52px 1fr;
 }
 
 /* ── Header ── */
 .header {
-  height: 52px;
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  padding: 0 20px 0 0;
   border-bottom: 1px solid var(--border);
-  gap: 16px;
+  gap: 0;
+}
+
+.header-logo {
+  width: var(--nav-w);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border);
   flex-shrink: 0;
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .logo-mark {
-  width: 22px; height: 22px;
+  width: 26px; height: 26px;
   background: var(--graphite);
-  border-radius: 4px;
+  border-radius: 5px;
   display: flex; align-items: center; justify-content: center;
 }
 
-.logo-mark svg { width: 12px; height: 12px; }
+.logo-mark svg { width: 14px; height: 14px; }
 
-.logo-text {
-  font-size: 13px;
+.header-name {
+  padding: 0 20px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--graphite);
-  letter-spacing: -0.01em;
-}
-
-.header-divider {
-  width: 1px; height: 16px;
-  background: var(--border);
-}
-
-/* ── Tabs ── */
-.tabs {
+  letter-spacing: -0.02em;
+  border-right: 1px solid var(--border);
+  height: 100%;
   display: flex;
-  gap: 2px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.tab {
-  padding: 5px 14px;
-  border-radius: var(--radius);
-  font-size: 12px;
-  font-weight: 500;
+.breadcrumb {
+  padding: 0 16px;
+  font-size: 13px;
   color: var(--muted);
-  cursor: pointer;
-  transition: all 0.15s;
-  border: 1px solid transparent;
-  background: none;
-  font-family: var(--font);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.tab:hover { color: var(--graphite); background: var(--tag-bg); }
-
-.tab.active {
-  color: var(--graphite);
-  background: var(--surface);
-  border-color: var(--border);
-}
+.breadcrumb-sep { color: var(--border); }
+.breadcrumb-active { color: var(--graphite); font-weight: 500; }
 
 .header-spacer { flex: 1; }
 
 .header-pill {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
   background: var(--tag-bg);
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 20px;
 }
 
-/* ── Body ── */
-.body {
+/* ── Left nav (VS Code style) ── */
+.nav {
+  border-right: 1px solid var(--border);
   display: flex;
-  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
   overflow: hidden;
 }
 
-/* ── Sidebar ── */
-.sidebar {
-  width: 272px;
+.nav-item {
+  width: 36px; height: 36px;
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s;
+  color: var(--muted);
+}
+
+.nav-item:hover { background: var(--tag-bg); color: var(--graphite); }
+.nav-item.active { background: var(--graphite); color: white; }
+.nav-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.nav-tooltip {
+  position: absolute;
+  left: calc(100% + 8px);
+  background: var(--graphite);
+  color: white;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+
+.nav-item:hover .nav-tooltip { opacity: 1; }
+
+.nav-divider {
+  width: 24px;
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* ── Left sidebar (view tree) ── */
+.left-panel {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
-.sidebar-block {
-  padding: 14px 16px;
+.panel-header {
+  padding: 14px 16px 10px;
   border-bottom: 1px solid var(--border);
-}
-
-.sidebar-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-/* Search */
-.search-wrap { position: relative; }
-.search-wrap svg {
-  position: absolute; left: 9px; top: 50%;
-  transform: translateY(-50%);
-  width: 12px; height: 12px;
-  stroke: var(--muted); fill: none; stroke-width: 1.5;
-  pointer-events: none;
-}
-
-input[type=text], input[type=date] {
-  width: 100%;
-  background: var(--input-bg);
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  padding: 7px 9px;
-  font-family: var(--font);
-  font-size: 12px;
-  color: var(--graphite);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-#search { padding-left: 28px; }
-input:focus { border-color: var(--spine); }
-input::placeholder { color: var(--muted); }
-
-/* Lists */
-.scroll-list {
+.view-tree {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 8px;
+  padding: 6px 0;
 }
 
-.scroll-list::-webkit-scrollbar { width: 3px; }
-.scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.view-tree::-webkit-scrollbar { width: 3px; }
+.view-tree::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-.list-item {
+.tree-group { margin-bottom: 2px; }
+
+.tree-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.1s;
+}
+
+.tree-group-header:hover { color: var(--graphite); }
+
+.tree-chevron {
+  width: 14px; height: 14px;
+  stroke: currentColor; fill: none; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+.tree-group.open .tree-chevron { transform: rotate(90deg); }
+
+.tree-children { display: none; }
+.tree-group.open .tree-children { display: block; }
+
+.tree-leaf {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 8px;
-  border-radius: var(--radius);
+  padding: 6px 16px 6px 34px;
+  font-size: 14px;
+  color: var(--muted);
   cursor: pointer;
-  transition: background 0.1s;
+  border-left: 2px solid transparent;
+  transition: all 0.1s;
 }
 
-.list-item:hover { background: var(--tag-bg); }
-.list-item.active { background: var(--graphite); }
-.list-item.active .item-sym,
-.list-item.active .item-name { color: #fff; }
-.list-item.active .item-name { opacity: 0.6; }
+.tree-leaf:hover { color: var(--graphite); background: var(--tag-bg); }
 
-.item-dot {
-  width: 7px; height: 7px;
+.tree-leaf.active {
+  color: var(--graphite);
+  border-left-color: var(--graphite);
+  background: var(--tag-bg);
+  font-weight: 500;
+}
+
+.tree-dot {
+  width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--border);
   flex-shrink: 0;
 }
 
-.list-item.active .item-dot { background: var(--c0); }
+.tree-leaf.active .tree-dot { background: var(--c0); }
 
-.item-sym {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--graphite);
-  min-width: 56px;
-}
-
-.item-name {
-  font-size: 11px;
-  color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.item-count {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--muted);
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-/* Date controls */
-.date-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.date-grid label {
-  display: block;
-  font-size: 10px;
-  color: var(--muted);
-  margin-bottom: 3px;
-}
-
-input[type=date] {
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 6px 8px;
-}
-
-/* Presets */
-.presets { display: flex; gap: 3px; flex-wrap: wrap; }
-
-.preset {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  padding: 3px 8px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  background: none;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-.preset:hover { border-color: var(--spine); color: var(--graphite); }
-.preset.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
-
-/* Selected tags */
-.tags { display: flex; flex-wrap: wrap; gap: 3px; min-height: 24px; }
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 7px 2px 9px;
-  border-radius: 20px;
-  color: #fff;
-}
-
-.tag-x { cursor: pointer; opacity: 0.7; font-size: 13px; line-height: 1; }
-.tag-x:hover { opacity: 1; }
-
-/* ── Main ── */
+/* ── Main chart area ── */
 .main {
-  flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
 }
 
-.chart-top {
+.chart-header {
   padding: 18px 24px 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
-.chart-title { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
-.chart-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.chart-title  { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+.chart-sub    { font-size: 13px; color: var(--muted); margin-top: 3px; }
 
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font);
-  font-size: 11px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--graphite);
-  cursor: pointer;
-  transition: all 0.1s;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  padding: 7px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--graphite); cursor: pointer; transition: all 0.1s;
+  white-space: nowrap;
 }
-
 .btn:hover { border-color: var(--spine); }
-.btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
-/* Perf row */
 .perf-row {
   padding: 10px 24px 4px;
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  min-height: 30px;
+  display: flex; gap: 14px; flex-wrap: wrap;
+  min-height: 32px; flex-shrink: 0;
 }
 
-.perf-item { display: flex; align-items: center; gap: 5px; }
-.perf-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.perf-sym  { font-family: var(--mono); font-size: 11px; font-weight: 500; }
-.perf-val  { font-family: var(--mono); font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+.perf-item  { display: flex; align-items: center; gap: 6px; }
+.perf-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.perf-sym   { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.perf-val   { font-family: var(--mono); font-size: 12px; padding: 2px 7px; border-radius: 10px; }
 .pos { background: #E6F9EE; color: #0A6E2A; }
 .neg { background: #FDEAEA; color: #9B2020; }
+.neu { background: var(--tag-bg); color: var(--muted); }
 
-/* Chart area */
 .chart-area {
-  flex: 1;
-  padding: 4px 24px 0;
-  position: relative;
-  min-height: 0;
+  flex: 1; padding: 4px 24px 0;
+  position: relative; min-height: 0;
 }
 
 canvas { display: block; width: 100% !important; height: 100% !important; }
@@ -357,306 +298,666 @@ canvas { display: block; width: 100% !important; height: 100% !important; }
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  color: var(--muted); gap: 8px;
+  color: var(--muted); gap: 10px;
 }
-
-.empty svg { width: 28px; height: 28px; stroke: var(--border); fill: none; stroke-width: 1; }
-.empty p { font-size: 12px; }
+.empty svg { width: 32px; height: 32px; stroke: var(--border); fill: none; stroke-width: 1; }
+.empty p { font-size: 14px; }
 
 .spinner-wrap {
-  position: absolute; inset: 0;
-  display: none;
+  position: absolute; inset: 0; display: none;
   align-items: center; justify-content: center;
   background: rgba(250,250,250,0.85);
 }
-
 .spinner-wrap.on { display: flex; }
-
 .spinner {
-  width: 18px; height: 18px;
-  border: 2px solid var(--border);
-  border-top-color: var(--spine);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  width: 20px; height: 20px;
+  border: 2px solid var(--border); border-top-color: var(--spine);
+  border-radius: 50%; animation: spin 0.6s linear infinite;
 }
-
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.source {
+.chart-source {
   padding: 6px 24px 14px;
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--muted);
-  letter-spacing: 0.06em;
+  font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.06em;
+  flex-shrink: 0;
 }
 
-/* ── View panels ── */
-.view { display: none; height: 100%; }
-.view.active { display: contents; }
+/* ── Right sidebar (controls + list) ── */
+.right-panel {
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rp-block {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.rp-label {
+  font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.07em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+
+/* Search */
+.search-wrap { position: relative; }
+.search-wrap svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; stroke: var(--muted); fill: none; stroke-width: 1.5;
+  pointer-events: none;
+}
+input[type=text] {
+  width: 100%; background: var(--input-bg); border: 1px solid transparent;
+  border-radius: var(--radius); padding: 8px 10px 8px 32px;
+  font-family: var(--font); font-size: 14px; color: var(--graphite);
+  outline: none; transition: border-color 0.15s;
+}
+input[type=text]:focus { border-color: var(--spine); }
+input[type=text]::placeholder { color: var(--muted); }
+
+input[type=date], input[type=number] {
+  width: 100%; background: var(--input-bg); border: 1px solid transparent;
+  border-radius: var(--radius); padding: 7px 9px;
+  font-family: var(--mono); font-size: 13px; color: var(--graphite);
+  outline: none; transition: border-color 0.15s;
+}
+input[type=date]:focus, input[type=number]:focus { border-color: var(--spine); }
+
+.date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.date-grid label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+
+.presets { display: flex; gap: 3px; flex-wrap: wrap; }
+.preset {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 4px 9px; border-radius: 20px; border: 1px solid var(--border);
+  background: none; color: var(--muted); cursor: pointer; transition: all 0.12s;
+}
+.preset:hover { border-color: var(--spine); color: var(--graphite); }
+.preset.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
+
+/* Window input */
+.window-row { display: flex; align-items: center; gap: 8px; }
+.window-row label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+input[type=number] { width: 70px; }
+
+/* Scroll list */
+.rp-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
+.rp-list::-webkit-scrollbar { width: 3px; }
+.rp-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.list-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: var(--radius);
+  cursor: pointer; transition: background 0.1s;
+}
+.list-item:hover { background: var(--tag-bg); }
+.list-item.active { background: var(--graphite); }
+.list-item.active .item-sym,
+.list-item.active .item-name,
+.list-item.active .item-count { color: white; }
+.list-item.active .item-name { opacity: 0.6; }
+.list-item.active .item-dot { background: var(--c0); }
+
+.item-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.item-sym  { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--graphite); min-width: 60px; }
+.item-name { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-count { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: auto; flex-shrink: 0; }
+
+/* Tags */
+.tags { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 3px 8px 3px 10px; border-radius: 20px; color: #fff;
+}
+.tag-x { cursor: pointer; opacity: 0.7; font-size: 14px; line-height: 1; }
+.tag-x:hover { opacity: 1; }
+
+/* Versus selector */
+.versus-row { display: flex; gap: 6px; }
+.versus-btn {
+  flex: 1; padding: 6px 0; border-radius: var(--radius);
+  border: 1px solid var(--border); background: none;
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--muted); cursor: pointer; transition: all 0.12s; text-align: center;
+}
+.versus-btn:hover { border-color: var(--spine); color: var(--graphite); }
+.versus-btn.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
+<!-- ── Header ── -->
 <header class="header">
-  <div class="logo">
+  <div class="header-logo">
     <div class="logo-mark">
-      <svg viewBox="0 0 12 12" fill="none">
-        <polyline points="1,9 4,5 7,7 11,2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg viewBox="0 0 14 14" fill="none">
+        <polyline points="1,11 5,6 8,8 13,2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <span class="logo-text">Wintermute</span>
   </div>
-  <div class="header-divider"></div>
-  <nav class="tabs">
-    <button class="tab active" data-tab="individual">Individual</button>
-    <button class="tab" data-tab="sector">Sector</button>
-  </nav>
+  <div class="header-name">Wintermute</div>
+  <div class="breadcrumb">
+    <span id="bc-section">Sector</span>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-active" id="bc-view">Equal-weighted</span>
+  </div>
   <div class="header-spacer"></div>
   <span class="header-pill" id="db-count">—</span>
 </header>
 
-<!-- Body -->
-<div class="body">
-
-  <!-- ── INDIVIDUAL VIEW ── -->
-  <div class="view active" id="view-individual" style="display:contents">
-    <aside class="sidebar">
-      <div class="sidebar-block">
-        <div class="sidebar-label">Assets</div>
-        <div class="search-wrap">
-          <svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
-          <input type="text" id="ind-search" placeholder="Search…">
-        </div>
-      </div>
-      <div class="scroll-list" id="ind-list"></div>
-      <div class="sidebar-block">
-        <div class="sidebar-label">Period</div>
-        <div class="date-grid">
-          <div><label>From</label><input type="date" id="ind-from"></div>
-          <div><label>To</label><input type="date" id="ind-to"></div>
-        </div>
-        <div class="presets" id="ind-presets">
-          <button class="preset" data-days="7">1W</button>
-          <button class="preset" data-days="30">1M</button>
-          <button class="preset" data-days="90">3M</button>
-          <button class="preset active" data-days="180">6M</button>
-          <button class="preset" data-days="365">1Y</button>
-          <button class="preset" data-days="1095">3Y</button>
-          <button class="preset" data-days="0">All</button>
-        </div>
-      </div>
-      <div class="sidebar-block" style="flex-shrink:0">
-        <div class="sidebar-label">Selected</div>
-        <div class="tags" id="ind-tags"><span style="color:var(--muted);font-size:11px">None</span></div>
-      </div>
-    </aside>
-
-    <main class="main">
-      <div class="chart-top">
-        <div>
-          <div class="chart-title" id="ind-title">Select assets to compare</div>
-          <div class="chart-sub">Daily close · Rebased to 100 at period start</div>
-        </div>
-        <button class="btn" id="ind-save">
-          <svg viewBox="0 0 16 16"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
-          Save PNG
-        </button>
-      </div>
-      <div class="perf-row" id="ind-perf"></div>
-      <div class="chart-area">
-        <canvas id="ind-chart"></canvas>
-        <div class="empty" id="ind-empty">
-          <svg viewBox="0 0 32 32"><polyline points="2,26 10,16 16,20 22,10 30,14"/><rect x="2" y="2" width="28" height="28" rx="2"/></svg>
-          <p>Select assets from the sidebar</p>
-        </div>
-        <div class="spinner-wrap" id="ind-spin"><div class="spinner"></div></div>
-      </div>
-      <div class="source">Source: CoinGecko Pro — Wintermute OTC</div>
-    </main>
+<!-- ── Left nav ── -->
+<nav class="nav">
+  <div class="nav-item active" data-section="sector" title="">
+    <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+    <span class="nav-tooltip">Sector</span>
   </div>
-
-  <!-- ── SECTOR VIEW ── -->
-  <div class="view" id="view-sector">
-    <aside class="sidebar">
-      <div class="sidebar-block">
-        <div class="sidebar-label">Sectors</div>
-      </div>
-      <div class="scroll-list" id="sec-list"></div>
-      <div class="sidebar-block">
-        <div class="sidebar-label">Period</div>
-        <div class="date-grid">
-          <div><label>From</label><input type="date" id="sec-from"></div>
-          <div><label>To</label><input type="date" id="sec-to"></div>
-        </div>
-        <div class="presets" id="sec-presets">
-          <button class="preset" data-days="7">1W</button>
-          <button class="preset" data-days="30">1M</button>
-          <button class="preset" data-days="90">3M</button>
-          <button class="preset active" data-days="180">6M</button>
-          <button class="preset" data-days="365">1Y</button>
-          <button class="preset" data-days="1095">3Y</button>
-          <button class="preset" data-days="0">All</button>
-        </div>
-      </div>
-      <div class="sidebar-block" style="flex-shrink:0">
-        <div class="sidebar-label">Selected</div>
-        <div class="tags" id="sec-tags"><span style="color:var(--muted);font-size:11px">None</span></div>
-      </div>
-    </aside>
-
-    <main class="main">
-      <div class="chart-top">
-        <div>
-          <div class="chart-title" id="sec-title">Select sectors to compare</div>
-          <div class="chart-sub">Equal-weighted daily price index · Rebased to 100 at period start</div>
-        </div>
-        <button class="btn" id="sec-save">
-          <svg viewBox="0 0 16 16"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
-          Save PNG
-        </button>
-      </div>
-      <div class="perf-row" id="sec-perf"></div>
-      <div class="chart-area">
-        <canvas id="sec-chart"></canvas>
-        <div class="empty" id="sec-empty">
-          <svg viewBox="0 0 32 32"><polyline points="2,26 10,16 16,20 22,10 30,14"/><rect x="2" y="2" width="28" height="28" rx="2"/></svg>
-          <p>Select sectors from the sidebar</p>
-        </div>
-        <div class="spinner-wrap" id="sec-spin"><div class="spinner"></div></div>
-      </div>
-      <div class="source">Source: CoinGecko Pro — Wintermute OTC · Equal-weighted index</div>
-    </main>
+  <div class="nav-item" data-section="individual" title="">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span class="nav-tooltip">Individual</span>
   </div>
+  <div class="nav-divider"></div>
+  <div class="nav-item" data-section="settings" title="">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span class="nav-tooltip">Settings</span>
+  </div>
+</nav>
 
-</div>
+<!-- ── Left panel (view tree) ── -->
+<aside class="left-panel">
+  <div class="panel-header">Views</div>
+  <div class="view-tree" id="view-tree"></div>
+</aside>
+
+<!-- ── Main chart area ── -->
+<main class="main">
+  <div class="chart-header">
+    <div>
+      <div class="chart-title" id="chart-title">Select sectors to compare</div>
+      <div class="chart-sub" id="chart-sub">—</div>
+    </div>
+    <button class="btn" id="btn-save">
+      <svg viewBox="0 0 16 16"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
+      Save PNG
+    </button>
+  </div>
+  <div class="perf-row" id="perf-row"></div>
+  <div class="chart-area">
+    <canvas id="main-chart"></canvas>
+    <div class="empty" id="chart-empty">
+      <svg viewBox="0 0 32 32"><polyline points="2,26 10,16 16,20 22,10 30,14"/><rect x="2" y="2" width="28" height="28" rx="2"/></svg>
+      <p id="empty-msg">Select items from the right panel</p>
+    </div>
+    <div class="spinner-wrap" id="chart-spin"><div class="spinner"></div></div>
+  </div>
+  <div class="chart-source" id="chart-source">Source: CoinGecko Pro — Wintermute OTC</div>
+</main>
+
+<!-- ── Right panel (controls + list) ── -->
+<aside class="right-panel" id="right-panel">
+  <!-- injected dynamically -->
+</aside>
 
 <script>
 const PAL = ['#00D64A','#2471CC','#746BE6','#DB33CB','#EC5B5B','#F7931A','#26A17B','#FFB800'];
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-let activeTab = 'individual';
+// ── State ─────────────────────────────────────────────────────────────────────
+let chart      = null;
+let allAssets  = [];
+let allSectors = [];
+let selected   = [];   // current selected items
+let activeView = null; // {section, view, key}
 
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    activeTab = btn.dataset.tab;
-    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('view-individual').style.display = activeTab === 'individual' ? 'contents' : 'none';
-    document.getElementById('view-sector').style.display     = activeTab === 'sector'     ? 'contents' : 'none';
+// ── View tree definition ──────────────────────────────────────────────────────
+const TREE = {
+  sector: {
+    label: "Sector",
+    icon: `<path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>`,
+    groups: [
+      {
+        label: "Price Action",
+        children: [
+          { key: "sector-equal",    label: "Equal-weighted",     sub: "Equal-weighted daily price index · Rebased to 100", source: "CoinGecko Pro — Wintermute OTC" },
+          { key: "sector-mcap",     label: "Marketcap-weighted", sub: "Marketcap-weighted daily price index · Rebased to 100", source: "CoinGecko Pro — Wintermute OTC" },
+        ]
+      },
+      {
+        label: "Correlation",
+        children: [
+          { key: "sector-intra",    label: "Intracorrelation",   sub: "Rolling pairwise correlation between selected sectors", source: "CoinGecko Pro — Wintermute OTC · Rolling Pearson" },
+          { key: "sector-vs",       label: "vs BTC / ETH / Alts",sub: "Rolling correlation of sectors vs reference asset", source: "CoinGecko Pro — Wintermute OTC · Rolling Pearson" },
+        ]
+      }
+    ]
+  },
+  individual: {
+    label: "Individual",
+    icon: `<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`,
+    groups: [
+      {
+        label: "Price Action",
+        children: [
+          { key: "ind-price",       label: "Price comparison",   sub: "Daily close · Rebased to 100 at period start", source: "CoinGecko Pro — Wintermute OTC" },
+        ]
+      }
+    ]
+  }
+};
+
+// ── Build view tree ───────────────────────────────────────────────────────────
+function buildTree(section) {
+  const def = TREE[section];
+  if (!def) return;
+  document.getElementById('view-tree').innerHTML = def.groups.map((g, gi) => `
+    <div class="tree-group open" data-gi="${gi}">
+      <div class="tree-group-header" onclick="toggleGroup(${gi})">
+        <svg class="tree-chevron" viewBox="0 0 16 16"><polyline points="4,6 8,10 12,6"/></svg>
+        ${g.label}
+      </div>
+      <div class="tree-children">
+        ${g.children.map(c => `
+          <div class="tree-leaf ${activeView && activeView.key === c.key ? 'active' : ''}"
+               data-key="${c.key}" onclick="selectView('${section}','${c.key}')">
+            <div class="tree-dot"></div>
+            ${c.label}
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleGroup(gi) {
+  const group = document.querySelector(`.tree-group[data-gi="${gi}"]`);
+  group.classList.toggle('open');
+}
+
+// ── Right panel templates ─────────────────────────────────────────────────────
+function rpSectorList(extraBlocks = '') {
+  return `
+    <div class="rp-block">
+      <div class="rp-label">Period</div>
+      <div class="date-grid">
+        <div><label>From</label><input type="date" id="rp-from"></div>
+        <div><label>To</label><input type="date" id="rp-to"></div>
+      </div>
+      <div class="presets" id="rp-presets">
+        <button class="preset" data-days="7">1W</button>
+        <button class="preset" data-days="30">1M</button>
+        <button class="preset" data-days="90">3M</button>
+        <button class="preset active" data-days="180">6M</button>
+        <button class="preset" data-days="365">1Y</button>
+        <button class="preset" data-days="1095">3Y</button>
+        <button class="preset" data-days="0">All</button>
+      </div>
+    </div>
+    ${extraBlocks}
+    <div class="rp-block" style="flex-shrink:0">
+      <div class="rp-label">Selected</div>
+      <div class="tags" id="rp-tags"><span style="color:var(--muted);font-size:13px">None</span></div>
+    </div>
+    <div class="rp-block" style="padding: 8px;">
+      <div class="rp-label" style="margin-bottom:4px">Sectors</div>
+    </div>
+    <div class="rp-list" id="rp-list"></div>`;
+}
+
+function rpIndList() {
+  return `
+    <div class="rp-block">
+      <div class="rp-label">Search</div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+        <input type="text" id="rp-search" placeholder="Ticker or name…">
+      </div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Period</div>
+      <div class="date-grid">
+        <div><label>From</label><input type="date" id="rp-from"></div>
+        <div><label>To</label><input type="date" id="rp-to"></div>
+      </div>
+      <div class="presets" id="rp-presets">
+        <button class="preset" data-days="7">1W</button>
+        <button class="preset" data-days="30">1M</button>
+        <button class="preset" data-days="90">3M</button>
+        <button class="preset active" data-days="180">6M</button>
+        <button class="preset" data-days="365">1Y</button>
+        <button class="preset" data-days="1095">3Y</button>
+        <button class="preset" data-days="0">All</button>
+      </div>
+    </div>
+    <div class="rp-block" style="flex-shrink:0">
+      <div class="rp-label">Selected</div>
+      <div class="tags" id="rp-tags"><span style="color:var(--muted);font-size:13px">None</span></div>
+    </div>
+    <div class="rp-block" style="padding: 8px;">
+      <div class="rp-label" style="margin-bottom:4px">Assets</div>
+    </div>
+    <div class="rp-list" id="rp-list"></div>`;
+}
+
+// ── Select view ───────────────────────────────────────────────────────────────
+function selectView(section, key) {
+  const def   = TREE[section];
+  let viewDef = null;
+  for (const g of def.groups)
+    for (const c of g.children)
+      if (c.key === key) viewDef = c;
+
+  if (!viewDef) return;
+
+  activeView = { section, key, def: viewDef };
+  selected   = [];
+
+  // Update nav
+  document.querySelectorAll('.nav-item[data-section]').forEach(el => {
+    el.classList.toggle('active', el.dataset.section === section);
   });
-});
+
+  // Update breadcrumb
+  document.getElementById('bc-section').textContent = def.label;
+  document.getElementById('bc-view').textContent    = viewDef.label;
+
+  // Rebuild tree
+  buildTree(section);
+
+  // Update chart header
+  document.getElementById('chart-title').textContent = `Select ${section === 'sector' ? 'sectors' : 'assets'} to compare`;
+  document.getElementById('chart-sub').textContent   = viewDef.sub;
+  document.getElementById('chart-source').textContent = `Source: ${viewDef.source}`;
+
+  // Clear chart
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'flex';
+  document.getElementById('empty-msg').textContent = `Select items from the right panel`;
+  document.getElementById('perf-row').innerHTML = '';
+
+  // Build right panel
+  const rp = document.getElementById('right-panel');
+
+  if (section === 'individual') {
+    rp.innerHTML = rpIndList();
+    initDates('rp-from', 'rp-to', 180);
+    initPresets('rp-presets', 'rp-from', 'rp-to', fetchCurrent);
+    renderRPList();
+    document.getElementById('rp-search').addEventListener('input', e =>
+      renderRPList(e.target.value.toLowerCase()));
+
+  } else if (key === 'sector-equal' || key === 'sector-mcap') {
+    rp.innerHTML = rpSectorList();
+    initDates('rp-from', 'rp-to', 180);
+    initPresets('rp-presets', 'rp-from', 'rp-to', fetchCurrent);
+    renderRPList();
+
+  } else if (key === 'sector-intra') {
+    rp.innerHTML = rpSectorList(`
+      <div class="rp-block">
+        <div class="rp-label">Rolling window</div>
+        <div class="window-row">
+          <input type="number" id="rp-window" value="30" min="7" max="365">
+          <label>days</label>
+        </div>
+      </div>`);
+    initDates('rp-from', 'rp-to', 365);
+    initPresets('rp-presets', 'rp-from', 'rp-to', fetchCurrent);
+    document.getElementById('rp-window').addEventListener('change', fetchCurrent);
+    renderRPList();
+
+  } else if (key === 'sector-vs') {
+    rp.innerHTML = rpSectorList(`
+      <div class="rp-block">
+        <div class="rp-label">Rolling window</div>
+        <div class="window-row">
+          <input type="number" id="rp-window" value="30" min="7" max="365">
+          <label>days</label>
+        </div>
+      </div>
+      <div class="rp-block">
+        <div class="rp-label">Compare versus</div>
+        <div class="versus-row">
+          <button class="versus-btn active" data-v="BTC" onclick="setVersus('BTC')">BTC</button>
+          <button class="versus-btn" data-v="ETH" onclick="setVersus('ETH')">ETH</button>
+          <button class="versus-btn" data-v="ALTS" onclick="setVersus('ALTS')">Alts</button>
+        </div>
+      </div>`);
+    initDates('rp-from', 'rp-to', 365);
+    initPresets('rp-presets', 'rp-from', 'rp-to', fetchCurrent);
+    document.getElementById('rp-window').addEventListener('change', fetchCurrent);
+    renderRPList();
+  }
+}
+
+function setVersus(v) {
+  document.querySelectorAll('.versus-btn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  fetchCurrent();
+}
+
+// ── Render right panel list ───────────────────────────────────────────────────
+function renderRPList(q = '') {
+  const el = document.getElementById('rp-list');
+  if (!el) return;
+
+  if (activeView.section === 'individual') {
+    const items = q
+      ? allAssets.filter(a => a.symbol.toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q))
+      : allAssets;
+    el.innerHTML = items.map(a => `
+      <div class="list-item ${selected.includes(a.symbol) ? 'active' : ''}"
+           onclick="toggleItem('${a.symbol}')">
+        <div class="item-dot"></div>
+        <span class="item-sym">${a.symbol}</span>
+        <span class="item-name">${a.name || ''}</span>
+      </div>`).join('');
+  } else {
+    el.innerHTML = allSectors.map(s => `
+      <div class="list-item ${selected.includes(s.name) ? 'active' : ''}"
+           onclick="toggleItem('${s.name}')">
+        <div class="item-dot"></div>
+        <span class="item-sym" style="min-width:90px">${s.name}</span>
+        <span class="item-count">${s.count}</span>
+      </div>`).join('');
+  }
+}
+
+function toggleItem(name) {
+  if (selected.includes(name)) {
+    selected = selected.filter(s => s !== name);
+  } else {
+    if (selected.length >= 8) selected.shift();
+    selected.push(name);
+  }
+  renderTags();
+  renderRPList(document.getElementById('rp-search')?.value?.toLowerCase() || '');
+  fetchCurrent();
+}
+
+function renderTags() {
+  const el = document.getElementById('rp-tags');
+  if (!el) return;
+  if (!selected.length) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:13px">None</span>';
+    return;
+  }
+  el.innerHTML = selected.map((s, i) => `
+    <span class="tag" style="background:${PAL[i%PAL.length]}">
+      ${s}<span class="tag-x" onclick="toggleItem('${s}')">×</span>
+    </span>`).join('');
+}
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
-function setDates(fromId, toId, days) {
-  const to   = new Date();
-  const from = new Date();
+function initDates(fromId, toId, days) {
+  const to = new Date(), from = new Date();
   if (days > 0) from.setDate(from.getDate() - days);
   else from.setFullYear(2013);
   document.getElementById(toId).value   = to.toISOString().split('T')[0];
   document.getElementById(fromId).value = from.toISOString().split('T')[0];
 }
 
-function initPresets(containerId, fromId, toId, onchange) {
-  document.querySelectorAll(`#${containerId} .preset`).forEach(btn => {
+function initPresets(cid, fid, tid, cb) {
+  document.querySelectorAll(`#${cid} .preset`).forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll(`#${containerId} .preset`).forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(`#${cid} .preset`).forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      setDates(fromId, toId, parseInt(btn.dataset.days));
-      onchange();
+      initDates(fid, tid, parseInt(btn.dataset.days));
+      cb();
     });
   });
-  document.getElementById(fromId).addEventListener('change', onchange);
-  document.getElementById(toId).addEventListener('change', onchange);
+  document.getElementById(fid)?.addEventListener('change', cb);
+  document.getElementById(tid)?.addEventListener('change', cb);
 }
 
-// ── Chart helpers ─────────────────────────────────────────────────────────────
-function makeChart(canvasId) {
-  return new Chart(document.getElementById(canvasId), {
+// ── Chart ─────────────────────────────────────────────────────────────────────
+function getOrCreateChart() {
+  if (chart) return chart;
+  chart = new Chart(document.getElementById('main-chart'), {
     type: 'line',
     data: { labels: [], datasets: [] },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       animation: { duration: 250 },
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#fff',
-          borderColor: '#E8E8E6',
-          borderWidth: 1,
-          titleColor: '#323935',
-          bodyColor: '#606663',
-          padding: 10,
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) : '—'}`
-          }
+          backgroundColor: '#fff', borderColor: '#E4E4E2', borderWidth: 1,
+          titleColor: '#323935', bodyColor: '#606663', padding: 12,
+          callbacks: { label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(2) : '—'}` }
         }
       },
       scales: {
         x: {
-          type: 'category',
-          grid: { display: false },
+          type: 'category', grid: { display: false },
           border: { color: '#606663', width: 0.8 },
           ticks: {
-            color: '#606663',
-            font: { family: 'DM Mono, monospace', size: 10 },
-            maxRotation: 0,
-            maxTicksLimit: 8,
-            callback: function(val) {
-              const lbl = this.getLabelForValue(val);
-              return lbl ? lbl.slice(0, 7) : '';
-            }
+            color: '#606663', font: { family: 'DM Mono, monospace', size: 11 },
+            maxRotation: 0, maxTicksLimit: 8,
+            callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; }
           }
         },
         y: {
-          grid: { display: false },
-          border: { color: '#606663', width: 0.8 },
-          ticks: {
-            color: '#606663',
-            font: { family: 'DM Mono, monospace', size: 10 },
-            callback: v => v.toFixed(0)
-          }
+          grid: { display: false }, border: { color: '#606663', width: 0.8 },
+          ticks: { color: '#606663', font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) }
         }
       }
     }
   });
+  return chart;
 }
 
-function updateChart(chart, data, keys) {
+function drawChart(data, keys) {
   const firstKey = keys.find(k => data[k]);
   if (!firstKey) return;
-  chart.data.labels   = data[firstKey].dates;
-  chart.data.datasets = keys.filter(k => data[k]).map((k, i) => ({
-    label:           k,
-    data:            data[k].rebased,
-    borderColor:     PAL[i % PAL.length],
-    backgroundColor: PAL[i % PAL.length] + '15',
-    borderWidth:     1.5,
-    pointRadius:     0,
+
+  const c = getOrCreateChart();
+  c.data.labels   = data[firstKey].dates;
+  c.data.datasets = keys.filter(k => data[k]).map((k, i) => ({
+    label:            k,
+    data:             data[k].rebased,
+    borderColor:      PAL[i % PAL.length],
+    backgroundColor:  PAL[i % PAL.length] + '14',
+    borderWidth:      1.8,
+    pointRadius:      0,
     pointHoverRadius: 4,
-    tension:         0.1,
-    fill:            false,
+    tension:          0.1,
+    fill:             false,
+    spanGaps:         true,
   }));
-  chart.update();
+  c.update();
 }
 
-function updatePerfRow(elId, data, keys) {
-  document.getElementById(elId).innerHTML = keys.filter(k => data[k]).map((k, i) => {
-    const r   = data[k].rebased;
-    const ret = r && r.length ? r[r.length - 1] - 100 : null;
-    const cls = ret === null ? '' : ret >= 0 ? 'pos' : 'neg';
-    const val = ret === null ? '—' : `${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%`;
+function updatePerf(data, keys, isCorr = false) {
+  document.getElementById('perf-row').innerHTML = keys.filter(k => data[k]).map((k, i) => {
+    const r   = (data[k].rebased || []).filter(v => v != null);
+    const last = r.length ? r[r.length - 1] : null;
+
+    let valHtml;
+    if (isCorr) {
+      const cls = last === null ? 'neu' : last >= 0.7 ? 'pos' : last <= -0.3 ? 'neg' : 'neu';
+      valHtml = `<span class="perf-val ${cls}">${last !== null ? last.toFixed(2) : '—'}</span>`;
+    } else {
+      const ret = last !== null ? last - 100 : null;
+      const cls = ret === null ? '' : ret >= 0 ? 'pos' : 'neg';
+      valHtml = `<span class="perf-val ${cls}">${ret !== null ? (ret >= 0 ? '+' : '') + ret.toFixed(1) + '%' : '—'}</span>`;
+    }
+
     return `<div class="perf-item">
       <div class="perf-dot" style="background:${PAL[i%PAL.length]}"></div>
       <span class="perf-sym">${k}</span>
-      <span class="perf-val ${cls}">${val}</span>
+      ${valHtml}
     </div>`;
   }).join('');
 }
 
-function savePNG(chart, name) {
+// ── Fetch dispatcher ──────────────────────────────────────────────────────────
+async function fetchCurrent() {
+  if (!activeView || !selected.length) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('perf-row').innerHTML = '';
+    if (chart) { chart.data.labels = []; chart.data.datasets = []; chart.update(); }
+    return;
+  }
+
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  const from   = document.getElementById('rp-from')?.value || '2024-01-01';
+  const to     = document.getElementById('rp-to')?.value   || '2099-01-01';
+  const window_ = document.getElementById('rp-window')?.value || '30';
+  const versus = document.querySelector('.versus-btn.active')?.dataset.v || 'BTC';
+  const key    = activeView.key;
+
+  let url, isCorr = false;
+
+  if (key === 'ind-price') {
+    url = `/api/price?symbols=${selected.join(',')}&from=${from}&to=${to}`;
+  } else if (key === 'sector-equal') {
+    url = `/api/sector-price?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+  } else if (key === 'sector-mcap') {
+    url = `/api/sector-mcap?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+  } else if (key === 'sector-intra') {
+    if (selected.length < 2) {
+      document.getElementById('chart-spin').classList.remove('on');
+      document.getElementById('chart-empty').style.display = 'flex';
+      document.getElementById('empty-msg').textContent = 'Select at least 2 sectors';
+      return;
+    }
+    url = `/api/sector-intra-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${window_}`;
+    isCorr = true;
+  } else if (key === 'sector-vs') {
+    url = `/api/sector-btc-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${window_}&versus=${versus}`;
+    isCorr = true;
+  }
+
+  try {
+    const data = await (await fetch(url)).json();
+    if (data.error) throw new Error(data.error);
+    drawChart(data, selected.length && key.startsWith('sector-intra') ? Object.keys(data) : selected);
+    updatePerf(data, key.startsWith('sector-intra') ? Object.keys(data) : selected, isCorr);
+    document.getElementById('chart-title').textContent = selected.join(' · ');
+  } catch(e) {
+    console.error(e);
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+// ── Nav section switching ─────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item[data-section]').forEach(el => {
+  el.addEventListener('click', () => {
+    const section = el.dataset.section;
+    if (section === 'settings') return;
+    const firstGroup = TREE[section]?.groups[0];
+    const firstView  = firstGroup?.children[0];
+    if (firstView) selectView(section, firstView.key);
+  });
+});
+
+// ── Save PNG ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
   const W = 1800, H = 750;
   const off = document.createElement('canvas');
@@ -667,171 +968,23 @@ function savePNG(chart, name) {
   ctx.drawImage(chart.canvas, 40, 20, W - 80, H - 80);
   ctx.fillStyle = '#606663';
   ctx.font = '500 16px DM Mono, monospace';
-  ctx.fillText('Source: CoinGecko Pro — Wintermute OTC', 40, H - 18);
+  ctx.fillText(`Source: ${document.getElementById('chart-source').textContent}`, 40, H - 18);
   const a = document.createElement('a');
-  a.download = `${name}_${new Date().toISOString().split('T')[0]}.png`;
+  a.download = `${activeView?.key || 'chart'}_${selected.join('_')}_${new Date().toISOString().split('T')[0]}.png`;
   a.href = off.toDataURL('image/png');
   a.click();
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// INDIVIDUAL VIEW
-// ══════════════════════════════════════════════════════════════════════════════
-let allAssets  = [];
-let indSelected = [];
-let indChart   = null;
-
-async function loadAssets() {
-  const res = await fetch('/api/assets');
-  allAssets = await res.json();
-  document.getElementById('db-count').textContent = `${allAssets.length} assets`;
-  renderIndList();
-}
-
-function renderIndList(q = '') {
-  const filtered = q
-    ? allAssets.filter(a => a.symbol.toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q))
-    : allAssets;
-  document.getElementById('ind-list').innerHTML = filtered.map(a => `
-    <div class="list-item ${indSelected.includes(a.symbol) ? 'active' : ''}"
-         onclick="toggleInd('${a.symbol}')">
-      <div class="item-dot"></div>
-      <span class="item-sym">${a.symbol}</span>
-      <span class="item-name">${a.name || ''}</span>
-    </div>`).join('');
-}
-
-function toggleInd(sym) {
-  if (indSelected.includes(sym)) {
-    indSelected = indSelected.filter(s => s !== sym);
-  } else {
-    if (indSelected.length >= 8) indSelected.shift();
-    indSelected.push(sym);
-  }
-  renderIndTags();
-  renderIndList(document.getElementById('ind-search').value.toLowerCase());
-  fetchInd();
-}
-
-function renderIndTags() {
-  const el = document.getElementById('ind-tags');
-  if (!indSelected.length) {
-    el.innerHTML = '<span style="color:var(--muted);font-size:11px">None</span>';
-    return;
-  }
-  el.innerHTML = indSelected.map((s, i) => `
-    <span class="tag" style="background:${PAL[i%PAL.length]}">
-      ${s}<span class="tag-x" onclick="toggleInd('${s}')">×</span>
-    </span>`).join('');
-}
-
-async function fetchInd() {
-  if (!indSelected.length) {
-    document.getElementById('ind-empty').style.display = 'flex';
-    document.getElementById('ind-perf').innerHTML = '';
-    if (indChart) { indChart.data.labels = []; indChart.data.datasets = []; indChart.update(); }
-    return;
-  }
-  document.getElementById('ind-empty').style.display = 'none';
-  document.getElementById('ind-spin').classList.add('on');
-
-  const from = document.getElementById('ind-from').value;
-  const to   = document.getElementById('ind-to').value;
-  const url  = `/api/price?symbols=${indSelected.join(',')}&from=${from}&to=${to}`;
-
-  try {
-    const data = await (await fetch(url)).json();
-    if (!indChart) indChart = makeChart('ind-chart');
-    updateChart(indChart, data, indSelected);
-    updatePerfRow('ind-perf', data, indSelected);
-    document.getElementById('ind-title').textContent = indSelected.join(' · ');
-  } catch(e) { console.error(e); }
-  finally { document.getElementById('ind-spin').classList.remove('on'); }
-}
-
-document.getElementById('ind-search').addEventListener('input', e => renderIndList(e.target.value.toLowerCase()));
-document.getElementById('ind-save').addEventListener('click', () => savePNG(indChart, 'individual_' + indSelected.join('_')));
-initPresets('ind-presets', 'ind-from', 'ind-to', fetchInd);
-
-// ══════════════════════════════════════════════════════════════════════════════
-// SECTOR VIEW
-// ══════════════════════════════════════════════════════════════════════════════
-let allSectors   = [];
-let secSelected  = [];
-let secChart     = null;
-
-async function loadSectors() {
-  const res = await fetch('/api/sectors');
-  allSectors = await res.json();
-  renderSecList();
-}
-
-function renderSecList() {
-  document.getElementById('sec-list').innerHTML = allSectors.map(s => `
-    <div class="list-item ${secSelected.includes(s.name) ? 'active' : ''}"
-         onclick="toggleSec('${s.name}')">
-      <div class="item-dot"></div>
-      <span class="item-sym" style="min-width:80px">${s.name}</span>
-      <span class="item-count">${s.count}</span>
-    </div>`).join('');
-}
-
-function toggleSec(name) {
-  if (secSelected.includes(name)) {
-    secSelected = secSelected.filter(s => s !== name);
-  } else {
-    if (secSelected.length >= 8) secSelected.shift();
-    secSelected.push(name);
-  }
-  renderSecTags();
-  renderSecList();
-  fetchSec();
-}
-
-function renderSecTags() {
-  const el = document.getElementById('sec-tags');
-  if (!secSelected.length) {
-    el.innerHTML = '<span style="color:var(--muted);font-size:11px">None</span>';
-    return;
-  }
-  el.innerHTML = secSelected.map((s, i) => `
-    <span class="tag" style="background:${PAL[i%PAL.length]}">
-      ${s}<span class="tag-x" onclick="toggleSec('${s}')">×</span>
-    </span>`).join('');
-}
-
-async function fetchSec() {
-  if (!secSelected.length) {
-    document.getElementById('sec-empty').style.display = 'flex';
-    document.getElementById('sec-perf').innerHTML = '';
-    if (secChart) { secChart.data.labels = []; secChart.data.datasets = []; secChart.update(); }
-    return;
-  }
-  document.getElementById('sec-empty').style.display = 'none';
-  document.getElementById('sec-spin').classList.add('on');
-
-  const from = document.getElementById('sec-from').value;
-  const to   = document.getElementById('sec-to').value;
-  const url  = `/api/sector-price?sectors=${encodeURIComponent(secSelected.join(','))}&from=${from}&to=${to}`;
-
-  try {
-    const data = await (await fetch(url)).json();
-    if (!secChart) secChart = makeChart('sec-chart');
-    updateChart(secChart, data, secSelected);
-    updatePerfRow('sec-perf', data, secSelected);
-    document.getElementById('sec-title').textContent = secSelected.join(' · ');
-  } catch(e) { console.error(e); }
-  finally { document.getElementById('sec-spin').classList.remove('on'); }
-}
-
-document.getElementById('sec-save').addEventListener('click', () => savePNG(secChart, 'sector_' + secSelected.join('_')));
-initPresets('sec-presets', 'sec-from', 'sec-to', fetchSec);
+});
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-setDates('ind-from', 'ind-to', 180);
-setDates('sec-from', 'sec-to', 180);
-loadAssets();
-loadSectors();
+async function boot() {
+  const [ar, sr] = await Promise.all([fetch('/api/assets'), fetch('/api/sectors')]);
+  allAssets  = await ar.json();
+  allSectors = await sr.json();
+  document.getElementById('db-count').textContent = `${allAssets.length} assets`;
+  selectView('sector', 'sector-equal');
+}
+
+boot();
 </script>
 </body>
 </html>
