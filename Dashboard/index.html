@@ -416,6 +416,8 @@ input[type=number] { width: 70px; }
     <button class="tgl-btn" data-gran="hourly" id="gran-hourly">Hourly</button>
   </div>
   <div class="tgl-sep"></div>
+  <button class="tgl-btn" id="btn-log" title="Toggle log scale">Log</button>
+  <div class="tgl-sep"></div>
   <div class="toggle-group">
     <button class="tgl-btn active" data-align="own" id="align-own">Own start</button>
     <button class="tgl-btn" data-align="common" id="align-common">Common start</button>
@@ -576,7 +578,7 @@ function updateChartTheme() {
 }
 
 // ── Log scale ────────────────────────────────────────────────────────────────
-document.getElementById('btn-log').addEventListener('click', () => {
+document.getElementById('btn-log')?.addEventListener('click', () => {
   logScale = !logScale;
   document.getElementById('btn-log').style.background = logScale ? 'var(--graphite)' : '';
   document.getElementById('btn-log').style.color      = logScale ? 'var(--bg)'       : '';
