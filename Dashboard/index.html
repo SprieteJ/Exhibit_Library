@@ -551,21 +551,30 @@ document.querySelectorAll('[data-gran]').forEach(btn => {
   btn.addEventListener('click', () => {
     granularity = btn.dataset.gran;
     document.querySelectorAll('[data-gran]').forEach(b => b.classList.toggle('active', b.dataset.gran === granularity));
-    // Limit hourly to 90 days max
-    if (granularity === 'hourly') {
-      const fromEl = document.getElementById('rp-from');
-      const toEl   = document.getElementById('rp-to');
-      if (fromEl && toEl) {
+    // When switching granularity, reset date range to sensible default
+    const fromEl = document.getElementById('rp-from');
+    const toEl   = document.getElementById('rp-to');
+    if (fromEl && toEl) {
+      if (granularity === 'hourly') {
+        // Cap to 90 days max
         const to   = new Date();
         const from = new Date();
-        from.setDate(from.getDate() - 90);
-        const fromStr = from.toISOString().split('T')[0];
-        if (fromEl.value < fromStr) fromEl.value = fromStr;
-        fromEl.min = fromStr;
+        from.setDate(from.getDate() - 30); // default to 1M for hourly
+        fromEl.min   = new Date(Date.now() - 90*24*60*60*1000).toISOString().split('T')[0];
+        fromEl.value = from.toISOString().split('T')[0];
+        toEl.value   = to.toISOString().split('T')[0];
+        // Update preset active state
+        document.querySelectorAll('#rp-presets .preset').forEach(b => b.classList.toggle('active', b.dataset.days === '30'));
+      } else {
+        // Reset to 6M for daily
+        const to   = new Date();
+        const from = new Date();
+        from.setDate(from.getDate() - 180);
+        fromEl.min   = '';
+        fromEl.value = from.toISOString().split('T')[0];
+        toEl.value   = to.toISOString().split('T')[0];
+        document.querySelectorAll('#rp-presets .preset').forEach(b => b.classList.toggle('active', b.dataset.days === '180'));
       }
-    } else {
-      const fromEl = document.getElementById('rp-from');
-      if (fromEl) fromEl.min = '';
     }
     fetchCurrent();
   });

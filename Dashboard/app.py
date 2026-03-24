@@ -190,14 +190,22 @@ def handle_sectors():
 
 def fetch_sector_index(cur, cg_ids, date_from, date_to, weighting='equal', granularity='daily'):
     tbl  = price_table(granularity)
-    cast = "p.timestamp::date" if granularity != "hourly" else "p.timestamp"
-    cur.execute(f"""
-        SELECT p.coingecko_id, {cast} as ts, p.price_usd, m.market_cap_usd
-        FROM {tbl} p
-        LEFT JOIN marketcap_daily m ON p.coingecko_id = m.coingecko_id AND p.timestamp::date = m.timestamp::date
-        WHERE p.coingecko_id = ANY(%s) AND p.timestamp >= %s AND p.timestamp <= %s AND p.price_usd > 0
-        ORDER BY p.coingecko_id, p.timestamp
-    """, (cg_ids, date_from, date_to))
+    if granularity == "hourly":
+        # Hourly: no mcap join (mcap is daily only), use p.timestamp directly
+        cur.execute(f"""
+            SELECT p.coingecko_id, p.timestamp as ts, p.price_usd, NULL::double precision as market_cap_usd
+            FROM {tbl} p
+            WHERE p.coingecko_id = ANY(%s) AND p.timestamp >= %s AND p.timestamp <= %s AND p.price_usd > 0
+            ORDER BY p.coingecko_id, p.timestamp
+        """, (cg_ids, date_from, date_to))
+    else:
+        cur.execute(f"""
+            SELECT p.coingecko_id, p.timestamp::date as ts, p.price_usd, m.market_cap_usd
+            FROM {tbl} p
+            LEFT JOIN marketcap_daily m ON p.coingecko_id = m.coingecko_id AND p.timestamp::date = m.timestamp::date
+            WHERE p.coingecko_id = ANY(%s) AND p.timestamp >= %s AND p.timestamp <= %s AND p.price_usd > 0
+            ORDER BY p.coingecko_id, p.timestamp
+        """, (cg_ids, date_from, date_to))
     rows = cur.fetchall()
     if not rows: return {}, []
 
