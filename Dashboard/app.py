@@ -190,7 +190,7 @@ def handle_sectors():
 
 def fetch_sector_index(cur, cg_ids, date_from, date_to, weighting='equal', granularity='daily'):
     tbl  = price_table(granularity)
-    cast = ts_cast(granularity)
+    cast = "p.timestamp::date" if granularity != "hourly" else "p.timestamp"
     cur.execute(f"""
         SELECT p.coingecko_id, {cast} as ts, p.price_usd, m.market_cap_usd
         FROM {tbl} p
