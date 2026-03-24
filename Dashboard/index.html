@@ -10,6 +10,7 @@
 
 :root {
   --bg:       #FAFAFA;
+  --logo-color: #000000;
   --surface:  #FFFFFF;
   --border:   #E4E4E2;
   --spine:    #606663;
@@ -25,6 +26,7 @@
 
 [data-theme="dark"] {
   --bg:       #0F1110;
+  --logo-color: #FAFAFA;
   --surface:  #1A1D1B;
   --border:   #2A2D2B;
   --spine:    #606663;
@@ -364,12 +366,28 @@ input[type=number] { width: 70px; }
 
 <!-- Header -->
 <header class="header">
-  <div class="logo-mark">
-    <svg viewBox="0 0 14 14" fill="none">
-      <polyline points="1,11 5,6 8,8 13,2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </div>
-  <span class="logo-name">Wintermute</span>
+  <svg class="wm-logo" viewBox="0 0 220 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:auto;flex-shrink:0">
+    <!-- Crystal mark -->
+    <g stroke="var(--logo-color)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+      <!-- outer diamond -->
+      <polygon points="20,2 36,14 20,38 4,14"/>
+      <!-- inner facets -->
+      <line x1="4"  y1="14" x2="20" y2="20"/>
+      <line x1="36" y1="14" x2="20" y2="20"/>
+      <line x1="20" y1="2"  x2="20" y2="20"/>
+      <line x1="20" y1="20" x2="20" y2="38"/>
+      <!-- mid horizontal -->
+      <line x1="4"  y1="14" x2="36" y2="14"/>
+      <!-- left inner triangle -->
+      <line x1="4"  y1="14" x2="12" y2="26"/>
+      <line x1="20" y1="20" x2="12" y2="26"/>
+      <!-- right inner triangle -->
+      <line x1="36" y1="14" x2="28" y2="26"/>
+      <line x1="20" y1="20" x2="28" y2="26"/>
+    </g>
+    <!-- WINTERMUTE wordmark -->
+    <text x="48" y="28" font-family="DM Sans, Helvetica Neue, sans-serif" font-size="18" font-weight="600" letter-spacing="3" fill="var(--logo-color)">WINTERMUTE</text>
+  </svg>
   <div class="header-divider"></div>
   <span style="font-size:13px;color:var(--muted)" id="bc-view">—</span>
   <div class="header-spacer"></div>
