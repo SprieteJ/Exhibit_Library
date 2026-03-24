@@ -998,7 +998,7 @@ function yAxisFormatter(v, isCorr, isMom, isZscore, isMcap) {
 }
 
 // ── Chart ─────────────────────────────────────────────────────────────────────
-function getOrMakeChart(isCorr = false, isMom = false) {
+function getOrMakeChart(isCorr = false, isMom = false, isZscore = false, isMcap = false) {
   if (chart) return chart;
   const tc = darkMode ? '#E8EAE8' : '#606663';
   chart = new Chart(document.getElementById('main-chart'), {
@@ -1020,9 +1020,11 @@ function getOrMakeChart(isCorr = false, isMom = false) {
           callbacks: {
             label: ctx => {
               const v = ctx.parsed.y;
-              if (v == null) return ` ${ctx.dataset.label}  —`;
-              if (isCorr) return ` ${ctx.dataset.label}  ${v.toFixed(3)}`;
-              if (isMom)  return ` ${ctx.dataset.label}  ${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+              if (v == null)    return ` ${ctx.dataset.label}  —`;
+              if (isCorr)       return ` ${ctx.dataset.label}  ${v.toFixed(3)}`;
+              if (isZscore)     return ` ${ctx.dataset.label}  ${v.toFixed(2)}σ`;
+              if (isMom)        return ` ${ctx.dataset.label}  ${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+              if (isMcap)       { const f = v >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : `$${v.toFixed(0)}`; return ` ${ctx.dataset.label}  ${f}`; }
               const delta = v - 100;
               const pct = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
               return ` ${ctx.dataset.label}  ${pct}`;
@@ -1037,18 +1039,21 @@ function getOrMakeChart(isCorr = false, isMom = false) {
           ticks: {
             color: tc, font: { family: 'DM Mono, monospace', size: 11 },
             maxRotation: 0, maxTicksLimit: 8,
-            callback: function(val) {
+            callback: function(val, idx, ticks) {
               const l = this.getLabelForValue(val);
-              return l ? (granularity === 'hourly' ? l.slice(0,10) : l.slice(0,7)) : '';
-            }
+              if (!l) return '';
+              return granularity === 'hourly' ? l.slice(0,10) : l.slice(0,7);
+            },
+            autoSkip: true,
+            autoSkipPadding: 20
           }
         },
         y: {
-          grid: isMom ? { color: tc + '30', drawBorder: false, lineWidth: 0.8 } : { display: false },
+          grid: (isMom || isZscore || isCorr) ? { color: tc + '22', drawBorder: false, lineWidth: 0.5 } : { display: false },
           border: { color: tc, width: 0.8 },
           ticks: {
             color: tc, font: { family: 'DM Mono, monospace', size: 11 },
-            callback: v => isMom ? `${v >= 0 ? '+' : ''}${v.toFixed(1)}%` : yAxisFormatter(v, isCorr)
+            callback: v => yAxisFormatter(v, isCorr, isMom, isZscore, isMcap)
           }
         }
       }
@@ -1057,12 +1062,12 @@ function getOrMakeChart(isCorr = false, isMom = false) {
   return chart;
 }
 
-function drawChart(data, keys, isCorr = false, isMom = false) {
+function drawChart(data, keys, isCorr = false, isMom = false, isZscore = false, isMcap = false) {
   const firstKey = keys.find(k => data[k]);
   if (!firstKey) return;
 
   if (chart) { chart.destroy(); chart = null; }
-  const c = getOrMakeChart(isCorr, isMom);
+  const c = getOrMakeChart(isCorr, isMom, isZscore, isMcap);
   c.data.labels   = data[firstKey].dates;
   c.data.datasets = keys.filter(k => data[k]).map((k, i) => {
     const col = data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length];
@@ -1082,7 +1087,7 @@ function drawChart(data, keys, isCorr = false, isMom = false) {
   c.update();
 }
 
-function updatePerf(data, keys, isCorr = false, isMom = false) {
+function updatePerf(data, keys, isCorr = false, isMom = false, isZscore = false, isMcap = false) {
   document.getElementById('perf-row').innerHTML = keys.filter(k => data[k]).map((k, i) => {
     const r    = (data[k].rebased || []).filter(v => v != null);
     const last = r.length ? r[r.length - 1] : null;
@@ -1122,6 +1127,14 @@ async function fetchCurrent() {
     const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
     const win  = document.getElementById('rp-window')?.value || '30';
     await fetchBubble(from, to, win);
+    return;
+  }
+
+  if (activeView?.key === 'btc-epochs' || activeView?.key === 'btc-cycles') {
+    const win = document.getElementById('rp-window')?.value || (activeView.key === 'btc-epochs' ? '1400' : '1000');
+    const to  = new Date().toISOString().split('T')[0];
+    await fetchBtcChart(activeView.key === 'btc-epochs' ? 'epochs' : 'cycles', null, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
     return;
   }
 
@@ -1213,8 +1226,8 @@ async function fetchCurrent() {
     const data = JSON.parse(text);
     if (data.error) throw new Error(data.error);
     chartKeys = (isCorr || isMom) ? Object.keys(data) : selected;
-    drawChart(data, chartKeys, isCorr, isMom);
-    updatePerf(data, chartKeys, isCorr, isMom);
+    drawChart(data, chartKeys, isCorr, isMom, isZscore, isMcap);
+    updatePerf(data, chartKeys, isCorr, isMom, isZscore, isMcap);
     document.getElementById('chart-title').textContent = selected.join(' · ');
   } catch(e) {
     console.error(e);
