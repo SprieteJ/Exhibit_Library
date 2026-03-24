@@ -405,7 +405,6 @@ input[type=number] { width: 70px; }
   <button class="tab" data-tab="bitcoin">Bitcoin</button>
   <button class="tab" data-tab="altcoins">Altcoins</button>
   <button class="tab" data-tab="macro">Macro</button>
-  <button class="tab" data-tab="marketcap">Market cap</button>
   <button class="tab" data-tab="equity">Equity</button>
   <button class="tab" data-tab="data">
     <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-right:4px;vertical-align:-2px" viewBox="0 0 16 16"><ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v4c0 1.1 2.69 2 6 2s6-.9 6-2V4"/><path d="M2 8v4c0 1.1 2.69 2 6 2s6-.9 6-2V8"/></svg>
@@ -474,17 +473,23 @@ const TABS = {
     label: "Sector",
     groups: [
       { label: "Price Action", children: [
-        { key:"sec-equal", label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",         src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-mcap",  label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",     src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-mom",   label:"Momentum",           sub:"Rolling N-day return of equal-weighted sector index",  src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-equal",  label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",        src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-mcap",   label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",    src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Market Cap", children: [
+        { key:"mc-total",   label:"Total market cap",   sub:"Sum of constituent market caps per sector (USD)",     src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"mc-median",  label:"Median market cap",  sub:"Median constituent market cap per sector (USD)",      src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Correlation", children: [
-        { key:"sec-intra", label:"Intracorrelation",   sub:"Rolling pairwise correlation between sectors",          src:"CoinGecko Pro — Rolling Pearson" },
-        { key:"sec-vs",    label:"vs BTC / ETH / Alts",sub:"Rolling correlation of sectors vs reference asset",     src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"sec-intra",  label:"Intracorrelation",   sub:"Rolling pairwise correlation between sectors",         src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"sec-vs",     label:"vs BTC / ETH / Alts",sub:"Rolling correlation of sectors vs reference asset",    src:"CoinGecko Pro — Rolling Pearson" },
       ]},
       { label: "Momentum", children: [
-        { key:"sec-mom",   label:"30d Rolling return",  sub:"Rolling N-day return of equal-weighted sector index",  src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-zscore",label:"Z-score of returns",  sub:"Z-score of daily returns vs rolling window — unusually strong/weak momentum",  src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-mom",    label:"30d Rolling return",  sub:"Rolling N-day return of equal-weighted sector index", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-zscore", label:"Z-score of returns",  sub:"Z-score of daily returns vs rolling window",          src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Analysis", children: [
+        { key:"ana-bubble", label:"Momentum vs correlation", sub:"Bubble · Y = momentum · X = autocorrelation · Size = market cap", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
     ]
   },
@@ -521,15 +526,7 @@ const TABS = {
       ]},
     ]
   },
-  marketcap: {
-    label: "Market cap",
-    groups: [
-      { label: "Sector market cap", children: [
-        { key:"mc-total",  label:"Total market cap",  sub:"Sum of constituent market caps per sector (USD)", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"mc-median", label:"Median market cap", sub:"Median constituent market cap per sector (USD)",  src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-    ]
-  },
+
   equity: {
     label: "Equity",
     groups: []
@@ -707,7 +704,7 @@ async function selectView(tab, key) {
   document.getElementById('perf-row').innerHTML = '';
 
   // Load items for this tab
-  if (tab === 'sector' || tab === 'marketcap') {
+  if (tab === 'sector') {
     allItems = allSectors;
   } else {
     const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab}`);
@@ -726,7 +723,7 @@ function buildRightPanel(tab, key) {
   const rp          = document.getElementById('right-panel');
   const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles';
   const isBubble    = key === 'ana-bubble';
-  const needsSearch = tab !== 'sector' && tab !== 'marketcap' && !isBtcView;
+  const needsSearch = tab !== 'sector' && !isBtcView;
   const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble';
   const needsVersus = key === 'sec-vs';
   const showList    = !isBubble && !isBtcView;
@@ -804,7 +801,7 @@ function buildRightPanel(tab, key) {
   // Asset/sector list
   if (showList) {
     html += `<div class="rp-block" style="padding:8px 14px 6px">
-      <div class="rp-label">${tab === 'sector' || tab === 'marketcap' ? 'Sectors' : 'Assets'}</div>
+      <div class="rp-label">${tab === 'sector' ? 'Sectors' : 'Assets'}</div>
     </div>
     <div class="rp-list" id="rp-list"></div>`;
   } else if (isBubble) {
