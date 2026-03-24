@@ -49,48 +49,66 @@ def handle_price(params):
 
 def handle_alt_scatter(params):
     """
-    For top N altcoins by mcap (ex BTC/ETH):
+    Top N altcoins by mcap (ex BTC/ETH):
       y = % return vs BTC over window
-      x = daily return volatility vs BTC (higher = more volatile than BTC)
-    X-axis is reversed on frontend so high vol is on the left.
+      x = daily return vol vs BTC vol
     """
     date_to = params.get("to",   ["2099-01-01"])[0]
     days    = int(params.get("days", ["7"])[0])
     topn    = int(params.get("topn", ["50"])[0])
 
+    # Cap topn to avoid runaway queries
+    topn = min(topn, 250)
+
     try:
-        dt_to   = datetime.strptime(date_to, "%Y-%m-%d")
+        dt_to   = datetime.strptime(min(date_to, "2099-01-01"), "%Y-%m-%d")
         dt_from = (dt_to - timedelta(days=days + 5)).strftime("%Y-%m-%d")
+        dt_to_s = dt_to.strftime("%Y-%m-%d")
     except:
         dt_from = "2024-01-01"
+        dt_to_s = "2099-01-01"
 
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    # Top N altcoins by most recent market cap
+    # Step 1: get top N symbols by most recent mcap using a tight date window
     cur.execute("""
-        SELECT DISTINCT ON (p.symbol) p.symbol, m.market_cap_usd
+        SELECT p.symbol
         FROM price_daily p
-        JOIN marketcap_daily m ON p.coingecko_id = m.coingecko_id
-            AND p.timestamp::date = m.timestamp::date
-        WHERE p.symbol NOT IN ('BTC','ETH')
-          AND m.market_cap_usd > 0
-        ORDER BY p.symbol, m.timestamp DESC
-    """)
-    all_assets = sorted(cur.fetchall(), key=lambda r: r["market_cap_usd"] or 0, reverse=True)[:topn]
-    symbols    = [r["symbol"] for r in all_assets]
+        JOIN (
+            SELECT coingecko_id, market_cap_usd
+            FROM marketcap_daily
+            WHERE timestamp::date = (
+                SELECT MAX(timestamp::date) FROM marketcap_daily
+                WHERE timestamp <= NOW()
+            )
+            AND market_cap_usd > 0
+        ) m ON p.coingecko_id = m.coingecko_id
+        WHERE p.symbol NOT IN ('BTC','ETH','USDT','USDC','DAI','BUSD','TUSD','USDP','FDUSD','PYUSD')
+        GROUP BY p.symbol, m.market_cap_usd
+        ORDER BY m.market_cap_usd DESC
+        LIMIT %s
+    """, (topn,))
+    symbols = [r["symbol"] for r in cur.fetchall()]
 
+    if not symbols:
+        conn.close()
+        return {"error": "no assets found", "points": []}
+
+    # Step 2: fetch prices for BTC + symbols over the tight window only
     cur.execute("""
         SELECT symbol, timestamp::date as date, price_usd
         FROM price_daily
         WHERE symbol = ANY(%s)
-          AND timestamp >= %s AND timestamp <= %s
+          AND timestamp::date >= %s
+          AND timestamp::date <= %s
           AND price_usd > 0
         ORDER BY symbol, timestamp
-    """, (["BTC"] + symbols, dt_from, date_to))
+    """, (["BTC"] + symbols, dt_from, dt_to_s))
     rows = cur.fetchall()
     conn.close()
 
+    # Build price maps
     prices = {}
     for row in rows:
         sym = row["symbol"]
@@ -101,7 +119,7 @@ def handle_alt_scatter(params):
         return {"error": "insufficient BTC data", "points": []}
 
     btc_vals   = [prices["BTC"][d] for d in sorted(prices["BTC"])]
-    btc_return = (btc_vals[-1] / btc_vals[0] - 1) * 100 if len(btc_vals) >= 2 else 0
+    btc_return = (btc_vals[-1] / btc_vals[0] - 1) * 100
     btc_rets   = [(btc_vals[i]/btc_vals[i-1]-1)*100 for i in range(1, len(btc_vals))]
     btc_mean   = sum(btc_rets)/len(btc_rets) if btc_rets else 0
     btc_vol    = math.sqrt(sum((r-btc_mean)**2 for r in btc_rets)/len(btc_rets)) if btc_rets else 1
