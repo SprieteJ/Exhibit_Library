@@ -500,9 +500,8 @@ const TABS = {
         { key:"btc-epochs", label:"Halving epochs",      sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5",    src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-cycles", label:"Bear market cycles",  sub:"BTC indexed to peak (peak = 100) · Days since peak",             src:"CoinGecko Pro — Wintermute OTC" },
       ]},
-      { label: "Price Action", children: [
-        { key:"maj-price",  label:"Price comparison",    sub:"BTC & ETH · Daily close · Rebased to 100",                      src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-gold",   label:"Bitcoin vs Gold",     sub:"BTC (left axis, orange) overlaid with Gold/GLD (right axis)",   src:"CoinGecko Pro + yfinance" },
+      { label: "Bitcoin vs Gold", children: [
+        { key:"btc-gold",   label:"Bitcoin vs Gold",     sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)",    src:"CoinGecko Pro + yfinance" },
       ]},
     ]
   },
@@ -839,6 +838,12 @@ function buildRightPanel(tab, key) {
         <option value="100">Top 100</option>
         <option value="250">Top 250</option>
       </select>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Y-axis</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="rp-logscale" style="accent-color:var(--graphite)"> Log scale
+      </label>
     </div>`;
   }
 
@@ -884,6 +889,8 @@ function buildRightPanel(tab, key) {
   const winEl  = document.getElementById('rp-window');
   const topnEl = document.getElementById('rp-topn');
   if (topnEl) topnEl.addEventListener('change', fetchCurrent);
+  const logEl = document.getElementById('rp-logscale');
+  if (logEl) logEl.addEventListener('change', fetchCurrent);
   if (winEl) winEl.addEventListener('change', fetchCurrent);
   ['rp-perf-win','rp-corr-win','rp-smooth-win'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', fetchCurrent);
@@ -2303,50 +2310,36 @@ async function fetchBtcGold(from, to) {
   document.getElementById('chart-spin').classList.add('on');
 
   try {
-    const [btcRes, goldRes] = await Promise.all([
-      fetch(`/api/price?symbols=BTC&from=${from}&to=${to}&granularity=daily&align=own`),
-      fetch(`/api/macro-price?symbols=GLD&from=${from}&to=${to}&granularity=daily&align=own`)
-    ]);
-    const btcData  = await btcRes.json();
-    const goldData = await goldRes.json();
-
-    if (!btcData.BTC?.dates?.length) throw new Error('No BTC data');
-    if (!goldData.GLD?.dates?.length) throw new Error('No Gold data');
+    const resp = await fetch(`/api/btc-gold?from=${from}&to=${to}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.dates?.length) throw new Error('no data');
 
     const tc = darkMode ? '#E8EAE8' : '#606663';
 
     chart = new Chart(document.getElementById('main-chart'), {
       type: 'line',
       data: {
-        labels: btcData.BTC.dates,
+        labels: data.dates,
         datasets: [
           {
             label: 'BTC',
-            data: btcData.BTC.prices,
+            data: data.btc_prices,
             borderColor: '#F7931A',
             backgroundColor: 'transparent',
             borderWidth: 1.8,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            tension: 0.1,
-            yAxisID: 'yBTC',
-            spanGaps: true,
+            pointRadius: 0, pointHoverRadius: 4,
+            tension: 0.1, yAxisID: 'yBTC', spanGaps: true,
           },
           {
             label: 'Gold (GLD)',
-            data: (() => {
-              const goldMap = {};
-              goldData.GLD.dates.forEach((d, i) => goldMap[d] = goldData.GLD.prices[i]);
-              return btcData.BTC.dates.map(d => goldMap[d] || null);
-            })(),
+            data: data.gold_prices,
             borderColor: '#FFB800',
             backgroundColor: 'transparent',
             borderWidth: 1.5,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            tension: 0.1,
-            yAxisID: 'yGold',
-            spanGaps: true,
+            pointRadius: 0, pointHoverRadius: 4,
+            tension: 0.1, yAxisID: 'yGold', spanGaps: true,
           }
         ]
       },
@@ -2359,17 +2352,16 @@ async function fetchBtcGold(from, to) {
           tooltip: {
             backgroundColor: darkMode ? '#1A1D1B' : '#fff',
             borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
-            borderWidth: 1,
+            borderWidth: 1, padding: 12,
             titleColor: darkMode ? '#E8EAE8' : '#323935',
             bodyColor:  darkMode ? '#888B88' : '#606663',
-            padding: 12,
             callbacks: {
               label: ctx => {
                 const v = ctx.parsed.y;
                 if (v == null) return ` ${ctx.dataset.label}  —`;
                 return ctx.dataset.label === 'BTC'
-                  ? ` BTC  $${v.toLocaleString()}`
-                  : ` Gold  $${v.toFixed(2)}`;
+                  ? ` BTC  $${v.toLocaleString(undefined, {maximumFractionDigits:0})}`
+                  : ` Gold (GLD)  $${v.toFixed(2)}`;
               }
             }
           }
@@ -2404,11 +2396,10 @@ async function fetchBtcGold(from, to) {
       }
     });
 
-    // Perf row
-    const btcLast = btcData.BTC.prices.filter(v => v != null).slice(-1)[0];
-    const goldLast = goldData.GLD.prices.filter(v => v != null).slice(-1)[0];
+    const btcLast  = data.btc_prices.filter(v=>v!=null).slice(-1)[0];
+    const goldLast = data.gold_prices.filter(v=>v!=null).slice(-1)[0];
     document.getElementById('perf-row').innerHTML = `
-      <div class="perf-item"><div class="perf-dot" style="background:#F7931A"></div><span class="perf-sym">BTC</span><span class="perf-val neu">$${btcLast?.toLocaleString() || '—'}</span></div>
+      <div class="perf-item"><div class="perf-dot" style="background:#F7931A"></div><span class="perf-sym">BTC</span><span class="perf-val neu">$${btcLast?.toLocaleString(undefined,{maximumFractionDigits:0}) || '—'}</span></div>
       <div class="perf-item"><div class="perf-dot" style="background:#FFB800"></div><span class="perf-sym">Gold (GLD)</span><span class="perf-val neu">$${goldLast?.toFixed(2) || '—'}</span></div>`;
     document.getElementById('chart-title').textContent = 'Bitcoin vs Gold';
 
@@ -2466,11 +2457,12 @@ async function fetchAltScatter(from, to, days) {
         scales: {
           x: {
             reverse: true,
-            title: { display: true, text: 'Volatility vs BTC (%) ← high vol   low vol →', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            title: { display: true, text: '← high vol    volatility vs BTC (%)    low vol →', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
             grid: { display: false }, border: { color: tc, width: 0.8 },
             ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => `${v.toFixed(0)}%` }
           },
           y: {
+            type: document.getElementById('rp-logscale')?.checked ? 'logarithmic' : 'linear',
             title: { display: true, text: '% performance vs BTC', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
             grid: { display: false }, border: { color: tc, width: 0.8 },
             ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => `${v >= 0 ? '+' : ''}${v.toFixed(0)}%` }
@@ -2478,6 +2470,29 @@ async function fetchAltScatter(from, to, days) {
         }
       },
       plugins: [{
+        id: 'quadrantLines',
+        afterDatasetsDraw(ch) {
+          const pts  = ch.data.datasets[0].data;
+          if (!pts?.length) return;
+          const xVals = pts.map(p => p.x).filter(v => v != null).sort((a,b) => a-b);
+          const yVals = pts.map(p => p.y).filter(v => v != null).sort((a,b) => a-b);
+          const medX  = xVals[Math.floor(xVals.length/2)];
+          const medY  = yVals[Math.floor(yVals.length/2)];
+          const ctx2  = ch.ctx;
+          const xPx   = ch.scales.x.getPixelForValue(medX);
+          const yPx   = ch.scales.y.getPixelForValue(medY);
+          const area  = ch.chartArea;
+          ctx2.save();
+          ctx2.setLineDash([4, 4]);
+          ctx2.strokeStyle = darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)';
+          ctx2.lineWidth   = 1;
+          // vertical median line
+          ctx2.beginPath(); ctx2.moveTo(xPx, area.top); ctx2.lineTo(xPx, area.bottom); ctx2.stroke();
+          // horizontal median line
+          ctx2.beginPath(); ctx2.moveTo(area.left, yPx); ctx2.lineTo(area.right, yPx); ctx2.stroke();
+          ctx2.restore();
+        }
+      },{
         id: 'tickerLabels',
         afterDatasetsDraw(ch) {
           const ctx2 = ch.ctx;
