@@ -166,12 +166,43 @@ def handle_macro_price(params):
     rows = cur.fetchall()
     conn.close()
 
-    data = {}
+    # Build per-symbol price maps
+    price_maps = {}
     for row in rows:
         sym = row["symbol"]
-        if sym not in data: data[sym] = {"dates": [], "prices": []}
-        data[sym]["dates"].append(str(row["ts"]))
-        data[sym]["prices"].append(float(row["price_usd"]) if row["price_usd"] else None)
+        if sym not in price_maps: price_maps[sym] = {}
+        if row["price_usd"]:
+            price_maps[sym][str(row["ts"])] = float(row["price_usd"])
+
+    if not price_maps: return {}
+
+    # For hourly: align all series to a common timestamp union, forward-fill gaps
+    # This prevents warping when market-hours-only tickers (VIX, yields) are mixed
+    # with 24h tickers (FX, crypto ETFs)
+    if granularity == "hourly" and len(price_maps) > 1:
+        # Use the timestamps of the ticker with the most data as the master index
+        master_sym = max(price_maps, key=lambda s: len(price_maps[s]))
+        master_ts  = sorted(price_maps[master_sym].keys())
+        data = {}
+        for sym in price_maps:
+            prices = []
+            last_val = None
+            for ts in master_ts:
+                v = price_maps[sym].get(ts)
+                if v is not None:
+                    last_val = v
+                elif last_val is not None:
+                    v = last_val  # forward-fill
+                prices.append(v)
+            data[sym] = {"dates": master_ts, "prices": prices}
+    else:
+        data = {}
+        for sym, pmap in price_maps.items():
+            sorted_ts = sorted(pmap.keys())
+            data[sym] = {
+                "dates":  sorted_ts,
+                "prices": [pmap[ts] for ts in sorted_ts],
+            }
 
     if align == "common" and len(data) > 1:
         common_start = max(s["dates"][0] for s in data.values() if s["dates"])
