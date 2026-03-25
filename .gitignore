@@ -10,3 +10,4 @@ __pycache__/
 .DS_Store
 *.log
 scripts/ingest/derivatives_backfill_progress.json
+.claude/
