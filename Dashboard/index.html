@@ -485,22 +485,37 @@ const TABS = {
         { key:"sec-mcap",   label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",    src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Market Cap", children: [
-        { key:"mc-total",   label:"Total market cap",   sub:"Sum of constituent market caps per sector (USD)",     src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"mc-median",  label:"Median market cap",  sub:"Median constituent market cap per sector (USD)",      src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"mc-total",       label:"Total market cap",       sub:"Sum of constituent market caps per sector (USD)",                                       src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"mc-median",      label:"Median market cap",      sub:"Median constituent market cap per sector (USD)",                                       src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-dominance",  label:"Dominance over time",    sub:"How is capital rotating between sectors? Each sector's mcap as % of total, 100% stacked area.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Correlation", children: [
-        { key:"sec-intra",  label:"Intracorrelation",   sub:"Rolling pairwise correlation between sectors",         src:"CoinGecko Pro — Rolling Pearson" },
-        { key:"sec-vs",     label:"vs BTC / ETH / Alts",sub:"Rolling correlation of sectors vs reference asset",    src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"sec-intra",      label:"Intracorrelation",       sub:"Rolling pairwise correlation between sectors",                                          src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"sec-vs",         label:"vs BTC / ETH / Alts",   sub:"Rolling correlation of sectors vs reference asset",                                     src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"sec-xheatmap",   label:"Cross-sector heatmap",  sub:"Which sectors move together? Rolling 30d pairwise Pearson correlation between all sector EW indices.", src:"CoinGecko Pro — Rolling Pearson" },
       ]},
       { label: "Momentum", children: [
-        { key:"sec-mom",    label:"30d Rolling return",  sub:"Rolling N-day return of equal-weighted sector index", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-zscore", label:"Z-score of returns",  sub:"Z-score of daily returns vs rolling window",          src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-mom",        label:"30d Rolling return",     sub:"Rolling N-day return of equal-weighted sector index",                                   src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-zscore",     label:"Z-score of returns",     sub:"Z-score of daily returns vs rolling window",                                            src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-cumulative", label:"Cumulative returns ranking", sub:"Which sectors delivered the most total return over the chosen period? Bar chart sorted by return.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Volatility", children: [
+        { key:"sec-vol",        label:"Realized volatility",    sub:"Which sectors carry the most risk? 30d rolling annualized realized vol of EW daily log returns.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-drawdown",   label:"Drawdown from peak",     sub:"How far is each sector from its best recent level? Rolling drawdown from peak of EW index.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Breadth", children: [
+        { key:"sec-breadth",    label:"Breadth indicator",      sub:"Is a sector rally broad-based or carried by a few names? % of constituents above their 50d SMA.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Derivatives", children: [
+        { key:"sec-funding",    label:"Sector funding rate",    sub:"Is the derivatives market paying a premium to be long or short each sector? Avg 8h funding rate by sector.", src:"CoinGecko Pro + Derivatives" },
+        { key:"sec-oi",         label:"Sector open interest",  sub:"How much leveraged positioning is in each sector? Sum of OI (USD) across constituents.",  src:"CoinGecko Pro + Derivatives" },
       ]},
       { label: "Rotation", children: [
-        { key:"sec-rrg", label:"RRG scatter", sub:"Shows which sectors are leading the market, catching up, losing steam, or lagging — and which direction they're rotating.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-rrg",        label:"RRG scatter",            sub:"Shows which sectors are leading the market, catching up, losing steam, or lagging — and which direction they're rotating.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Analysis", children: [
-        { key:"ana-bubble", label:"Momentum vs correlation", sub:"Bubble · Y = momentum · X = autocorrelation · Size = market cap", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"ana-bubble",     label:"Momentum vs correlation", sub:"Bubble · Y = momentum · X = autocorrelation · Size = market cap",                    src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-sharpe",     label:"Risk-adjusted returns",  sub:"Which sectors deliver the best return per unit of risk? Scatter: x=30d vol, y=30d return.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
     ]
   },
@@ -508,14 +523,25 @@ const TABS = {
     label: "Bitcoin",
     groups: [
       { label: "Cycle analysis", children: [
-        { key:"btc-epochs", label:"Halving epochs",      sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5",    src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-cycles", label:"Bear market cycles",  sub:"BTC indexed to peak (peak = 100) · Days since peak",             src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-epochs",   label:"Halving epochs",       sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5",            src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-cycles",   label:"Bear market cycles",   sub:"BTC indexed to peak (peak = 100) · Days since peak",                    src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-bull",     label:"Bull market cycles",   sub:"How does the current rally compare to prior bull runs? BTC indexed to cycle trough (=100), days since trough.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Rolling performance", children: [
-        { key:"btc-rolling", label:"Rolling return",     sub:"BTC N-day rolling return (%) · Green = positive · Red = negative", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-rolling",  label:"Rolling return",       sub:"BTC N-day rolling return (%) · Green = positive · Red = negative",      src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-realvol",  label:"Realized volatility",  sub:"Is BTC volatility expanding or contracting? 30d, 90d, and 180d rolling annualized vol plotted together.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-drawdown", label:"Drawdown from ATH",    sub:"How far is BTC from its all-time high? Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Bitcoin vs Gold", children: [
-        { key:"btc-gold",   label:"Bitcoin vs Gold",     sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)",    src:"CoinGecko Pro + yfinance" },
+        { key:"btc-gold",       label:"Bitcoin vs Gold",    sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)",            src:"CoinGecko Pro + yfinance" },
+        { key:"btc-gold-ratio", label:"BTC/Gold ratio",     sub:"Is BTC gaining or losing ground against gold? BTC price divided by gold price.", src:"CoinGecko Pro + yfinance" },
+      ]},
+      { label: "Dominance", children: [
+        { key:"btc-dominance", label:"BTC market dominance", sub:"Is capital flowing into or out of BTC relative to all crypto? BTC mcap as % of total crypto mcap.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Derivatives", children: [
+        { key:"btc-funding",   label:"Funding rate",         sub:"Is the futures market crowded long or short? BTC perpetual 8h funding rate, bar chart.", src:"CoinGecko Pro + Derivatives" },
+        { key:"btc-oi",        label:"Open interest",        sub:"How much leverage is in the BTC market? Total BTC OI in USD with price overlay.",       src:"CoinGecko Pro + Derivatives" },
       ]},
     ]
   },
@@ -523,10 +549,21 @@ const TABS = {
     label: "Altcoins",
     groups: [
       { label: "Price Action", children: [
-        { key:"alt-price",   label:"Price comparison",  sub:"Altcoin price · Rebased to 100",                                    src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-price",            label:"Price comparison",        sub:"Altcoin price · Rebased to 100",                                                      src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Relative Performance", children: [
-        { key:"alt-scatter", label:"Performance vs BTC", sub:"Scatter · Y = % vs BTC · X = volatility vs BTC · period-adjusted", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-scatter",          label:"Performance vs BTC",      sub:"Scatter · Y = % vs BTC · X = volatility vs BTC · period-adjusted",                   src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-altseason",        label:"Altseason indicator",     sub:"Is it altseason? % of top-50 alts (ex-BTC) outperforming BTC over a rolling 90d window.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-beta",             label:"Beta to BTC",             sub:"Which alts amplify BTC moves? Scatter: x=60d beta to BTC, y=60d alpha (annualized).", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Correlation", children: [
+        { key:"alt-heatmap",          label:"Correlation heatmap",     sub:"Which altcoins move together and which provide genuine diversification? Rolling 30d pairwise Pearson correlations.", src:"CoinGecko Pro — Rolling Pearson" },
+      ]},
+      { label: "Drawdown", children: [
+        { key:"alt-ath-drawdown",     label:"Distance from ATH",       sub:"How beaten-down is each alt? Current drawdown from all-time high, sorted worst-first.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Derivatives", children: [
+        { key:"alt-funding-heatmap",  label:"Funding rate heatmap",    sub:"Where is the derivatives market most crowded across alts? Heatmap of funding rates by asset over time.", src:"CoinGecko Pro + Derivatives" },
       ]},
     ]
   },
@@ -534,7 +571,20 @@ const TABS = {
     label: "Macro",
     groups: [
       { label: "Price Action", children: [
-        { key:"mac-price", label:"Price comparison", sub:"Macro assets · Rebased to 100", src:"Yahoo Finance via yfinance" },
+        { key:"mac-price",        label:"Price comparison",             sub:"Macro assets · Rebased to 100",                                                          src:"Yahoo Finance via yfinance" },
+      ]},
+      { label: "Correlation", children: [
+        { key:"mac-matrix",       label:"Macro vs crypto correlation",  sub:"How correlated is crypto to traditional markets? 30d Pearson correlation heatmap: macro assets vs crypto sectors.", src:"Yahoo Finance + CoinGecko Pro" },
+        { key:"mac-dxy-btc",      label:"DXY vs BTC",                  sub:"Is dollar strength suppressing crypto? DXY and BTC plotted together with rolling correlation.", src:"Yahoo Finance + CoinGecko Pro" },
+      ]},
+      { label: "Risk Regime", children: [
+        { key:"mac-risk",         label:"Risk-on / Risk-off indicator", sub:"Is the macro environment supportive for crypto? Composite score from VIX + credit spreads + DXY.", src:"Yahoo Finance" },
+      ]},
+      { label: "Rates", children: [
+        { key:"mac-real-yields",  label:"Real yields vs BTC",           sub:"Are falling real yields driving crypto? 10Y real yield (^TNX) vs BTC.",                  src:"Yahoo Finance + CoinGecko Pro" },
+      ]},
+      { label: "Flows", children: [
+        { key:"mac-stablecoin",   label:"Stablecoin supply",            sub:"Is new capital entering crypto via stablecoins? Total market cap of stablecoin-sector assets over time.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
     ]
   },
@@ -750,7 +800,14 @@ async function selectView(tab, key) {
 
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
-  if (key === 'ana-bubble' || key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi' || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling' || key === 'sec-rrg') {
+  const AUTO_VIEWS = new Set([
+    'ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
+    'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi',
+    'alt-altseason','alt-beta','alt-ath-drawdown',
+    'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+  ]);
+  if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
     document.getElementById('empty-msg').textContent = 'Loading…';
     setTimeout(fetchCurrent, 100);
@@ -758,17 +815,30 @@ async function selectView(tab, key) {
 }
 
 // ── Right panel ───────────────────────────────────────────────────────────────
+const NEW_AUTO_KEYS = new Set([
+  'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi',
+  'alt-altseason','alt-beta','alt-ath-drawdown',
+  'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+]);
+const SELECTION_KEYS = new Set([
+  'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
+  'alt-heatmap','alt-funding-heatmap',
+]);
+
 function buildRightPanel(tab, key) {
   const rp          = document.getElementById('right-panel');
-  const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi';
+  const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi' || key === 'btc-bull';
   const isTradFi   = key === 'btc-tradfi';
   const isBubble    = key === 'ana-bubble';
   const isRRG       = key === 'sec-rrg';
-  const needsSearch = tab !== 'sector' && !isBtcView && key !== 'alt-scatter' && key !== 'btc-gold' && key !== 'btc-rolling';
+  const isNewAuto   = NEW_AUTO_KEYS.has(key);
+  const isSelChart  = SELECTION_KEYS.has(key);
+  const needsSearch = tab !== 'sector' && !isBtcView && key !== 'alt-scatter' && key !== 'btc-gold' && key !== 'btc-rolling' && !isNewAuto;
   const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble' || key === 'alt-scatter' || key === 'btc-rolling';
   const needsVersus = key === 'sec-vs';
-  const isAutoView  = isBubble || isRRG || isBtcView || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling';
-  const showList    = !isAutoView;
+  const isAutoView  = isBubble || isRRG || isBtcView || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling' || isNewAuto;
+  const showList    = !isAutoView || isSelChart;
 
   let html = '';
 
@@ -880,6 +950,23 @@ function buildRightPanel(tab, key) {
         <label>days after event</label>
       </div>
     </div>`;
+  } else if (isNewAuto && !isSelChart) {
+    // Auto-view with date range panel
+    html += `<div class="rp-block">
+      <div class="rp-label">Period</div>
+      <div class="date-grid">
+        <div><label>From</label><input type="date" id="rp-from"></div>
+        <div><label>To</label><input type="date" id="rp-to"></div>
+      </div>
+      <div class="presets" id="rp-presets">
+        <button class="preset" data-days="30">1M</button>
+        <button class="preset" data-days="90">3M</button>
+        <button class="preset active" data-days="365">1Y</button>
+        <button class="preset" data-days="730">2Y</button>
+        <button class="preset" data-days="1095">3Y</button>
+        <button class="preset" data-days="0">All</button>
+      </div>
+    </div>`;
   } else {
     html += `<div class="rp-block">
       <div class="rp-label">Period</div>
@@ -951,12 +1038,17 @@ function buildRightPanel(tab, key) {
   </div>`;
 
   // Asset/sector list
-  if (showList) {
+  if (isSelChart) {
     html += `<div class="rp-block" style="padding:8px 14px 6px">
       <div class="rp-label">${tab === 'sector' ? 'Sectors' : 'Assets'}</div>
     </div>
     <div class="rp-list" id="rp-list"></div>`;
-  } else if (isBubble || isRRG) {
+  } else if (showList && !isNewAuto) {
+    html += `<div class="rp-block" style="padding:8px 14px 6px">
+      <div class="rp-label">${tab === 'sector' ? 'Sectors' : 'Assets'}</div>
+    </div>
+    <div class="rp-list" id="rp-list"></div>`;
+  } else if (isBubble || isRRG || isNewAuto) {
     html += `<div style="padding:12px 14px;font-size:13px;color:var(--muted)">All sectors shown automatically</div>`;
   }
 
@@ -1293,10 +1385,44 @@ async function fetchCurrent() {
     return;
   }
 
-  if (activeView?.key === 'btc-epochs' || activeView?.key === 'btc-cycles') {
+  if (activeView?.key === 'btc-epochs' || activeView?.key === 'btc-cycles' || activeView?.key === 'btc-bull') {
     const win = document.getElementById('rp-window')?.value || (activeView.key === 'btc-epochs' ? '1400' : '1000');
     const to  = new Date().toISOString().split('T')[0];
-    await fetchBtcChart(activeView.key === 'btc-epochs' ? 'epochs' : 'cycles', null, to, win);
+    if (activeView.key === 'btc-bull') {
+      await fetchBtcBull(win);
+    } else {
+      await fetchBtcChart(activeView.key === 'btc-epochs' ? 'epochs' : 'cycles', null, to, win);
+    }
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
+  // New auto-view charts
+  const newAutoKey = activeView?.key;
+  if (NEW_AUTO_KEYS.has(newAutoKey)) {
+    const from = document.getElementById('rp-from')?.value || '2022-01-01';
+    const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
+    switch (newAutoKey) {
+      case 'sec-dominance':  await fetchSectorDominance(from, to); break;
+      case 'sec-xheatmap':   await fetchSectorXHeatmap(from, to); break;
+      case 'sec-cumulative': await fetchSectorCumulative(from, to); break;
+      case 'sec-sharpe':     await fetchSectorSharpe(to); break;
+      case 'btc-bull':       await fetchBtcBull(); break;
+      case 'btc-realvol':    await fetchBtcRealvol(from, to); break;
+      case 'btc-drawdown':   await fetchBtcDrawdownATH(from, to); break;
+      case 'btc-gold-ratio': await fetchBtcGoldRatio(from, to); break;
+      case 'btc-dominance':  await fetchBtcDominance(from, to); break;
+      case 'btc-funding':    await fetchBtcFunding(from, to); break;
+      case 'btc-oi':         await fetchBtcOI(from, to); break;
+      case 'alt-altseason':  await fetchAltAltseason(from, to); break;
+      case 'alt-beta':       await fetchAltBeta(to); break;
+      case 'alt-ath-drawdown': await fetchAltATHDrawdown(); break;
+      case 'mac-matrix':     await fetchMacroMatrix(from, to); break;
+      case 'mac-dxy-btc':    await fetchMacroDxyBtc(from, to); break;
+      case 'mac-risk':       await fetchMacroRisk(from, to); break;
+      case 'mac-real-yields': await fetchMacroRealYields(from, to); break;
+      case 'mac-stablecoin': await fetchMacroStablecoin(from, to); break;
+    }
     document.getElementById('chart-spin').classList.remove('on');
     return;
   }
@@ -1385,6 +1511,31 @@ async function fetchCurrent() {
   } else if (key === 'alt-scatter') {
     url = null;
     await fetchAltScatter(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'sec-vol') {
+    url = `/api/sector-vol?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMom = true;
+  } else if (key === 'sec-drawdown') {
+    url = `/api/sector-drawdown?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMom = true;
+  } else if (key === 'sec-breadth') {
+    url = `/api/sector-breadth?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMom = true;
+  } else if (key === 'sec-funding') {
+    url = `/api/sector-funding?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMom = true;
+  } else if (key === 'sec-oi') {
+    url = `/api/sector-oi?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMcap = true;
+  } else if (key === 'alt-heatmap') {
+    url = null;
+    await fetchAltHeatmap(selected, from, to);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'alt-funding-heatmap') {
+    url = null;
+    await fetchAltFundingHeatmap(selected, from, to);
     document.getElementById('chart-spin').classList.remove('on');
     return;
   } else {
@@ -2969,6 +3120,588 @@ async function fetchAltScatter(from, to, days) {
   } finally {
     document.getElementById('chart-spin').classList.remove('on');
   }
+}
+
+// ── Heatmap helpers ───────────────────────────────────────────────────────────
+function heatCorr(v) {
+  if (v === null || v === undefined) return 'rgba(60,60,60,0.6)';
+  const t = (v + 1) / 2;
+  if (t < 0.5) {
+    const f = t * 2;
+    return `rgb(${Math.round(220)},${Math.round(60 + 195*f)},${Math.round(60 + 195*f)})`;
+  } else {
+    const f = (t - 0.5) * 2;
+    return `rgb(${Math.round(255 - 195*f)},${Math.round(220)},${Math.round(255 - 195*f)})`;
+  }
+}
+function heatFunding(v, maxAbs) {
+  if (v === null || v === undefined) return 'rgba(60,60,60,0.6)';
+  const t = Math.max(-1, Math.min(1, v / (maxAbs || 0.001)));
+  return t > 0
+    ? `rgba(236,91,91,${0.15 + 0.85 * t})`
+    : `rgba(0,214,74,${0.15 + 0.85 * Math.abs(t)})`;
+}
+function drawHeatmapCanvas(rowLabels, colLabels, matrix, colorFn) {
+  if (chart) { chart.destroy(); chart = null; }
+  const box = document.getElementById('chart-box');
+  const canvas = document.getElementById('myChart');
+  const W = box.clientWidth  || 600;
+  const H = box.clientHeight || 400;
+  canvas.width  = W;
+  canvas.height = H;
+  const cx = canvas.getContext('2d');
+  cx.clearRect(0, 0, W, H);
+  const nR = rowLabels.length, nC = colLabels.length;
+  if (!nR || !nC) return;
+  const padL = 120, padT = 60, padB = 10, padR = 10;
+  const cellW = (W - padL - padR) / nC;
+  const cellH = (H - padT - padB) / nR;
+  cx.font = '11px monospace';
+  for (let i = 0; i < nR; i++) {
+    for (let j = 0; j < nC; j++) {
+      const v = Array.isArray(matrix[i]) ? matrix[i][j] : null;
+      const x = padL + j * cellW, y = padT + i * cellH;
+      cx.fillStyle = colorFn(v, 0.05);
+      cx.fillRect(x, y, cellW - 1, cellH - 1);
+      if (v !== null && v !== undefined) {
+        cx.fillStyle = Math.abs(v) > 0.5 ? '#111' : '#eee';
+        cx.textAlign = 'center';
+        cx.textBaseline = 'middle';
+        cx.fillText(v.toFixed(2), x + cellW / 2, y + cellH / 2);
+      }
+    }
+    cx.fillStyle = '#aaa';
+    cx.textAlign = 'right';
+    cx.textBaseline = 'middle';
+    cx.fillText(rowLabels[i], padL - 4, padT + i * cellH + cellH / 2);
+  }
+  for (let j = 0; j < nC; j++) {
+    cx.save();
+    cx.fillStyle = '#aaa';
+    cx.font = '11px monospace';
+    cx.textAlign = 'right';
+    cx.textBaseline = 'middle';
+    cx.translate(padL + j * cellW + cellW / 2, padT - 8);
+    cx.rotate(-Math.PI / 4);
+    cx.fillText(colLabels[j], 0, 0);
+    cx.restore();
+  }
+}
+
+// ── Chart defaults ─────────────────────────────────────────────────────────────
+const CDEFAULT = {
+  animation: false, responsive: true, maintainAspectRatio: false,
+  interaction: { mode: 'index', intersect: false },
+};
+const XTICK = { color: '#888', font: { family: 'monospace', size: 11 } };
+const YTICK = { color: '#888', font: { family: 'monospace', size: 11 } };
+const XGRID = { color: 'rgba(255,255,255,0.04)' };
+const YGRID = { color: 'rgba(255,255,255,0.04)' };
+function spinOn()  { document.getElementById('chart-spin').classList.add('on'); document.getElementById('chart-empty').style.display = 'none'; }
+function showErr(e){ document.getElementById('chart-empty').style.display = 'flex'; document.getElementById('empty-msg').textContent = `Error: ${e.message}`; }
+function mkChart(type, data, options, plugins) {
+  if (chart) { chart.destroy(); chart = null; }
+  const ctx2 = document.getElementById('myChart').getContext('2d');
+  chart = new Chart(ctx2, { type, data, options: Object.assign({}, CDEFAULT, options), plugins: plugins || [] });
+  return chart;
+}
+function setTitle(t, s) {
+  document.getElementById('chart-title').textContent = t;
+  if (s) document.getElementById('chart-src').textContent = s;
+}
+function fmtBig(v) {
+  if (v == null) return '—';
+  if (Math.abs(v) >= 1e9) return (v/1e9).toFixed(1)+'B';
+  if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(0)+'M';
+  if (Math.abs(v) >= 1e3) return (v/1e3).toFixed(0)+'K';
+  return v.toFixed(0);
+}
+
+// ── Sector: Dominance ─────────────────────────────────────────────────────────
+async function fetchSectorDominance(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/sector-dominance?from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    const sectors = Object.keys(data);
+    if (!sectors.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data[sectors[0]].dates,
+      datasets: sectors.map(s => ({
+        label: s, data: data[s].values,
+        borderColor: data[s].color, backgroundColor: data[s].color + '88',
+        fill: true, pointRadius: 0, borderWidth: 1, tension: 0.1,
+      }))
+    }, {
+      scales: {
+        x: { ticks: XTICK, grid: XGRID },
+        y: { stacked: true, min: 0, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('Sector Market Cap Dominance (%)', 'Source: CoinGecko · mcap weighted');
+  } catch(e) { showErr(e); }
+}
+
+// ── Sector: Cross-Heatmap ─────────────────────────────────────────────────────
+async function fetchSectorXHeatmap(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/sector-xheatmap?from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    drawHeatmapCanvas(data.sectors, data.sectors, data.matrix, heatCorr);
+    setTitle('Cross-Sector Correlation Heatmap', 'Source: CoinGecko · 30d rolling Pearson');
+  } catch(e) { showErr(e); }
+}
+
+// ── Sector: Cumulative Return ─────────────────────────────────────────────────
+async function fetchSectorCumulative(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/sector-cumulative?from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    const entries = Object.entries(data).sort((a, b) => b[1].value - a[1].value);
+    mkChart('bar', {
+      labels: entries.map(e => e[0]),
+      datasets: [{ label: 'Cumulative Return', data: entries.map(e => e[1].value),
+        backgroundColor: entries.map(e => e[1].value >= 0 ? (e[1].color+'cc') : 'rgba(236,91,91,0.8)'),
+        borderWidth: 0 }]
+    }, {
+      scales: {
+        x: { ticks: XTICK, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v.toFixed(1)+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('Sector Cumulative Returns', 'Source: CoinGecko · equal-weighted');
+  } catch(e) { showErr(e); }
+}
+
+// ── Sector: Sharpe / Risk-Return ──────────────────────────────────────────────
+async function fetchSectorSharpe(to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/sector-sharpe?to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    const pts = Object.entries(data).map(([s, v]) => ({ label: s, x: v.x, y: v.y, color: v.color }));
+    mkChart('scatter', {
+      datasets: [{ data: pts.map(p => ({ x: p.x, y: p.y, label: p.label })),
+        backgroundColor: pts.map(p => p.color + 'cc'), pointRadius: 8, pointHoverRadius: 10 }]
+    }, {
+      scales: {
+        x: { title: { display: true, text: '30d Vol (%)', color: '#888' }, ticks: XTICK, grid: XGRID },
+        y: { title: { display: true, text: '30d Return (%)', color: '#888' }, ticks: YTICK, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    }, [{
+      id: 'sectorLabels',
+      afterDraw(ch) {
+        const c = ch.ctx; c.save(); c.font = '11px monospace'; c.textAlign = 'left';
+        ch.data.datasets[0].data.forEach((pt, i) => {
+          const el = ch.getDatasetMeta(0).data[i]; if (!el) return;
+          c.fillStyle = pts[i].color;
+          c.fillText(pt.label, el.x + 6, el.y - 4);
+        });
+        c.restore();
+      }
+    }]);
+    setTitle('Sector Risk vs Return (30d)', 'Source: CoinGecko · equal-weighted');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Bull Cycles ──────────────────────────────────────────────────────────
+async function fetchBtcBull() {
+  spinOn();
+  try {
+    const data = await fetch('/api/btc-bull?days=1000').then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    const labels = Object.keys(data);
+    if (!labels.length) throw new Error('no data');
+    const COLS = ['#F7931A', '#00D64A', '#4FC3F7'];
+    mkChart('line', {
+      datasets: labels.map((lbl, i) => ({
+        label: lbl,
+        data: data[lbl].days.map((d, j) => ({ x: d, y: data[lbl].values[j] })),
+        borderColor: COLS[i % COLS.length], backgroundColor: 'transparent',
+        pointRadius: 0, borderWidth: 2, tension: 0,
+      }))
+    }, {
+      scales: {
+        x: { type: 'linear', title: { display: true, text: 'Days from trough', color: '#888' }, ticks: XTICK, grid: XGRID },
+        y: { type: 'logarithmic', title: { display: true, text: 'Index (trough=100)', color: '#888' }, ticks: YTICK, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('BTC Bull Cycles — Indexed to Trough', 'Source: CoinGecko · log scale');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Realized Volatility ──────────────────────────────────────────────────
+async function fetchBtcRealvol(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-realvol?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: '30d Vol',  data: data.vol_30d,  borderColor: '#F7931A', backgroundColor: 'transparent', pointRadius: 0, borderWidth: 2, tension: 0 },
+        { label: '90d Vol',  data: data.vol_90d,  borderColor: '#4FC3F7', backgroundColor: 'transparent', pointRadius: 0, borderWidth: 2, tension: 0 },
+        { label: '180d Vol', data: data.vol_180d, borderColor: '#00D64A', backgroundColor: 'transparent', pointRadius: 0, borderWidth: 2, tension: 0 },
+      ]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { title: { display: true, text: 'Annualized Vol (%)', color: '#888' }, ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('BTC Realized Volatility (Annualized)', 'Source: CoinGecko · log-return std dev');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Drawdown from ATH ────────────────────────────────────────────────────
+async function fetchBtcDrawdownATH(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-drawdown?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{ label: 'Drawdown from ATH', data: data.values,
+        borderColor: '#EC5B5B', backgroundColor: 'rgba(236,91,91,0.15)',
+        fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0 }]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { max: 0, ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('BTC Drawdown from All-Time High', 'Source: CoinGecko · running ATH');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Gold Ratio ───────────────────────────────────────────────────────────
+async function fetchBtcGoldRatio(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-gold-ratio?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{ label: 'BTC/Gold', data: data.values,
+        borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.1)',
+        fill: true, pointRadius: 0, borderWidth: 2, tension: 0 }]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { type: 'logarithmic', ticks: YTICK, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('BTC / Gold Ratio', 'Source: CoinGecko + GLD ETF');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Dominance ────────────────────────────────────────────────────────────
+async function fetchBtcDominance(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-dominance?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{ label: 'BTC Dominance', data: data.values,
+        borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.1)',
+        fill: true, pointRadius: 0, borderWidth: 2, tension: 0 }]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v.toFixed(1)+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('BTC Market Cap Dominance', 'Source: CoinGecko · mcap ratio');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Funding Rate ─────────────────────────────────────────────────────────
+async function fetchBtcFunding(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-funding?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('bar', {
+      labels: data.dates,
+      datasets: [
+        { type: 'bar',  label: 'Funding Rate', data: data.values,
+          backgroundColor: data.values.map(v => (v||0) >= 0 ? 'rgba(247,147,26,0.55)' : 'rgba(0,214,74,0.55)'),
+          borderWidth: 0, order: 2 },
+        { type: 'line', label: '7d MA', data: data.ma7,
+          borderColor: '#fff', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, order: 1 },
+      ]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => (v*100).toFixed(3)+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('BTC Perpetual Funding Rate', 'Source: Binance · 8h avg per day');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Open Interest ────────────────────────────────────────────────────────
+async function fetchBtcOI(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-oi?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'Open Interest', data: data.oi_values,
+          borderColor: '#4FC3F7', backgroundColor: 'rgba(79,195,247,0.1)',
+          fill: true, pointRadius: 0, borderWidth: 2, tension: 0, yAxisID: 'y' },
+        { label: 'BTC Price', data: data.btc_prices,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { position: 'left',  ticks: { ...YTICK, color: '#4FC3F7', callback: v => fmtBig(v) }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, color: '#F7931A', callback: v => '$'+fmtBig(v) }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('BTC Open Interest', 'Source: Binance · USD notional');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: Altseason Index ──────────────────────────────────────────────────────
+async function fetchAltAltseason(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-altseason?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'Alts outperforming BTC (%)', data: data.values,
+          borderColor: '#4FC3F7', backgroundColor: 'rgba(79,195,247,0.15)',
+          fill: true, pointRadius: 0, borderWidth: 2, tension: 0.1 },
+        { label: 'BTC Dominance (%)', data: data.btc_dominance,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { min: 0, max: 100, ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID },
+        y2: { position: 'right', min: 0, max: 100, ticks: { ...YTICK, color: '#F7931A', callback: v => v.toFixed(0)+'%' }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('Altseason Index — Alts vs BTC (90d window)', 'Source: CoinGecko · top 50 ex-BTC');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: Beta vs BTC ──────────────────────────────────────────────────────────
+async function fetchAltBeta(to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-beta?to=${to}`).then(r=>r.json());
+    if (!data.points?.length) throw new Error('no data');
+    const pts = data.points;
+    mkChart('scatter', {
+      datasets: [{ data: pts.map(p => ({ x: p.beta, y: p.alpha, label: p.symbol })),
+        backgroundColor: pts.map(p => p.color_sector + 'cc'),
+        pointRadius: 5, pointHoverRadius: 7 }]
+    }, {
+      scales: {
+        x: { title: { display: true, text: 'Beta vs BTC', color: '#888' }, ticks: XTICK, grid: XGRID },
+        y: { title: { display: true, text: 'Alpha (annualized %)', color: '#888' }, ticks: { ...YTICK, callback: v => v.toFixed(0)+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.raw.label}  β=${ctx.raw.x.toFixed(2)}  α=${ctx.raw.y.toFixed(1)}%` } } }
+    });
+    setTitle('Alt Beta & Alpha vs BTC (60d)', 'Source: CoinGecko · OLS regression');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: ATH Drawdown ─────────────────────────────────────────────────────────
+async function fetchAltATHDrawdown() {
+  spinOn();
+  try {
+    const data = await fetch('/api/alt-ath-drawdown').then(r=>r.json());
+    if (!data.points?.length) throw new Error('no data');
+    const pts = data.points.slice(0, 30);
+    mkChart('bar', {
+      labels: pts.map(p => p.symbol),
+      datasets: [{ label: 'Drawdown from ATH', data: pts.map(p => p.drawdown_pct),
+        backgroundColor: 'rgba(236,91,91,0.7)', borderWidth: 0 }]
+    }, {
+      indexAxis: 'y',
+      scales: {
+        x: { max: 0, ticks: { ...XTICK, callback: v => v+'%' }, grid: XGRID },
+        y: { ticks: YTICK, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('Altcoin Drawdown from ATH (Top 30)', 'Source: CoinGecko · all-time high');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: Correlation Heatmap ──────────────────────────────────────────────────
+async function fetchAltHeatmap(symbols, from, to) {
+  spinOn();
+  try {
+    const syms = symbols.join(',');
+    const data = await fetch(`/api/alt-heatmap?symbols=${encodeURIComponent(syms)}&from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    drawHeatmapCanvas(data.symbols, data.symbols, data.matrix, heatCorr);
+    setTitle('Altcoin Correlation Heatmap (30d)', 'Source: CoinGecko · Pearson');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: Funding Heatmap ──────────────────────────────────────────────────────
+async function fetchAltFundingHeatmap(symbols, from, to) {
+  spinOn();
+  try {
+    const syms = symbols.join(',');
+    const data = await fetch(`/api/alt-funding-heatmap?symbols=${encodeURIComponent(syms)}&from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    if (!data.symbols?.length) throw new Error('no data');
+    const maxAbs = Math.max(...data.symbols.flatMap(s => (data.matrix[s]||[]).filter(v=>v!=null).map(Math.abs)), 0.001);
+    const matrix = data.symbols.map(s => data.matrix[s] || []);
+    drawHeatmapCanvas(data.symbols, data.dates, matrix, (v) => heatFunding(v, maxAbs));
+    setTitle('Altcoin Funding Rate Heatmap', 'Source: Binance/Bybit · 8h avg');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: Correlation Matrix ─────────────────────────────────────────────────
+async function fetchMacroMatrix(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-matrix?from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    drawHeatmapCanvas(data.macro_tickers, data.crypto_sectors, data.matrix, heatCorr);
+    setTitle('Macro vs Crypto Sector Correlation', 'Source: CoinGecko + Yahoo Finance · 30d');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: DXY vs BTC ─────────────────────────────────────────────────────────
+async function fetchMacroDxyBtc(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-dxy-btc?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'DXY', data: data.dxy,
+          borderColor: '#4FC3F7', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y' },
+        { label: 'BTC', data: data.btc,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+        { label: '30d Corr', data: data.correlation,
+          borderColor: '#EC5B5B', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 2, tension: 0.1, yAxisID: 'y3',
+          borderDash: [4, 3] },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { position: 'left',  ticks: { ...YTICK, color: '#4FC3F7' }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, color: '#F7931A', callback: v => '$'+fmtBig(v) }, grid: { display: false } },
+        y3: { display: false, min: -1, max: 1 },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('DXY vs BTC + 30d Rolling Correlation', 'Source: Yahoo Finance + CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: Risk-On/Off Score ──────────────────────────────────────────────────
+async function fetchMacroRisk(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-risk?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'Risk Score (0-100)', data: data.score,
+          borderColor: '#00D64A', backgroundColor: 'rgba(0,214,74,0.12)',
+          fill: true, pointRadius: 0, borderWidth: 2, tension: 0.1, yAxisID: 'y' },
+        { label: 'BTC Price', data: data.btc,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { min: 0, max: 100, position: 'left',  ticks: { ...YTICK, color: '#00D64A' }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, color: '#F7931A', callback: v => '$'+fmtBig(v) }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('Macro Risk-On/Off Score', 'Source: Yahoo Finance · VIX + DXY + HYG/LQD');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: Real Yields ────────────────────────────────────────────────────────
+async function fetchMacroRealYields(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-real-yields?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: '10Y Yield', data: data.yield_10y,
+          borderColor: '#4FC3F7', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y' },
+        { label: 'BTC Price', data: data.btc,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { position: 'left',  ticks: { ...YTICK, color: '#4FC3F7', callback: v => v.toFixed(2)+'%' }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, color: '#F7931A', callback: v => '$'+fmtBig(v) }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('US 10Y Yield vs BTC Price', 'Source: Yahoo Finance (^TNX) + CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: Stablecoin Supply ──────────────────────────────────────────────────
+async function fetchMacroStablecoin(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-stablecoin?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{ label: 'Stablecoin Market Cap', data: data.values,
+        borderColor: '#00D64A', backgroundColor: 'rgba(0,214,74,0.12)',
+        fill: true, pointRadius: 0, borderWidth: 2, tension: 0 }]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => '$'+fmtBig(v) }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('Stablecoin Total Market Cap', 'Source: CoinGecko · USDT+USDC+DAI+…');
+  } catch(e) { showErr(e); }
 }
 
 async function boot() {
