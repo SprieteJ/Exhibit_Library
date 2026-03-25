@@ -3,7 +3,7 @@ api/altcoins.py — altcoin price comparison + performance vs BTC scatter
 """
 import math
 from datetime import datetime, timedelta
-from api.shared import get_conn, rebase_series, price_table, ts_cast
+from api.shared import get_conn, rebase_series, price_table, ts_cast, rolling_corr, SECTORS, SECTOR_COLORS
 import psycopg2.extras
 
 
@@ -140,3 +140,404 @@ def handle_alt_scatter(params):
         })
 
     return {"points": points, "btc_return": round(btc_return, 2)}
+
+
+def handle_alt_altseason(params):
+    """% of top-N alts (ex-BTC) outperforming BTC over a rolling window."""
+    date_from = params.get("from",   ["2024-01-01"])[0]
+    date_to   = params.get("to",     ["2099-01-01"])[0]
+    window    = int(params.get("window", ["90"])[0])
+    topn      = min(int(params.get("topn", ["50"])[0]), 250)
+
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Get top-N alts by recent mcap
+    cur.execute("""
+        SELECT p.symbol
+        FROM price_daily p
+        JOIN (
+            SELECT coingecko_id, market_cap_usd
+            FROM marketcap_daily
+            WHERE timestamp::date = (
+                SELECT MAX(timestamp::date) FROM marketcap_daily WHERE timestamp <= NOW()
+            ) AND market_cap_usd > 0
+        ) m ON p.coingecko_id = m.coingecko_id
+        WHERE p.symbol NOT IN ('BTC','USDT','USDC','DAI','BUSD','TUSD','USDP','FDUSD','PYUSD')
+        GROUP BY p.symbol, m.market_cap_usd
+        ORDER BY m.market_cap_usd DESC
+        LIMIT %s
+    """, (topn,))
+    symbols = [r['symbol'] for r in cur.fetchall()]
+
+    if not symbols:
+        conn.close()
+        return {"dates": [], "values": [], "btc_dominance": []}
+
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = ANY(%s)
+          AND timestamp::date >= %s AND timestamp::date <= %s
+          AND price_usd > 0
+        ORDER BY symbol, timestamp
+    """, (['BTC'] + symbols, dt_from_ext, date_to))
+    rows = cur.fetchall()
+
+    # BTC mcap dominance
+    cur.execute("""
+        SELECT b.timestamp::date as date,
+               b.market_cap_usd as btc_mcap,
+               t.total_mcap
+        FROM (
+            SELECT timestamp::date as date, market_cap_usd
+            FROM marketcap_daily
+            WHERE coingecko_id IN (SELECT coingecko_id FROM price_daily WHERE symbol='BTC' LIMIT 1)
+              AND timestamp >= %s AND timestamp <= %s AND market_cap_usd > 0
+        ) b
+        JOIN (
+            SELECT timestamp::date as date, SUM(market_cap_usd) as total_mcap
+            FROM marketcap_daily WHERE timestamp >= %s AND timestamp <= %s AND market_cap_usd > 0
+            GROUP BY timestamp::date
+        ) t ON b.date = t.date
+        ORDER BY b.date
+    """, (date_from, date_to, date_from, date_to))
+    dom_rows = cur.fetchall()
+    conn.close()
+
+    dom_map = {}
+    for row in dom_rows:
+        t = float(row['total_mcap']) if row['total_mcap'] else 0
+        b = float(row['btc_mcap'])   if row['btc_mcap']   else 0
+        if t > 0:
+            dom_map[str(row['date'])] = round(b / t * 100, 4)
+
+    prices = {}
+    for row in rows:
+        sym = row['symbol']
+        if sym not in prices: prices[sym] = {}
+        prices[sym][str(row['date'])] = float(row['price_usd'])
+
+    if 'BTC' not in prices:
+        return {"dates": [], "values": [], "btc_dominance": []}
+
+    all_dates = sorted(set(d for s in prices.values() for d in s))
+    result_dates, result_pcts = [], []
+
+    for d in all_dates:
+        if d < date_from:
+            continue
+        btc_sorted = sorted(prices['BTC'].keys())
+        # find index of d in btc history
+        btc_dates = sorted(prices['BTC'].keys())
+        if d not in prices['BTC']:
+            continue
+        di = btc_dates.index(d)
+        if di < window:
+            continue
+        start_d = btc_dates[di - window]
+        btc_start = prices['BTC'].get(start_d)
+        btc_end   = prices['BTC'].get(d)
+        if not btc_start or not btc_end or btc_start == 0:
+            continue
+        btc_ret = btc_end / btc_start - 1
+
+        count_above = 0
+        count_total = 0
+        for sym in symbols:
+            if sym not in prices or d not in prices[sym]:
+                continue
+            sym_dates = sorted(prices[sym].keys())
+            si = sym_dates.index(d) if d in sym_dates else -1
+            if si < window:
+                continue
+            s_start_d = sym_dates[si - window]
+            s_start = prices[sym].get(s_start_d)
+            s_end   = prices[sym].get(d)
+            if not s_start or not s_end or s_start == 0:
+                continue
+            sym_ret = s_end / s_start - 1
+            count_total += 1
+            if sym_ret > btc_ret:
+                count_above += 1
+
+        if count_total > 0:
+            result_dates.append(d)
+            result_pcts.append(round(count_above / count_total * 100, 2))
+
+    btc_dom_vals = [dom_map.get(d) for d in result_dates]
+    return {"dates": result_dates, "values": result_pcts, "btc_dominance": btc_dom_vals}
+
+
+def handle_alt_beta(params):
+    """OLS beta and alpha of each alt's daily returns vs BTC."""
+    date_to = params.get("to",     ["2099-01-01"])[0]
+    window  = int(params.get("window", ["60"])[0])
+    topn    = min(int(params.get("topn",   ["50"])[0]), 250)
+
+    if date_to == "2099-01-01":
+        date_to = datetime.now().strftime("%Y-%m-%d")
+    try:
+        dt_from = (datetime.strptime(date_to, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_from = "2024-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT p.symbol, ar.sector
+        FROM price_daily p
+        LEFT JOIN asset_registry ar ON p.coingecko_id = ar.coingecko_id
+        JOIN (
+            SELECT coingecko_id, market_cap_usd
+            FROM marketcap_daily
+            WHERE timestamp::date = (
+                SELECT MAX(timestamp::date) FROM marketcap_daily WHERE timestamp <= NOW()
+            ) AND market_cap_usd > 0
+        ) m ON p.coingecko_id = m.coingecko_id
+        WHERE p.symbol NOT IN ('BTC','USDT','USDC','DAI','BUSD','TUSD','USDP','FDUSD','PYUSD')
+        GROUP BY p.symbol, ar.sector, m.market_cap_usd
+        ORDER BY m.market_cap_usd DESC
+        LIMIT %s
+    """, (topn,))
+    sym_sector = {r['symbol']: r['sector'] for r in cur.fetchall()}
+    symbols = list(sym_sector.keys())
+
+    if not symbols:
+        conn.close()
+        return {"points": []}
+
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = ANY(%s)
+          AND timestamp::date >= %s AND timestamp::date <= %s
+          AND price_usd > 0
+        ORDER BY symbol, timestamp
+    """, (['BTC'] + symbols, dt_from, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    prices = {}
+    for row in rows:
+        sym = row['symbol']
+        if sym not in prices: prices[sym] = {}
+        prices[sym][str(row['date'])] = float(row['price_usd'])
+
+    if 'BTC' not in prices or len(prices['BTC']) < window:
+        return {"points": []}
+
+    btc_dates = sorted(prices['BTC'].keys())[-window - 1:]
+    btc_rets  = [
+        math.log(prices['BTC'][btc_dates[i]] / prices['BTC'][btc_dates[i - 1]])
+        for i in range(1, len(btc_dates))
+        if prices['BTC'].get(btc_dates[i]) and prices['BTC'].get(btc_dates[i - 1])
+    ]
+    if len(btc_rets) < 10:
+        return {"points": []}
+
+    btc_mean = sum(btc_rets) / len(btc_rets)
+    btc_var  = sum((r - btc_mean) ** 2 for r in btc_rets) / len(btc_rets)
+
+    points = []
+    for sym in symbols:
+        if sym not in prices: continue
+        sym_dates_sorted = sorted(prices[sym].keys())
+        # align to btc dates
+        common = [d for d in btc_dates[1:] if d in prices[sym]]
+        if len(common) < 10: continue
+        sym_rets_map = {}
+        sym_sorted = sorted(prices[sym].keys())
+        for i in range(1, len(sym_sorted)):
+            d = sym_sorted[i]
+            if prices[sym].get(sym_sorted[i - 1]) and prices[sym].get(d):
+                sym_rets_map[d] = math.log(prices[sym][d] / prices[sym][sym_sorted[i - 1]])
+
+        paired_btc = []
+        paired_sym = []
+        for d in common:
+            b = None
+            bi = btc_dates.index(d) if d in btc_dates else -1
+            if bi > 0:
+                b = math.log(prices['BTC'][btc_dates[bi]] / prices['BTC'][btc_dates[bi - 1]]) if prices['BTC'].get(btc_dates[bi - 1]) else None
+            s = sym_rets_map.get(d)
+            if b is not None and s is not None:
+                paired_btc.append(b)
+                paired_sym.append(s)
+
+        if len(paired_btc) < 10: continue
+        bm = sum(paired_btc) / len(paired_btc)
+        sm = sum(paired_sym) / len(paired_sym)
+        cov = sum((paired_btc[i] - bm) * (paired_sym[i] - sm) for i in range(len(paired_btc))) / len(paired_btc)
+        bvar = sum((r - bm) ** 2 for r in paired_btc) / len(paired_btc)
+        if bvar == 0: continue
+        beta  = cov / bvar
+        alpha = (sm - beta * bm) * 365 * 100  # annualized
+
+        sector = sym_sector.get(sym, '')
+        color  = SECTOR_COLORS.get(sector, '#888888')
+        points.append({
+            "symbol": sym,
+            "beta":   round(beta, 4),
+            "alpha":  round(alpha, 4),
+            "mcap":   0,
+            "color_sector": color,
+        })
+
+    return {"points": points}
+
+
+def handle_alt_heatmap(params):
+    """Pairwise rolling 30d Pearson correlation between selected alts — last value."""
+    symbols   = [s.strip().upper() for s in params.get("symbols", [""])[0].split(",") if s.strip()]
+    date_from = params.get("from",   ["2024-01-01"])[0]
+    date_to   = params.get("to",     ["2099-01-01"])[0]
+    window    = int(params.get("window", ["30"])[0])
+
+    if len(symbols) < 2:
+        return {"error": "need >= 2 symbols"}
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = ANY(%s)
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY symbol, timestamp
+    """, (symbols, date_from, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    prices = {}
+    for row in rows:
+        sym = row['symbol']
+        if sym not in prices: prices[sym] = {}
+        prices[sym][str(row['date'])] = float(row['price_usd'])
+
+    present = [s for s in symbols if s in prices and len(prices[s]) >= window]
+    if len(present) < 2:
+        return {"error": "insufficient data"}
+
+    all_dates = sorted(set(d for s in present for d in prices[s]))
+    n = len(present)
+    matrix = [[None] * n for _ in range(n)]
+
+    for i in range(n):
+        matrix[i][i] = 1.0
+        for j in range(i + 1, n):
+            a, b = present[i], present[j]
+            xa = [prices[a].get(d) for d in all_dates]
+            xb = [prices[b].get(d) for d in all_dates]
+            corr = rolling_corr(xa, xb, window)
+            last = next((v for v in reversed(corr) if v is not None), None)
+            matrix[i][j] = last
+            matrix[j][i] = last
+
+    return {"symbols": present, "matrix": matrix}
+
+
+def handle_alt_ath_drawdown(params):
+    """Current drawdown from all-time high for each asset, sorted worst-first."""
+    symbols = [s.strip().upper() for s in params.get("symbols", [""])[0].split(",") if s.strip()]
+    topn    = min(int(params.get("topn", ["50"])[0]), 250)
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    if not symbols:
+        # use top-N by mcap
+        cur.execute("""
+            SELECT p.symbol
+            FROM price_daily p
+            JOIN (
+                SELECT coingecko_id, market_cap_usd
+                FROM marketcap_daily
+                WHERE timestamp::date = (
+                    SELECT MAX(timestamp::date) FROM marketcap_daily WHERE timestamp <= NOW()
+                ) AND market_cap_usd > 0
+            ) m ON p.coingecko_id = m.coingecko_id
+            WHERE p.symbol NOT IN ('BTC','USDT','USDC','DAI','BUSD','TUSD','USDP','FDUSD','PYUSD')
+            GROUP BY p.symbol, m.market_cap_usd
+            ORDER BY m.market_cap_usd DESC
+            LIMIT %s
+        """, (topn,))
+        symbols = [r['symbol'] for r in cur.fetchall()]
+
+    if not symbols:
+        conn.close()
+        return {"points": []}
+
+    cur.execute("""
+        SELECT symbol,
+               MAX(price_usd) as ath_price,
+               (array_agg(price_usd ORDER BY timestamp DESC))[1] as current_price
+        FROM price_daily
+        WHERE symbol = ANY(%s) AND price_usd > 0
+        GROUP BY symbol
+    """, (symbols,))
+    rows = cur.fetchall()
+    conn.close()
+
+    points = []
+    for row in rows:
+        ath     = float(row['ath_price'])
+        current = float(row['current_price'])
+        if ath > 0:
+            dd = round((current / ath - 1) * 100, 2)
+            points.append({
+                "symbol":        row['symbol'],
+                "drawdown_pct":  dd,
+                "current_price": current,
+                "ath_price":     ath,
+            })
+
+    points.sort(key=lambda p: p['drawdown_pct'])
+    return {"points": points}
+
+
+def handle_alt_funding_heatmap(params):
+    """Daily avg funding rate per asset — heatmap matrix."""
+    symbols   = [s.strip().upper() for s in params.get("symbols", [""])[0].split(",") if s.strip()]
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    if not symbols:
+        return {"symbols": [], "dates": [], "matrix": {}}
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, AVG(funding_rate) as avg_rate
+        FROM funding_8h
+        WHERE symbol = ANY(%s)
+          AND timestamp >= %s AND timestamp <= %s
+        GROUP BY symbol, timestamp::date
+        ORDER BY symbol, timestamp::date
+    """, (symbols, date_from, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    data = {}
+    for row in rows:
+        sym = row['symbol']
+        if sym not in data: data[sym] = {}
+        data[sym][str(row['date'])] = float(row['avg_rate']) if row['avg_rate'] is not None else None
+
+    present = [s for s in symbols if s in data]
+    if not present:
+        return {"symbols": [], "dates": [], "matrix": {}}
+
+    all_dates = sorted(set(d for s in present for d in data[s]))
+    matrix = {}
+    for sym in present:
+        matrix[sym] = [data[sym].get(d) for d in all_dates]
+
+    return {"symbols": present, "dates": all_dates, "matrix": matrix}

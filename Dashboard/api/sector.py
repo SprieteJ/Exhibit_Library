@@ -3,6 +3,7 @@ api/sector.py — sector price, correlation, momentum, bubble, mcap
 """
 import math
 from datetime import datetime, timedelta
+from collections import defaultdict
 from api.shared import (get_conn, SECTORS, SECTOR_COLORS,
                      rebase_series, rolling_corr, fetch_sector_index,
                      price_table, ts_cast)
@@ -295,6 +296,432 @@ def handle_sector_bubble(params):
             "mcap":  total_mcap,
             "color": SECTOR_COLORS.get(sector, "#888888"),
             "count": len(cg_ids),
+        }
+
+    conn.close()
+    return result
+
+
+def handle_sector_dominance(params):
+    """100% stacked area: each sector's mcap as % of total per day."""
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Collect all sector mcaps per date
+    sector_daily = {}  # sector -> {date: mcap}
+    for sector, cg_ids in SECTORS.items():
+        if not cg_ids:
+            continue
+        cur.execute("""
+            SELECT timestamp::date as date, SUM(market_cap_usd) as mcap
+            FROM marketcap_daily
+            WHERE coingecko_id = ANY(%s)
+              AND timestamp >= %s AND timestamp <= %s
+              AND market_cap_usd > 0
+            GROUP BY timestamp::date
+            ORDER BY timestamp::date
+        """, (cg_ids, date_from, date_to))
+        rows = cur.fetchall()
+        sector_daily[sector] = {str(r["date"]): float(r["mcap"]) for r in rows}
+
+    conn.close()
+    if not sector_daily:
+        return {}
+
+    all_dates = sorted(set(d for s in sector_daily.values() for d in s))
+    if not all_dates:
+        return {}
+
+    result = {}
+    for sector in sector_daily:
+        pcts = []
+        for d in all_dates:
+            total = sum(sector_daily[s].get(d, 0) for s in sector_daily)
+            mine  = sector_daily[sector].get(d, 0)
+            pcts.append(round(mine / total * 100, 4) if total > 0 else 0)
+        result[sector] = {
+            "dates":  all_dates,
+            "values": pcts,
+            "color":  SECTOR_COLORS.get(sector, "#888888"),
+        }
+    return result
+
+
+def handle_sector_xheatmap(params):
+    """NxN cross-sector rolling correlation heatmap (last value of rolling window)."""
+    date_from = params.get("from",   ["2024-01-01"])[0]
+    date_to   = params.get("to",     ["2099-01-01"])[0]
+    window    = int(params.get("window", ["30"])[0])
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    sector_series = {}
+    all_dates_set = None
+    for sector, cg_ids in SECTORS.items():
+        if not cg_ids:
+            continue
+        index, dates = fetch_sector_index(cur, cg_ids, date_from, date_to, 'equal', 'daily')
+        if dates:
+            sector_series[sector] = index
+            s = set(dates)
+            all_dates_set = s if all_dates_set is None else all_dates_set & s
+
+    conn.close()
+    if not all_dates_set or len(sector_series) < 2:
+        return {"error": "insufficient data"}
+
+    common_dates = sorted(all_dates_set)
+    sectors = sorted(sector_series.keys())
+    n = len(sectors)
+    matrix = [[None] * n for _ in range(n)]
+
+    for i in range(n):
+        matrix[i][i] = 1.0
+        for j in range(i + 1, n):
+            a, b = sectors[i], sectors[j]
+            xa = [sector_series[a].get(d) for d in common_dates]
+            xb = [sector_series[b].get(d) for d in common_dates]
+            corr = rolling_corr(xa, xb, window)
+            last = next((v for v in reversed(corr) if v is not None), None)
+            matrix[i][j] = last
+            matrix[j][i] = last
+
+    return {"sectors": sectors, "matrix": matrix}
+
+
+def handle_sector_cumulative(params):
+    """Cumulative return per sector over the chosen period — sorted bar chart."""
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector, cg_ids in SECTORS.items():
+        if not cg_ids:
+            continue
+        index, dates = fetch_sector_index(cur, cg_ids, date_from, date_to, 'equal', 'daily')
+        if not dates or len(dates) < 2:
+            continue
+        first = index[dates[0]]
+        last  = index[dates[-1]]
+        if first and first > 0:
+            result[sector] = {
+                "value": round((last / first - 1) * 100, 4),
+                "color": SECTOR_COLORS.get(sector, "#888888"),
+            }
+
+    conn.close()
+    return result
+
+
+def handle_sector_vol(params):
+    """30d rolling annualized realized vol of EW daily log returns."""
+    sectors   = [s.strip() for s in params.get("sectors", [""])[0].split(",") if s.strip()]
+    date_from = params.get("from",   ["2024-01-01"])[0]
+    date_to   = params.get("to",     ["2099-01-01"])[0]
+    window    = int(params.get("window", ["30"])[0])
+
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector in sectors:
+        if sector not in SECTORS:
+            continue
+        index, dates = fetch_sector_index(cur, SECTORS[sector], dt_from_ext, date_to, 'equal', 'daily')
+        if not dates or len(dates) < window + 2:
+            continue
+
+        idx_vals = [index[d] for d in dates]
+        log_rets = [None] + [
+            math.log(idx_vals[i] / idx_vals[i - 1])
+            if idx_vals[i] and idx_vals[i - 1] and idx_vals[i - 1] > 0 else None
+            for i in range(1, len(idx_vals))
+        ]
+
+        vol_dates, vol_values = [], []
+        for i in range(window, len(dates)):
+            wr = [r for r in log_rets[i - window:i] if r is not None]
+            if len(wr) < window // 2:
+                continue
+            mean = sum(wr) / len(wr)
+            std  = math.sqrt(sum((r - mean) ** 2 for r in wr) / len(wr))
+            ann  = std * math.sqrt(365) * 100
+            vol_dates.append(dates[i])
+            vol_values.append(round(ann, 4))
+
+        trimmed = [(d, v) for d, v in zip(vol_dates, vol_values) if d >= date_from]
+        if not trimmed:
+            continue
+        td, tv = zip(*trimmed)
+        result[sector] = {
+            "dates":   list(td),
+            "rebased": list(tv),
+            "count":   len(SECTORS[sector]),
+            "color":   SECTOR_COLORS.get(sector),
+        }
+
+    conn.close()
+    return result
+
+
+def handle_sector_drawdown(params):
+    """Rolling drawdown from peak of EW sector index."""
+    sectors   = [s.strip() for s in params.get("sectors", [""])[0].split(",") if s.strip()]
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector in sectors:
+        if sector not in SECTORS:
+            continue
+        index, dates = fetch_sector_index(cur, SECTORS[sector], date_from, date_to, 'equal', 'daily')
+        if not dates:
+            continue
+
+        idx_vals = [index[d] for d in dates]
+        running_max = idx_vals[0]
+        dd_values = []
+        for v in idx_vals:
+            if v > running_max:
+                running_max = v
+            dd = (v / running_max - 1) * 100 if running_max > 0 else 0
+            dd_values.append(round(dd, 4))
+
+        result[sector] = {
+            "dates":   dates,
+            "rebased": dd_values,
+            "count":   len(SECTORS[sector]),
+            "color":   SECTOR_COLORS.get(sector),
+        }
+
+    conn.close()
+    return result
+
+
+def handle_sector_breadth(params):
+    """% of constituents above their 50d SMA per sector per day."""
+    sectors   = [s.strip() for s in params.get("sectors", [""])[0].split(",") if s.strip()]
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    sma_win   = 50
+
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=sma_win + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector in sectors:
+        if sector not in SECTORS:
+            continue
+        cg_ids = SECTORS[sector]
+        if not cg_ids:
+            continue
+
+        cur.execute("""
+            SELECT coingecko_id, timestamp::date as date, price_usd
+            FROM price_daily
+            WHERE coingecko_id = ANY(%s)
+              AND timestamp >= %s AND timestamp <= %s
+              AND price_usd > 0
+            ORDER BY coingecko_id, timestamp::date
+        """, (cg_ids, dt_from_ext, date_to))
+        rows = cur.fetchall()
+        if not rows:
+            continue
+
+        asset_prices = defaultdict(dict)
+        for row in rows:
+            asset_prices[row['coingecko_id']][str(row['date'])] = float(row['price_usd'])
+
+        all_dates = sorted(set(d for ap in asset_prices.values() for d in ap))
+        breadth_dates, breadth_values = [], []
+
+        for d in all_dates:
+            if d < date_from:
+                continue
+            above = 0
+            total = 0
+            for cid, prices in asset_prices.items():
+                if d not in prices:
+                    continue
+                sorted_d = sorted(prices.keys())
+                idx = sorted_d.index(d) if d in sorted_d else -1
+                if idx < sma_win:
+                    continue
+                window_prices = [prices[sorted_d[k]] for k in range(idx - sma_win, idx)]
+                sma = sum(window_prices) / len(window_prices)
+                total += 1
+                if prices[d] > sma:
+                    above += 1
+            if total > 0:
+                breadth_dates.append(d)
+                breadth_values.append(round(above / total * 100, 4))
+
+        if not breadth_dates:
+            continue
+        result[sector] = {
+            "dates":   breadth_dates,
+            "rebased": breadth_values,
+            "count":   len(cg_ids),
+            "color":   SECTOR_COLORS.get(sector),
+        }
+
+    conn.close()
+    return result
+
+
+def handle_sector_funding(params):
+    """Average 8h funding rate by sector per day."""
+    sectors   = [s.strip() for s in params.get("sectors", [""])[0].split(",") if s.strip()]
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector in sectors:
+        if sector not in SECTORS:
+            continue
+        cg_ids = SECTORS[sector]
+        if not cg_ids:
+            continue
+
+        # Get symbols for these coingecko_ids from asset_registry or funding_8h
+        cur.execute("""
+            SELECT DISTINCT symbol FROM funding_8h
+            WHERE coingecko_id = ANY(%s)
+        """, (cg_ids,))
+        syms = [r['symbol'] for r in cur.fetchall()]
+        if not syms:
+            continue
+
+        cur.execute("""
+            SELECT timestamp::date as date, AVG(funding_rate) as avg_rate
+            FROM funding_8h
+            WHERE coingecko_id = ANY(%s)
+              AND timestamp >= %s AND timestamp <= %s
+            GROUP BY timestamp::date
+            ORDER BY timestamp::date
+        """, (cg_ids, date_from, date_to))
+        rows = cur.fetchall()
+        if not rows:
+            continue
+
+        result[sector] = {
+            "dates":   [str(r['date']) for r in rows],
+            "rebased": [float(r['avg_rate']) if r['avg_rate'] is not None else None for r in rows],
+            "color":   SECTOR_COLORS.get(sector),
+        }
+
+    conn.close()
+    return result
+
+
+def handle_sector_oi(params):
+    """Sum of open interest (USD) across sector constituents per day."""
+    sectors   = [s.strip() for s in params.get("sectors", [""])[0].split(",") if s.strip()]
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector in sectors:
+        if sector not in SECTORS:
+            continue
+        cg_ids = SECTORS[sector]
+        if not cg_ids:
+            continue
+
+        cur.execute("""
+            SELECT timestamp::date as date, SUM(oi_usd) as total_oi
+            FROM open_interest_daily
+            WHERE coingecko_id = ANY(%s)
+              AND timestamp >= %s AND timestamp <= %s
+            GROUP BY timestamp::date
+            ORDER BY timestamp::date
+        """, (cg_ids, date_from, date_to))
+        rows = cur.fetchall()
+        if not rows:
+            continue
+
+        result[sector] = {
+            "dates":   [str(r['date']) for r in rows],
+            "rebased": [float(r['total_oi']) if r['total_oi'] is not None else None for r in rows],
+            "color":   SECTOR_COLORS.get(sector),
+        }
+
+    conn.close()
+    return result
+
+
+def handle_sector_sharpe(params):
+    """Scatter: x=30d vol, y=30d return for each sector at 'to' date."""
+    date_to = params.get("to",     ["2099-01-01"])[0]
+    window  = int(params.get("window", ["30"])[0])
+
+    if date_to == "2099-01-01":
+        date_to = datetime.now().strftime("%Y-%m-%d")
+
+    try:
+        dt_from = (datetime.strptime(date_to, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_from = "2024-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    result = {}
+
+    for sector, cg_ids in SECTORS.items():
+        if not cg_ids:
+            continue
+        index, dates = fetch_sector_index(cur, cg_ids, dt_from, date_to, 'equal', 'daily')
+        if not dates or len(dates) < window + 2:
+            continue
+
+        idx_vals = [index[d] for d in dates]
+        log_rets = [
+            math.log(idx_vals[i] / idx_vals[i - 1])
+            if idx_vals[i] and idx_vals[i - 1] and idx_vals[i - 1] > 0 else None
+            for i in range(1, len(idx_vals))
+        ]
+        recent = [r for r in log_rets[-window:] if r is not None]
+        if len(recent) < window // 2:
+            continue
+
+        mean = sum(recent) / len(recent)
+        std  = math.sqrt(sum((r - mean) ** 2 for r in recent) / len(recent))
+        ann_vol    = std * math.sqrt(365) * 100
+        # Return = cumulative over window
+        cum_ret = (idx_vals[-1] / idx_vals[-(window + 1)] - 1) * 100 if idx_vals[-(window + 1)] > 0 else None
+        if cum_ret is None:
+            continue
+
+        result[sector] = {
+            "x":     round(ann_vol, 4),
+            "y":     round(cum_ret, 4),
+            "color": SECTOR_COLORS.get(sector, "#888888"),
         }
 
     conn.close()
