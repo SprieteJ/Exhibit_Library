@@ -262,6 +262,11 @@ canvas { display: block; width: 100% !important; height: 100% !important; }
   padding: 5px 22px 12px;
   font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; flex-shrink: 0;
 }
+.chart-info {
+  padding: 4px 22px 14px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted); line-height: 1.7; flex-shrink: 0;
+  border-top: 1px solid var(--border); margin-top: 2px; display: none;
+}
 
 /* Right panel */
 .right-panel {
@@ -451,6 +456,7 @@ input[type=number] { width: 70px; }
     <div class="spinner-wrap" id="chart-spin"><div class="spinner"></div></div>
   </div>
   <div class="chart-src" id="chart-src">Source: CoinGecko Pro — Wintermute OTC</div>
+  <div class="chart-info" id="chart-info"></div>
 </main>
 
 <aside class="right-panel" id="right-panel"></aside>
@@ -491,7 +497,7 @@ const TABS = {
         { key:"sec-zscore", label:"Z-score of returns",  sub:"Z-score of daily returns vs rolling window",          src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Rotation", children: [
-        { key:"sec-rrg", label:"RRG scatter", sub:"Relative Rotation Graph · RS-Ratio (x) vs RS-Momentum (y) · Quadrant = rotation zone", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-rrg", label:"RRG scatter", sub:"Shows which sectors are leading the market, catching up, losing steam, or lagging — and which direction they're rotating.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Analysis", children: [
         { key:"ana-bubble", label:"Momentum vs correlation", sub:"Bubble · Y = momentum · X = autocorrelation · Size = market cap", src:"CoinGecko Pro — Wintermute OTC" },
@@ -719,6 +725,8 @@ async function selectView(tab, key) {
   document.getElementById('chart-title').textContent = viewDef.label;
   document.getElementById('chart-sub').textContent   = viewDef.sub;
   document.getElementById('chart-src').textContent   = `Source: ${viewDef.src}`;
+  const infoEl = document.getElementById('chart-info');
+  infoEl.style.display = 'none'; infoEl.innerHTML = '';
 
   if (chart) { chart.destroy(); chart = null; }
   logScale = false;
@@ -2295,12 +2303,12 @@ async function fetchRRG() {
     const tc = darkMode ? '#E8EAE8' : '#606663';
 
     // Axis range centered on 100
-    const allX  = sectors.map(s => data[s].x);
-    const allY  = sectors.map(s => data[s].y);
-    const xPad  = Math.max(3, ...allX.map(v => Math.abs(v - 100))) * 1.35;
-    const yPad  = Math.max(3, ...allY.map(v => Math.abs(v - 100))) * 1.35;
+    const allX = sectors.map(s => data[s].x);
+    const allY = sectors.map(s => data[s].y);
+    const xPad = Math.max(3, ...allX.map(v => Math.abs(v - 100))) * 1.4;
+    const yPad = Math.max(3, ...allY.map(v => Math.abs(v - 100))) * 1.4;
 
-    // Build datasets: tails first (drawn behind), then dots
+    // Datasets: tails first (behind), then invisible anchor points for tooltip hit areas
     const datasets = [];
 
     if (tailOn) {
@@ -2318,51 +2326,41 @@ async function fetchRRG() {
           borderColor: `rgba(${r},${g},${b},0.3)`,
           borderWidth: 1.5,
           backgroundColor: 'transparent',
-          pointRadius: pts.map((_, i) => i === pts.length - 1 ? 0 : 3),
-          pointBackgroundColor: pts.map((_, i) => {
-            const a = 0.12 + (i / pts.length) * 0.5;
-            return `rgba(${r},${g},${b},${a})`;
-          }),
+          pointRadius: pts.map((_, i) => i === pts.length - 1 ? 0 : 2),
+          pointBackgroundColor: pts.map((_, i) => `rgba(${r},${g},${b},${0.12 + (i / pts.length) * 0.45})`),
           pointBorderWidth: 0,
           order: 2,
         });
       });
     }
 
+    // Invisible anchor points — used only for tooltip hit detection
     sectors.forEach(sector => {
       const d = data[sector];
       datasets.push({
         label: sector,
         data:  [{x: d.x, y: d.y}],
-        backgroundColor: (d.color || '#888') + 'CC',
-        borderColor:     d.color || '#888',
-        borderWidth: 2,
-        pointRadius: 7,
-        pointHoverRadius: 10,
+        backgroundColor: 'transparent',
+        borderColor:     'transparent',
+        pointRadius: 18,          // large invisible hit area
+        pointHoverRadius: 18,
         order: 1,
       });
     });
 
-    // Quadrant background + crosshair plugin
+    // Crosshair + quadrant label plugin (no fills)
     const quadrantPlugin = {
       id: 'rrg-quadrant',
       beforeDraw(ch) {
         const {ctx, chartArea: {left, right, top, bottom}, scales} = ch;
         const cx = scales.x.getPixelForValue(100);
         const cy = scales.y.getPixelForValue(100);
-        const alpha = darkMode ? 0.06 : 0.08;
         ctx.save();
-        ctx.fillStyle = `rgba(0,214,74,${alpha})`;    ctx.fillRect(cx, top,  right-cx, cy-top);      // Leading
-        ctx.fillStyle = `rgba(247,147,26,${alpha})`;  ctx.fillRect(left,top, cx-left,  cy-top);      // Improving
-        ctx.fillStyle = `rgba(220,53,69,${alpha})`;   ctx.fillRect(left,cy,  cx-left,  bottom-cy);   // Lagging
-        ctx.fillStyle = `rgba(36,113,204,${alpha})`;  ctx.fillRect(cx,  cy,  right-cx, bottom-cy);   // Weakening
-        // Crosshair
         ctx.strokeStyle = darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
         ctx.lineWidth = 1; ctx.setLineDash([4,4]);
         ctx.beginPath(); ctx.moveTo(cx,top);  ctx.lineTo(cx,bottom); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(left,cy); ctx.lineTo(right,cy);  ctx.stroke();
         ctx.setLineDash([]);
-        // Quadrant labels
         ctx.font = '10px DM Mono, monospace';
         ctx.fillStyle = darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)';
         ctx.textBaseline = 'top';
@@ -2371,6 +2369,28 @@ async function fetchRRG() {
         ctx.textBaseline = 'bottom';
         ctx.textAlign = 'left';  ctx.fillText('WEAKENING', cx+8, bottom-8);
         ctx.textAlign = 'right'; ctx.fillText('LAGGING',   cx-8, bottom-8);
+        ctx.restore();
+      },
+      // Draw sector names directly on canvas (no dots)
+      afterDraw(ch) {
+        const {ctx} = ch;
+        ctx.save();
+        ch.data.datasets.forEach((ds, i) => {
+          if (ds.label?.endsWith('__tail')) return;
+          const meta = ch.getDatasetMeta(i);
+          if (!meta.visible) return;
+          const sector = ds.label;
+          const d = data[sector];
+          if (!d) return;
+          const color = d.color || '#888';
+          meta.data.forEach(pt => {
+            ctx.font = '600 12px DM Sans, sans-serif';
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(sector, pt.x, pt.y);
+          });
+        });
         ctx.restore();
       }
     };
@@ -2381,7 +2401,7 @@ async function fetchRRG() {
       options: {
         responsive: true, maintainAspectRatio: false,
         animation: { duration: 400 },
-        interaction: { mode: 'point', intersect: true },
+        interaction: { mode: 'nearest', intersect: false, axis: 'xy' },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -2425,26 +2445,6 @@ async function fetchRRG() {
       plugins: [quadrantPlugin]
     });
 
-    // Draw sector labels next to dots
-    chart.update();
-    setTimeout(() => {
-      const ctx2 = chart.canvas.getContext('2d');
-      ctx2.save();
-      ctx2.font = '500 11px DM Sans, sans-serif';
-      chart.data.datasets.forEach((ds, i) => {
-        if (ds.label?.endsWith('__tail')) return;
-        const meta = chart.getDatasetMeta(i);
-        if (!meta.visible) return;
-        meta.data.forEach(pt => {
-          ctx2.fillStyle = darkMode ? '#E8EAE8' : '#323935';
-          ctx2.textAlign = 'left';
-          ctx2.textBaseline = 'middle';
-          ctx2.fillText(ds.label, pt.x + 10, pt.y);
-        });
-      });
-      ctx2.restore();
-    }, 60);
-
     const qColors = { Leading: '#00D64A', Improving: '#F7931A', Lagging: '#DC3545', Weakening: '#2471CC' };
     document.getElementById('perf-row').innerHTML = sectors.map(s => {
       const d = data[s];
@@ -2456,6 +2456,19 @@ async function fetchRRG() {
     }).join('');
 
     document.getElementById('chart-title').textContent = 'Relative Rotation Graph';
+
+    // Methodology info block
+    const bmLabel = rrgBenchmark === 'market' ? 'equal-weighted market average' : rrgBenchmark.toUpperCase();
+    const infoEl  = document.getElementById('chart-info');
+    infoEl.style.display = 'block';
+    infoEl.innerHTML = `
+      <b>How it's calculated</b><br>
+      1. <b>RS ratio</b> — each sector's equal-weighted price index is divided by the ${bmLabel} index to get its relative strength (RS).<br>
+      2. <b>RS-Ratio (x-axis)</b> — measures whether the sector is currently outperforming: <code>100 + ((RS_now / RS_${rsWin}${rrgGran === 'weekly' ? ' weeks' : ' days'}_ago) − 1) × 100</code>. Above 100 = outperforming.<br>
+      3. <b>RS-Momentum (y-axis)</b> — measures whether that outperformance is accelerating: <code>100 + ((RS-Ratio_now / RS-Ratio_${momWin}${rrgGran === 'weekly' ? ' weeks' : ' days'}_ago) − 1) × 100</code>. Above 100 = accelerating.<br>
+      4. <b>Quadrants</b> — Leading (strong & accelerating) → Weakening (strong but slowing) → Lagging (weak & decelerating) → Improving (weak but accelerating). Sectors rotate clockwise over time.<br>
+      ${tailOn ? `5. <b>Trail</b> — the fading line behind each sector shows its last ${tailLen} ${rrgGran === 'weekly' ? 'weekly' : 'daily'} positions, giving a sense of direction and speed of rotation.<br>` : ''}
+      <span style="opacity:0.6">Lookback: RS = ${rsWin} ${rrgGran} periods · Momentum = ${momWin} ${rrgGran} periods · Benchmark = ${bmLabel} · As of ${to}</span>`;
 
   } catch(e) {
     document.getElementById('chart-empty').style.display = 'flex';
