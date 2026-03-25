@@ -519,7 +519,8 @@ def handle_btc_oi(params):
 
 
 def handle_btc_funding_delta(params):
-    """30d rolling change in avg funding rate (bps) vs 30d rolling BTC price return (%)."""
+    """Daily rolling N-day change in avg funding rate (bps) vs N-day BTC price return (%)."""
+    import bisect
     date_from = params.get("from", ["2024-01-01"])[0]
     date_to   = params.get("to",   ["2099-01-01"])[0]
     window    = int(params.get("window", ["30"])[0])
@@ -532,7 +533,6 @@ def handle_btc_funding_delta(params):
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    # Daily avg funding rate
     cur.execute("""
         SELECT timestamp::date as date, AVG(funding_rate) as avg_rate
         FROM funding_8h
@@ -543,7 +543,6 @@ def handle_btc_funding_delta(params):
     """, (dt_from_ext, date_to))
     funding_rows = cur.fetchall()
 
-    # Daily BTC price
     cur.execute("""
         SELECT timestamp::date as date, price_usd
         FROM price_daily
@@ -555,31 +554,41 @@ def handle_btc_funding_delta(params):
     price_rows = cur.fetchall()
     conn.close()
 
-    funding_map = {str(r["date"]): float(r["avg_rate"]) for r in funding_rows if r["avg_rate"] is not None}
-    price_map   = {str(r["date"]): float(r["price_usd"]) for r in price_rows}
+    # Build ordered lists (funding and price may have different dates)
+    f_dates = [str(r["date"]) for r in funding_rows if r["avg_rate"] is not None]
+    f_vals  = [float(r["avg_rate"]) for r in funding_rows if r["avg_rate"] is not None]
+    p_dates = [str(r["date"]) for r in price_rows]
+    p_vals  = [float(r["price_usd"]) for r in price_rows]
 
-    all_dates = sorted(set(list(funding_map.keys()) + list(price_map.keys())))
-
+    # Use price dates as the master series (daily, complete)
+    # For each date, look up the value exactly `window` calendar days ago
     dates, funding_delta, price_delta = [], [], []
-    for i, d in enumerate(all_dates):
+    for i, d in enumerate(p_dates):
         if d < date_from:
             continue
-        # find the date ~window days back
-        past_candidates = [all_dates[j] for j in range(max(0, i - window - 2), i) if all_dates[j] <= d]
-        if len(past_candidates) < window - 2:
-            continue
-        past_d = past_candidates[-(window - 1)] if len(past_candidates) >= window - 1 else past_candidates[0]
 
-        f_now  = funding_map.get(d)
-        f_past = funding_map.get(past_d)
-        p_now  = price_map.get(d)
-        p_past = price_map.get(past_d)
+        # Target date `window` calendar days before d
+        target = (datetime.strptime(d, "%Y-%m-%d") - timedelta(days=window)).strftime("%Y-%m-%d")
 
-        if f_now is None or f_past is None or p_now is None or p_past is None or p_past == 0:
+        # Price: find nearest price date <= target
+        pi = bisect.bisect_right(p_dates, target) - 1
+        if pi < 0:
             continue
+        p_now  = p_vals[i]
+        p_past = p_vals[pi]
+        if p_past == 0:
+            continue
+
+        # Funding: find nearest funding date <= d and <= target
+        fi_now  = bisect.bisect_right(f_dates, d) - 1
+        fi_past = bisect.bisect_right(f_dates, target) - 1
+        if fi_now < 0 or fi_past < 0:
+            continue
+        f_now  = f_vals[fi_now]
+        f_past = f_vals[fi_past]
 
         dates.append(d)
-        funding_delta.append(round((f_now - f_past) * 10000, 4))   # convert to bps
-        price_delta.append(round((p_now / p_past - 1) * 100, 4))   # %
+        funding_delta.append(round((f_now - f_past) * 10000, 4))  # bps
+        price_delta.append(round((p_now / p_past - 1) * 100, 4))  # %
 
     return {"dates": dates, "funding_delta": funding_delta, "price_delta": price_delta, "window": window}
