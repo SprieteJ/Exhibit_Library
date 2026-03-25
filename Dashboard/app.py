@@ -11,7 +11,7 @@ from pathlib import Path
 from api.assets   import handle_assets, handle_db_status
 from api.sector   import (handle_sectors, handle_sector_price, handle_intra_corr,
                            handle_btc_corr, handle_sector_momentum, handle_sector_zscore,
-                           handle_sector_bubble, handle_sector_mcap_view)
+                           handle_sector_bubble, handle_sector_mcap_view, handle_sector_rrg)
 from api.bitcoin  import handle_btc_epochs, handle_btc_cycles, handle_btc_gold, handle_btc_rolling
 from api.altcoins import handle_price, handle_alt_scatter
 from api.macro    import handle_macro_price
@@ -71,6 +71,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/sector-zscore":     self.send_json(handle_sector_zscore(params))
             elif p == "/api/sector-bubble":     self.send_json(handle_sector_bubble(params))
             elif p == "/api/sector-mcap-view":  self.send_json(handle_sector_mcap_view(params))
+            elif p == "/api/sector-rrg":        self.send_json(handle_sector_rrg(params))
 
             elif p == "/api/btc-epochs":        self.send_json(handle_btc_epochs(params))
             elif p == "/api/btc-cycles":        self.send_json(handle_btc_cycles(params))

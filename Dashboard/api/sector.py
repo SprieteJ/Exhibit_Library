@@ -301,6 +301,117 @@ def handle_sector_bubble(params):
     return result
 
 
+def handle_sector_rrg(params):
+    """Relative Rotation Graph — RS-Ratio (x) vs RS-Momentum (y) per sector."""
+    rs_window   = int(params.get("window",    ["10"])[0])
+    mom_window  = int(params.get("momentum",  ["6"])[0])
+    granularity = params.get("granularity", ["daily"])[0]
+    benchmark   = params.get("benchmark",  ["market"])[0].lower()
+    tail_len    = int(params.get("tail",      ["0"])[0])
+    date_to     = params.get("to", [datetime.now().strftime("%Y-%m-%d")])[0]
+    if date_to == "2099-01-01":
+        date_to = datetime.now().strftime("%Y-%m-%d")
+
+    needed = rs_window + mom_window + tail_len + 15
+    if granularity == "weekly":
+        needed *= 7
+    needed += 30
+
+    try:
+        dt_from = (datetime.strptime(date_to, "%Y-%m-%d") - timedelta(days=needed)).strftime("%Y-%m-%d")
+    except Exception:
+        dt_from = "2022-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Fetch all sector indices (daily)
+    sector_data  = {}
+    all_dates_set = None
+    for sector, cg_ids in SECTORS.items():
+        if not cg_ids: continue
+        index, dates = fetch_sector_index(cur, cg_ids, dt_from, date_to, 'equal', 'daily')
+        if not dates: continue
+        sector_data[sector] = index
+        s = set(dates)
+        all_dates_set = s if all_dates_set is None else all_dates_set & s
+
+    if not all_dates_set:
+        conn.close()
+        return {"error": "no sector data"}
+
+    common_dates = sorted(all_dates_set)
+
+    # Build benchmark series
+    if benchmark in ('btc', 'eth'):
+        sym = 'BTC' if benchmark == 'btc' else 'ETH'
+        cur.execute("""
+            SELECT timestamp::date as date, price_usd
+            FROM price_daily
+            WHERE symbol = %s AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+            ORDER BY timestamp
+        """, (sym, dt_from, date_to))
+        bm_map = {str(r["date"]): float(r["price_usd"]) for r in cur.fetchall()}
+        common_dates = [d for d in common_dates if d in bm_map]
+        bm_series    = {d: bm_map[d] for d in common_dates}
+    else:
+        bm_series = {}
+        for d in common_dates:
+            vals = [sector_data[s][d] for s in sector_data if sector_data[s].get(d)]
+            if vals:
+                bm_series[d] = sum(vals) / len(vals)
+        common_dates = [d for d in common_dates if bm_series.get(d)]
+
+    conn.close()
+
+    if len(common_dates) < rs_window + mom_window + 2:
+        return {"error": "insufficient data for these parameters"}
+
+    if granularity == "weekly":
+        common_dates = common_dates[::7]
+
+    if len(common_dates) < rs_window + mom_window + 2:
+        return {"error": "insufficient data after downsampling"}
+
+    result = {}
+    for sector, index in sector_data.items():
+        rs = []
+        for d in common_dates:
+            sv = index.get(d); bv = bm_series.get(d)
+            rs.append(sv / bv if sv and bv and bv > 0 else None)
+
+        rs_ratio = [None] * len(rs)
+        for i in range(rs_window, len(rs)):
+            if rs[i] and rs[i - rs_window] and rs[i - rs_window] > 0:
+                rs_ratio[i] = 100.0 + (rs[i] / rs[i - rs_window] - 1.0) * 100.0
+
+        rs_mom = [None] * len(rs_ratio)
+        for i in range(mom_window, len(rs_ratio)):
+            if rs_ratio[i] and rs_ratio[i - mom_window] and rs_ratio[i - mom_window] > 0:
+                rs_mom[i] = 100.0 + (rs_ratio[i] / rs_ratio[i - mom_window] - 1.0) * 100.0
+
+        valid = [i for i in range(len(common_dates)) if rs_ratio[i] and rs_mom[i]]
+        if not valid: continue
+
+        ci = valid[-1]
+        x, y = round(rs_ratio[ci], 4), round(rs_mom[ci], 4)
+        quadrant = ("Leading"   if x >= 100 and y >= 100 else
+                    "Improving" if x <  100 and y >= 100 else
+                    "Lagging"   if x <  100 and y <  100 else
+                    "Weakening")
+        tail = [{"x": round(rs_ratio[ti], 4), "y": round(rs_mom[ti], 4)}
+                for ti in valid[-(tail_len + 1):-1]] if tail_len > 0 else []
+
+        result[sector] = {
+            "x": x, "y": y,
+            "color":    SECTOR_COLORS.get(sector, "#888888"),
+            "quadrant": quadrant,
+            "tail":     tail,
+        }
+
+    return result
+
+
 def handle_sector_mcap_view(params):
     sectors   = [s.strip() for s in params.get("sectors",[""])[0].split(",") if s.strip()]
     date_from = params.get("from", ["2024-01-01"])[0]

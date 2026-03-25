@@ -490,6 +490,9 @@ const TABS = {
         { key:"sec-mom",    label:"30d Rolling return",  sub:"Rolling N-day return of equal-weighted sector index", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"sec-zscore", label:"Z-score of returns",  sub:"Z-score of daily returns vs rolling window",          src:"CoinGecko Pro — Wintermute OTC" },
       ]},
+      { label: "Rotation", children: [
+        { key:"sec-rrg", label:"RRG scatter", sub:"Relative Rotation Graph · RS-Ratio (x) vs RS-Momentum (y) · Quadrant = rotation zone", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
       { label: "Analysis", children: [
         { key:"ana-bubble", label:"Momentum vs correlation", sub:"Bubble · Y = momentum · X = autocorrelation · Size = market cap", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
@@ -548,10 +551,12 @@ let allSectors = [];
 let selected   = [];
 let activeTab  = 'sector';
 let activeView = null;
-let granularity = 'daily';
-let alignMode   = 'own';
-let darkMode    = false;
-let logScale    = false;
+let granularity   = 'daily';
+let alignMode     = 'own';
+let darkMode      = false;
+let logScale      = false;
+let rrgGran       = 'daily';
+let rrgBenchmark  = 'market';
 
 // ── Dark mode ─────────────────────────────────────────────────────────────────
 document.getElementById('dark-toggle').addEventListener('click', () => {
@@ -723,7 +728,7 @@ async function selectView(tab, key) {
     logBtn.style.background = ''; logBtn.style.color = ''; logBtn.style.borderColor = '';
   }
   document.getElementById('chart-empty').style.display = 'flex';
-  const isBtcAutoView = key === 'btc-epochs' || key === 'btc-cycles' || key === 'ana-bubble' || key === 'btc-tradfi' || key === 'btc-rolling';
+  const isBtcAutoView = key === 'btc-epochs' || key === 'btc-cycles' || key === 'ana-bubble' || key === 'btc-tradfi' || key === 'btc-rolling' || key === 'sec-rrg';
   document.getElementById('empty-msg').textContent = isBtcAutoView ? 'Loading…' : 'Select items from the right panel';
   document.getElementById('perf-row').innerHTML = '';
 
@@ -737,7 +742,7 @@ async function selectView(tab, key) {
 
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
-  if (key === 'ana-bubble' || key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi' || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling') {
+  if (key === 'ana-bubble' || key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi' || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling' || key === 'sec-rrg') {
     document.getElementById('chart-empty').style.display = 'none';
     document.getElementById('empty-msg').textContent = 'Loading…';
     setTimeout(fetchCurrent, 100);
@@ -750,10 +755,11 @@ function buildRightPanel(tab, key) {
   const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi';
   const isTradFi   = key === 'btc-tradfi';
   const isBubble    = key === 'ana-bubble';
+  const isRRG       = key === 'sec-rrg';
   const needsSearch = tab !== 'sector' && !isBtcView && key !== 'alt-scatter' && key !== 'btc-gold' && key !== 'btc-rolling';
   const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble' || key === 'alt-scatter' || key === 'btc-rolling';
   const needsVersus = key === 'sec-vs';
-  const isAutoView  = isBubble || isBtcView || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling';
+  const isAutoView  = isBubble || isRRG || isBtcView || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling';
   const showList    = !isAutoView;
 
   let html = '';
@@ -811,6 +817,51 @@ function buildRightPanel(tab, key) {
         <button class="preset" data-days="730">2Y</button>
         <button class="preset" data-days="1095">3Y</button>
         <button class="preset" data-days="0">All</button>
+      </div>
+    </div>`;
+  } else if (isRRG) {
+    html += `<div class="rp-block">
+      <div class="rp-label">As of</div>
+      <div class="date-grid"><div><label>Date</label><input type="date" id="rp-rrg-to"></div></div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Parameters</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="window-row">
+          <label style="min-width:120px;font-size:13px;color:var(--muted)">RS lookback</label>
+          <input type="number" id="rp-rrg-rs" value="10" min="3" max="52">
+          <label>periods</label>
+        </div>
+        <div class="window-row">
+          <label style="min-width:120px;font-size:13px;color:var(--muted)">Mom lookback</label>
+          <input type="number" id="rp-rrg-mom" value="6" min="2" max="26">
+          <label>periods</label>
+        </div>
+      </div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Timeframe</div>
+      <div class="versus-row">
+        <button class="versus-btn ${rrgGran==='daily'?'active':''}" onclick="setRRGGran('daily',this)">Daily</button>
+        <button class="versus-btn ${rrgGran==='weekly'?'active':''}" onclick="setRRGGran('weekly',this)">Weekly</button>
+      </div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Benchmark</div>
+      <div class="versus-row">
+        <button class="versus-btn ${rrgBenchmark==='market'?'active':''}" onclick="setRRGBenchmark('market',this)">Market</button>
+        <button class="versus-btn ${rrgBenchmark==='btc'?'active':''}" onclick="setRRGBenchmark('btc',this)">BTC</button>
+        <button class="versus-btn ${rrgBenchmark==='eth'?'active':''}" onclick="setRRGBenchmark('eth',this)">ETH</button>
+      </div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Trail</div>
+      <div class="window-row">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer">
+          <input type="checkbox" id="rp-rrg-tail" style="accent-color:var(--graphite)"> Show trail
+        </label>
+        <input type="number" id="rp-rrg-tail-len" value="6" min="2" max="20" style="width:54px;margin-left:8px">
+        <label>pts</label>
       </div>
     </div>`;
   } else if (isBtcView) {
@@ -897,15 +948,22 @@ function buildRightPanel(tab, key) {
       <div class="rp-label">${tab === 'sector' ? 'Sectors' : 'Assets'}</div>
     </div>
     <div class="rp-list" id="rp-list"></div>`;
-  } else if (isBubble) {
+  } else if (isBubble || isRRG) {
     html += `<div style="padding:12px 14px;font-size:13px;color:var(--muted)">All sectors shown automatically</div>`;
   }
 
   rp.innerHTML = html;
 
-  if (!isBtcView) {
+  if (!isBtcView && !isRRG) {
     initDates('rp-from', 'rp-to', 180);
     initPresets();
+  }
+  if (isRRG) {
+    const toEl = document.getElementById('rp-rrg-to');
+    if (toEl) toEl.value = new Date().toISOString().split('T')[0];
+    ['rp-rrg-to','rp-rrg-rs','rp-rrg-mom','rp-rrg-tail','rp-rrg-tail-len'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', fetchCurrent);
+    });
   }
   if (showList) renderRPList();
 
@@ -1033,6 +1091,20 @@ function initPresets() {
 
 function setVersus(v) {
   document.querySelectorAll('.versus-btn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  fetchCurrent();
+}
+
+function setRRGGran(val, btn) {
+  btn.closest('.versus-row').querySelectorAll('.versus-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  rrgGran = val;
+  fetchCurrent();
+}
+
+function setRRGBenchmark(val, btn) {
+  btn.closest('.versus-row').querySelectorAll('.versus-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  rrgBenchmark = val;
   fetchCurrent();
 }
 
@@ -1173,6 +1245,12 @@ async function fetchCurrent() {
   if (ph) ph.style.display = 'none';
 
   // Views that don't need selection
+  if (activeView?.key === 'sec-rrg') {
+    await fetchRRG();
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
   if (activeView?.key === 'ana-bubble') {
     const from = document.getElementById('rp-from')?.value || '2024-01-01';
     const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
@@ -2185,6 +2263,199 @@ async function fetchBubble(from, to, window) {
     }).join('');
 
     document.getElementById('chart-title').textContent = 'Momentum vs autocorrelation';
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchRRG() {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  try {
+    const to      = document.getElementById('rp-rrg-to')?.value  || new Date().toISOString().split('T')[0];
+    const rsWin   = document.getElementById('rp-rrg-rs')?.value  || '10';
+    const momWin  = document.getElementById('rp-rrg-mom')?.value || '6';
+    const tailOn  = document.getElementById('rp-rrg-tail')?.checked;
+    const tailLen = document.getElementById('rp-rrg-tail-len')?.value || '6';
+
+    const url = `/api/sector-rrg?to=${to}&window=${rsWin}&momentum=${momWin}&tail=${tailOn ? tailLen : 0}&granularity=${rrgGran}&benchmark=${rrgBenchmark}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const sectors = Object.keys(data).filter(k => data[k].x != null && data[k].y != null);
+    if (!sectors.length) throw new Error('no data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    // Axis range centered on 100
+    const allX  = sectors.map(s => data[s].x);
+    const allY  = sectors.map(s => data[s].y);
+    const xPad  = Math.max(3, ...allX.map(v => Math.abs(v - 100))) * 1.35;
+    const yPad  = Math.max(3, ...allY.map(v => Math.abs(v - 100))) * 1.35;
+
+    // Build datasets: tails first (drawn behind), then dots
+    const datasets = [];
+
+    if (tailOn) {
+      sectors.forEach(sector => {
+        const d = data[sector];
+        if (!d.tail?.length) return;
+        const pts   = [...d.tail, {x: d.x, y: d.y}];
+        const color = d.color || '#888';
+        const r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
+        datasets.push({
+          label: `${sector}__tail`,
+          data:  pts,
+          showLine: true,
+          tension: 0.3,
+          borderColor: `rgba(${r},${g},${b},0.3)`,
+          borderWidth: 1.5,
+          backgroundColor: 'transparent',
+          pointRadius: pts.map((_, i) => i === pts.length - 1 ? 0 : 3),
+          pointBackgroundColor: pts.map((_, i) => {
+            const a = 0.12 + (i / pts.length) * 0.5;
+            return `rgba(${r},${g},${b},${a})`;
+          }),
+          pointBorderWidth: 0,
+          order: 2,
+        });
+      });
+    }
+
+    sectors.forEach(sector => {
+      const d = data[sector];
+      datasets.push({
+        label: sector,
+        data:  [{x: d.x, y: d.y}],
+        backgroundColor: (d.color || '#888') + 'CC',
+        borderColor:     d.color || '#888',
+        borderWidth: 2,
+        pointRadius: 7,
+        pointHoverRadius: 10,
+        order: 1,
+      });
+    });
+
+    // Quadrant background + crosshair plugin
+    const quadrantPlugin = {
+      id: 'rrg-quadrant',
+      beforeDraw(ch) {
+        const {ctx, chartArea: {left, right, top, bottom}, scales} = ch;
+        const cx = scales.x.getPixelForValue(100);
+        const cy = scales.y.getPixelForValue(100);
+        const alpha = darkMode ? 0.06 : 0.08;
+        ctx.save();
+        ctx.fillStyle = `rgba(0,214,74,${alpha})`;    ctx.fillRect(cx, top,  right-cx, cy-top);      // Leading
+        ctx.fillStyle = `rgba(247,147,26,${alpha})`;  ctx.fillRect(left,top, cx-left,  cy-top);      // Improving
+        ctx.fillStyle = `rgba(220,53,69,${alpha})`;   ctx.fillRect(left,cy,  cx-left,  bottom-cy);   // Lagging
+        ctx.fillStyle = `rgba(36,113,204,${alpha})`;  ctx.fillRect(cx,  cy,  right-cx, bottom-cy);   // Weakening
+        // Crosshair
+        ctx.strokeStyle = darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+        ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(cx,top);  ctx.lineTo(cx,bottom); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(left,cy); ctx.lineTo(right,cy);  ctx.stroke();
+        ctx.setLineDash([]);
+        // Quadrant labels
+        ctx.font = '10px DM Mono, monospace';
+        ctx.fillStyle = darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)';
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'right'; ctx.fillText('IMPROVING', cx-8, top+8);
+        ctx.textAlign = 'left';  ctx.fillText('LEADING',   cx+8, top+8);
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'left';  ctx.fillText('WEAKENING', cx+8, bottom-8);
+        ctx.textAlign = 'right'; ctx.fillText('LAGGING',   cx-8, bottom-8);
+        ctx.restore();
+      }
+    };
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'scatter',
+      data: { datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 400 },
+        interaction: { mode: 'point', intersect: true },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            filter: ctx => !ctx.dataset.label?.endsWith('__tail'),
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, padding: 12,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            callbacks: {
+              title: ctx => ctx[0]?.dataset.label,
+              label: ctx => {
+                const d = data[ctx.dataset.label];
+                if (!d) return [];
+                return [
+                  ` RS-Ratio:  ${d.x.toFixed(2)}`,
+                  ` RS-Mom:    ${d.y.toFixed(2)}`,
+                  ` Quadrant:  ${d.quadrant}`,
+                ];
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            min: 100 - xPad, max: 100 + xPad,
+            title: { display: true, text: `← Weak    RS vs ${rrgBenchmark === 'market' ? 'market' : rrgBenchmark.toUpperCase()}    Strong →`, color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) }
+          },
+          y: {
+            min: 100 - yPad, max: 100 + yPad,
+            title: { display: true, text: '↑ Accelerating    RS Momentum    Decelerating ↓', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) }
+          }
+        }
+      },
+      plugins: [quadrantPlugin]
+    });
+
+    // Draw sector labels next to dots
+    chart.update();
+    setTimeout(() => {
+      const ctx2 = chart.canvas.getContext('2d');
+      ctx2.save();
+      ctx2.font = '500 11px DM Sans, sans-serif';
+      chart.data.datasets.forEach((ds, i) => {
+        if (ds.label?.endsWith('__tail')) return;
+        const meta = chart.getDatasetMeta(i);
+        if (!meta.visible) return;
+        meta.data.forEach(pt => {
+          ctx2.fillStyle = darkMode ? '#E8EAE8' : '#323935';
+          ctx2.textAlign = 'left';
+          ctx2.textBaseline = 'middle';
+          ctx2.fillText(ds.label, pt.x + 10, pt.y);
+        });
+      });
+      ctx2.restore();
+    }, 60);
+
+    const qColors = { Leading: '#00D64A', Improving: '#F7931A', Lagging: '#DC3545', Weakening: '#2471CC' };
+    document.getElementById('perf-row').innerHTML = sectors.map(s => {
+      const d = data[s];
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${d.color}"></div>
+        <span class="perf-sym">${s}</span>
+        <span class="perf-val" style="color:${qColors[d.quadrant]||'#888'}">${d.quadrant}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent = 'Relative Rotation Graph';
 
   } catch(e) {
     document.getElementById('chart-empty').style.display = 'flex';
