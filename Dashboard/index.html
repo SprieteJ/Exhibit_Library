@@ -1057,8 +1057,16 @@ function buildRightPanel(tab, key) {
   rp.innerHTML = html;
 
   if (!isBtcView && !isRRG) {
-    initDates('rp-from', 'rp-to', 180);
+    // Long-history charts default to All; others default to 6M
+    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-gold-ratio','btc-realvol','btc-drawdown',
+      'btc-funding','btc-funding-delta','alt-altseason','mac-stablecoin','sec-dominance']);
+    const defaultDays = ALL_HISTORY_KEYS.has(key) ? 0 : 180;
+    initDates('rp-from', 'rp-to', defaultDays);
     initPresets();
+    // Highlight the correct active preset button
+    document.querySelectorAll('#rp-presets .preset').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.days) === defaultDays);
+    });
   }
   if (isRRG) {
     const toEl = document.getElementById('rp-rrg-to');
