@@ -3144,7 +3144,7 @@ function heatFunding(v, maxAbs) {
 function drawHeatmapCanvas(rowLabels, colLabels, matrix, colorFn) {
   if (chart) { chart.destroy(); chart = null; }
   const box = document.getElementById('chart-box');
-  const canvas = document.getElementById('myChart');
+  const canvas = document.getElementById('main-chart');
   const W = box.clientWidth  || 600;
   const H = box.clientHeight || 400;
   canvas.width  = W;
@@ -3201,7 +3201,7 @@ function spinOn()  { document.getElementById('chart-spin').classList.add('on'); 
 function showErr(e){ document.getElementById('chart-empty').style.display = 'flex'; document.getElementById('empty-msg').textContent = `Error: ${e.message}`; }
 function mkChart(type, data, options, plugins) {
   if (chart) { chart.destroy(); chart = null; }
-  const ctx2 = document.getElementById('myChart').getContext('2d');
+  const ctx2 = document.getElementById('main-chart').getContext('2d');
   chart = new Chart(ctx2, { type, data, options: Object.assign({}, CDEFAULT, options), plugins: plugins || [] });
   return chart;
 }
