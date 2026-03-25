@@ -3485,8 +3485,8 @@ async function fetchBtcOI(from, to) {
 async function fetchAltAltseason(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/alt-altseason?from=${from}&to=${to}`).then(r=>r.json());
-    if (!data.dates?.length) throw new Error('no data');
+    const data = await fetch(`/api/alt-altseason?from=${from}&to=${to}&window=30`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data — try a longer date range');
     mkChart('line', {
       labels: data.dates,
       datasets: [
