@@ -613,6 +613,7 @@ let darkMode      = false;
 let logScale      = false;
 let rrgGran       = 'daily';
 let rrgBenchmark  = 'market';
+let dbLatestDate  = null; // Latest date available in DB
 
 // ── Dark mode ─────────────────────────────────────────────────────────────────
 document.getElementById('dark-toggle').addEventListener('click', () => {
@@ -1164,12 +1165,14 @@ function renderTags() {
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 function initDates(fromId, toId, days) {
-  const to = new Date(), from = new Date();
+  // Anchor to DB latest date if available, otherwise today
+  const to   = dbLatestDate ? new Date(dbLatestDate + 'T00:00:00') : new Date();
+  const from = new Date(to);
   if (days > 0) from.setDate(from.getDate() - days);
   else from.setFullYear(2013);
   // Cap hourly at 90 days
   if (granularity === 'hourly') {
-    const cap = new Date(); cap.setDate(cap.getDate() - 90);
+    const cap = new Date(to); cap.setDate(cap.getDate() - 90);
     if (from < cap) from.setTime(cap.getTime());
   }
   document.getElementById(toId).value   = to.toISOString().split('T')[0];
@@ -3705,6 +3708,13 @@ async function fetchMacroStablecoin(from, to) {
 }
 
 async function boot() {
+  // Fetch DB latest date first so all date pickers anchor to real data
+  try {
+    const lr = await fetch('/api/latest-date');
+    const ld = await lr.json();
+    if (ld.latest) dbLatestDate = ld.latest;
+  } catch(e) { /* fall back to today */ }
+
   const sr    = await fetch('/api/sectors');
   allSectors  = await sr.json();
   const ar    = await fetch('/api/assets?tab=individual');

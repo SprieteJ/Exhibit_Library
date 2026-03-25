@@ -8,7 +8,7 @@ import os, json, urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
-from api.assets   import handle_assets, handle_db_status
+from api.assets   import handle_assets, handle_db_status, handle_latest_date
 from api.sector   import (handle_sectors, handle_sector_price, handle_intra_corr,
                            handle_btc_corr, handle_sector_momentum, handle_sector_zscore,
                            handle_sector_bubble, handle_sector_mcap_view, handle_sector_rrg,
@@ -65,6 +65,7 @@ class Handler(BaseHTTPRequestHandler):
             if p in ("/", "/index.html"):
                 self.send_file(BASE_DIR / "index.html")
 
+            elif p == "/api/latest-date":       self.send_json(handle_latest_date())
             elif p == "/api/assets":            self.send_json(handle_assets(params))
             elif p == "/api/db-status":         self.send_json(handle_db_status())
             elif p == "/api/price":             self.send_json(handle_price(params))

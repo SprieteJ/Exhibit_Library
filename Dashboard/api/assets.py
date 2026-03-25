@@ -110,3 +110,17 @@ def handle_db_status():
 
     conn.close()
     return result
+
+
+def handle_latest_date():
+    """Return the latest date available in price_daily."""
+    try:
+        conn = get_conn()
+        cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT MAX(timestamp::date) as latest FROM price_daily WHERE price_usd > 0")
+        row = cur.fetchone()
+        conn.close()
+        latest = str(row["latest"]) if row and row["latest"] else None
+        return {"latest": latest}
+    except Exception as e:
+        return {"latest": None, "error": str(e)}
