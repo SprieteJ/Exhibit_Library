@@ -516,3 +516,70 @@ def handle_btc_oi(params):
         btc_prices.append(price_map.get(d))
 
     return {"dates": dates, "oi_values": oi_values, "btc_prices": btc_prices}
+
+
+def handle_btc_funding_delta(params):
+    """30d rolling change in avg funding rate (bps) vs 30d rolling BTC price return (%)."""
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    window    = int(params.get("window", ["30"])[0])
+
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 5)).strftime("%Y-%m-%d")
+    except Exception:
+        dt_from_ext = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Daily avg funding rate
+    cur.execute("""
+        SELECT timestamp::date as date, AVG(funding_rate) as avg_rate
+        FROM funding_8h
+        WHERE symbol = 'BTC'
+          AND timestamp >= %s AND timestamp <= %s
+        GROUP BY timestamp::date
+        ORDER BY timestamp::date
+    """, (dt_from_ext, date_to))
+    funding_rows = cur.fetchall()
+
+    # Daily BTC price
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC'
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY timestamp
+    """, (dt_from_ext, date_to))
+    price_rows = cur.fetchall()
+    conn.close()
+
+    funding_map = {str(r["date"]): float(r["avg_rate"]) for r in funding_rows if r["avg_rate"] is not None}
+    price_map   = {str(r["date"]): float(r["price_usd"]) for r in price_rows}
+
+    all_dates = sorted(set(list(funding_map.keys()) + list(price_map.keys())))
+
+    dates, funding_delta, price_delta = [], [], []
+    for i, d in enumerate(all_dates):
+        if d < date_from:
+            continue
+        # find the date ~window days back
+        past_candidates = [all_dates[j] for j in range(max(0, i - window - 2), i) if all_dates[j] <= d]
+        if len(past_candidates) < window - 2:
+            continue
+        past_d = past_candidates[-(window - 1)] if len(past_candidates) >= window - 1 else past_candidates[0]
+
+        f_now  = funding_map.get(d)
+        f_past = funding_map.get(past_d)
+        p_now  = price_map.get(d)
+        p_past = price_map.get(past_d)
+
+        if f_now is None or f_past is None or p_now is None or p_past is None or p_past == 0:
+            continue
+
+        dates.append(d)
+        funding_delta.append(round((f_now - f_past) * 10000, 4))   # convert to bps
+        price_delta.append(round((p_now / p_past - 1) * 100, 4))   # %
+
+    return {"dates": dates, "funding_delta": funding_delta, "price_delta": price_delta, "window": window}

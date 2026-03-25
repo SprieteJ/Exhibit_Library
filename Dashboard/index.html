@@ -540,8 +540,9 @@ const TABS = {
         { key:"btc-dominance", label:"BTC market dominance", sub:"Is capital flowing into or out of BTC relative to all crypto? BTC mcap as % of total crypto mcap.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Derivatives", children: [
-        { key:"btc-funding",   label:"Funding rate",         sub:"Is the futures market crowded long or short? BTC perpetual 8h funding rate, bar chart.", src:"CoinGecko Pro + Derivatives" },
-        { key:"btc-oi",        label:"Open interest",        sub:"How much leverage is in the BTC market? Total BTC OI in USD with price overlay.",       src:"CoinGecko Pro + Derivatives" },
+        { key:"btc-funding",       label:"Funding rate",       sub:"Is the futures market crowded long or short? BTC perpetual 8h funding rate, bar chart.", src:"CoinGecko Pro + Derivatives" },
+        { key:"btc-oi",            label:"Open interest",      sub:"How much leverage is in the BTC market? Total BTC OI in USD with price overlay.", src:"CoinGecko Pro + Derivatives" },
+        { key:"btc-funding-delta", label:"Funding rate delta", sub:"30d rolling change in BTC funding rate (bps) vs 30d rolling BTC price return (%). Spots regime shifts in sentiment.", src:"CoinGecko Pro + Derivatives" },
       ]},
     ]
   },
@@ -804,7 +805,7 @@ async function selectView(tab, key) {
   const AUTO_VIEWS = new Set([
     'ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
     'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
-    'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi',
+    'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
     'alt-altseason','alt-beta','alt-ath-drawdown',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
@@ -818,7 +819,7 @@ async function selectView(tab, key) {
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
   'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
-  'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi',
+  'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
   'alt-altseason','alt-beta','alt-ath-drawdown',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
@@ -1416,7 +1417,8 @@ async function fetchCurrent() {
       case 'btc-gold-ratio': await fetchBtcGoldRatio(from, to); break;
       case 'btc-dominance':  await fetchBtcDominance(from, to); break;
       case 'btc-funding':    await fetchBtcFunding(from, to); break;
-      case 'btc-oi':         await fetchBtcOI(from, to); break;
+      case 'btc-oi':            await fetchBtcOI(from, to); break;
+      case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
       case 'alt-altseason':  await fetchAltAltseason(from, to); break;
       case 'alt-beta':       await fetchAltBeta(to); break;
       case 'alt-ath-drawdown': await fetchAltATHDrawdown(); break;
@@ -3481,6 +3483,41 @@ async function fetchBtcOI(from, to) {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('BTC Open Interest', 'Source: Binance · USD notional');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Funding Rate Delta ───────────────────────────────────────────────────
+async function fetchBtcFundingDelta(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-funding-delta?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data — check derivatives feed');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: `${data.window||30}d Funding Δ (bps)`, data: data.funding_delta,
+          borderColor: '#4FC3F7', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 2, tension: 0, yAxisID: 'y' },
+        { label: `${data.window||30}d Price Δ (%)`, data: data.price_delta,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 2, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { position: 'left',
+              title: { display: true, text: 'Funding Δ (bps)', color: '#4FC3F7' },
+              ticks: { ...YTICK, color: '#4FC3F7', callback: v => v.toFixed(1)+'bp' },
+              grid: YGRID },
+        y2: { position: 'right',
+              title: { display: true, text: 'Price Δ (%)', color: '#F7931A' },
+              ticks: { ...YTICK, color: '#F7931A', callback: v => v.toFixed(1)+'%' },
+              grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle(`BTC Funding Rate Delta vs Price Return (${data.window||30}d rolling)`,
+             'Source: Binance · 8h funding avg · CoinGecko price');
   } catch(e) { showErr(e); }
 }
 
