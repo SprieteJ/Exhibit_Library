@@ -3489,7 +3489,7 @@ async function fetchAltAltseason(from, to) {
   spinOn();
   try {
     const data = await fetch(`/api/alt-altseason?from=${from}&to=${to}&window=30`).then(r=>r.json());
-    if (!data.dates?.length) throw new Error('no data — try a longer date range');
+    if (!data.dates?.length) throw new Error(`no data [${data.reason||'empty_result'} from=${from} to=${to}]`);
     mkChart('line', {
       labels: data.dates,
       datasets: [

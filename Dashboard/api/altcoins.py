@@ -177,7 +177,7 @@ def handle_alt_altseason(params):
 
     if not symbols:
         conn.close()
-        return {"dates": [], "values": [], "btc_dominance": []}
+        return {"dates": [], "values": [], "btc_dominance": [], "reason": "no_symbols"}
 
     cur.execute("""
         SELECT symbol, timestamp::date as date, price_usd
@@ -224,7 +224,8 @@ def handle_alt_altseason(params):
         prices[sym][str(row['date'])] = float(row['price_usd'])
 
     if 'BTC' not in prices:
-        return {"dates": [], "values": [], "btc_dominance": []}
+        return {"dates": [], "values": [], "btc_dominance": [],
+                "reason": f"no_btc_data sym_count={len(symbols)} rows={len(rows)} range={dt_from_ext}..{date_to}"}
 
     all_dates = sorted(set(d for s in prices.values() for d in s))
     result_dates, result_pcts = [], []
