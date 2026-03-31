@@ -406,10 +406,11 @@ input[type=number] { width: 70px; }
 
 <!-- Tab bar -->
 <div class="tabbar">
-  <button class="tab active" data-tab="sector">Sector</button>
+  <button class="tab active" data-tab="sector">Themes</button>
   <button class="tab" data-tab="bitcoin">Bitcoin</button>
   <button class="tab" data-tab="altcoins">Altcoins</button>
   <button class="tab" data-tab="macro">Macro</button>
+  <button class="tab" data-tab="crypto_market">Crypto Market</button>
   <button class="tab" data-tab="equity">Equity</button>
   <button class="tab" data-tab="data">
     <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-right:4px;vertical-align:-2px" viewBox="0 0 16 16"><ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v4c0 1.1 2.69 2 6 2s6-.9 6-2V4"/><path d="M2 8v4c0 1.1 2.69 2 6 2s6-.9 6-2V8"/></svg>
@@ -478,7 +479,7 @@ const PAL = ['#00D64A','#2471CC','#746BE6','#DB33CB','#EC5B5B','#F7931A','#26A17
 // ── View definitions ──────────────────────────────────────────────────────────
 const TABS = {
   sector: {
-    label: "Sector",
+    label: "Themes",
     groups: [
       { label: "Price Action", children: [
         { key:"sec-equal",  label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",        src:"CoinGecko Pro — Wintermute OTC" },
@@ -532,6 +533,9 @@ const TABS = {
         { key:"btc-realvol",  label:"Realized volatility",  sub:"Is BTC volatility expanding or contracting? 30d, 90d, and 180d rolling annualized vol plotted together.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-drawdown", label:"Drawdown from ATH",    sub:"How far is BTC from its all-time high? Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
+      { label: "Pricing", children: [
+        { key:"btc-ma",       label:"Moving averages",    sub:"BTC price with 50d and 200d moving averages. Add a custom MA window for additional analysis.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
       { label: "Bitcoin vs Gold", children: [
         { key:"btc-gold",       label:"Bitcoin vs Gold",    sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)",            src:"CoinGecko Pro + yfinance" },
         { key:"btc-gold-ratio", label:"BTC/Gold ratio",     sub:"Is BTC gaining or losing ground against gold? BTC price divided by gold price.", src:"CoinGecko Pro + yfinance" },
@@ -566,6 +570,14 @@ const TABS = {
       ]},
       { label: "Derivatives", children: [
         { key:"alt-funding-heatmap",  label:"Funding rate heatmap",    sub:"Where is the derivatives market most crowded across alts? Heatmap of funding rates by asset over time.", src:"CoinGecko Pro + Derivatives" },
+      ]},
+    ]
+  },
+  crypto_market: {
+    label: "Crypto Market",
+    groups: [
+      { label: "Market Cap", children: [
+        { key:"cm-total-mcap",  label:"Total market cap",  sub:"Total crypto market cap with 50d and 200d moving averages.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
     ]
   },
@@ -797,7 +809,7 @@ async function selectView(tab, key) {
   if (tab === 'sector') {
     allItems = allSectors;
   } else {
-    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab}`);
+    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab === 'crypto_market' ? 'majors' : tab}`);
     allItems  = await res.json();
   }
 
@@ -807,7 +819,7 @@ async function selectView(tab, key) {
     'ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
     'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
-    'alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
+    'btc-ma','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
@@ -821,7 +833,7 @@ async function selectView(tab, key) {
 const NEW_AUTO_KEYS = new Set([
   'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
-  'alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
+  'btc-ma','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
@@ -1428,6 +1440,8 @@ async function fetchCurrent() {
       case 'btc-funding':    await fetchBtcFunding(from, to); break;
       case 'btc-oi':            await fetchBtcOI(from, to); break;
       case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
+      case 'btc-ma':          await fetchBtcMA(from, to); break;
+      case 'cm-total-mcap':   await fetchTotalMcap(from, to); break;
       case 'alt-altseason':  await fetchAltAltseason(from, to); break;
       case 'alt-beta':       await fetchAltBeta(to); break;
       case 'alt-ath-drawdown': await fetchAltATHDrawdown(); break;
@@ -3583,6 +3597,83 @@ async function fetchAltBeta(to) {
 }
 
 // ── Alt: ATH Drawdown ─────────────────────────────────────────────────────────
+
+// ── BTC: Moving Averages ──────────────────────────────────────────────────────
+async function fetchBtcMA(from, to) {
+  spinOn();
+  try {
+    const customEl = document.getElementById('rp-custom-ma');
+    const custom = customEl?.value || '';
+    let url = `/api/btc-ma?from=${from}&to=${to}`;
+    if (custom && parseInt(custom) >= 2) url += `&custom=${custom}`;
+    const data = await fetch(url).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    const datasets = [
+      { label: 'BTC Price', data: data.price, borderColor: '#F7931A', backgroundColor: 'transparent',
+        borderWidth: 1.8, pointRadius: 0, tension: 0.1, yAxisID: 'y' },
+      { label: '50d MA', data: data.ma50, borderColor: '#2471CC', backgroundColor: 'transparent',
+        borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [4, 3], yAxisID: 'y' },
+      { label: '200d MA', data: data.ma200, borderColor: '#EC5B5B', backgroundColor: 'transparent',
+        borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [6, 4], yAxisID: 'y' },
+    ];
+    if (data.custom_ma?.length && data.custom_window) {
+      datasets.push({
+        label: `${data.custom_window}d MA`, data: data.custom_ma, borderColor: '#746BE6', backgroundColor: 'transparent',
+        borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [2, 2], yAxisID: 'y',
+      });
+    }
+    mkChart('line', { labels: data.dates, datasets }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8,
+          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v.toFixed(0)) }, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
+    });
+    setTitle('BTC Price — Moving Averages', 'Source: CoinGecko · 50d, 200d' + (data.custom_window ? `, ${data.custom_window}d` : ''));
+  } catch(e) { showErr(e); }
+}
+
+// ── Crypto Market: Total Market Cap ───────────────────────────────────────────
+async function fetchTotalMcap(from, to) {
+  spinOn();
+  try {
+    const customEl = document.getElementById('rp-custom-ma');
+    const custom = customEl?.value || '';
+    let url = `/api/total-mcap?from=${from}&to=${to}`;
+    if (custom && parseInt(custom) >= 2) url += `&custom=${custom}`;
+    const data = await fetch(url).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    const fmtT = v => {
+      if (v >= 1e12) return '$' + (v/1e12).toFixed(2) + 'T';
+      if (v >= 1e9)  return '$' + (v/1e9).toFixed(0) + 'B';
+      return '$' + (v/1e6).toFixed(0) + 'M';
+    };
+    const datasets = [
+      { label: 'Total Mcap', data: data.mcap, borderColor: '#00D64A', backgroundColor: 'rgba(0,214,74,0.06)',
+        borderWidth: 1.8, pointRadius: 0, tension: 0.1, fill: true, yAxisID: 'y' },
+      { label: '50d MA', data: data.ma50, borderColor: '#2471CC', backgroundColor: 'transparent',
+        borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [4, 3], yAxisID: 'y' },
+      { label: '200d MA', data: data.ma200, borderColor: '#EC5B5B', backgroundColor: 'transparent',
+        borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [6, 4], yAxisID: 'y' },
+    ];
+    if (data.custom_ma?.length && data.custom_window) {
+      datasets.push({
+        label: `${data.custom_window}d MA`, data: data.custom_ma, borderColor: '#746BE6', backgroundColor: 'transparent',
+        borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [2, 2], yAxisID: 'y',
+      });
+    }
+    mkChart('line', { labels: data.dates, datasets }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8,
+          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => fmtT(v) }, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
+    });
+    setTitle('Total Crypto Market Cap', 'Source: CoinGecko Global · 50d, 200d' + (data.custom_window ? `, ${data.custom_window}d` : ''));
+  } catch(e) { showErr(e); }
+}
 async function fetchAltATHDrawdown() {
   spinOn();
   try {
