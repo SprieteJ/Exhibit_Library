@@ -52,6 +52,14 @@ TIMEOUT         = 45
 BINANCE_BASE    = "https://fapi.binance.com"
 BYBIT_BASE      = "https://api.bybit.com"
 
+
+def to_utc_ts(dt) -> pd.Timestamp:
+    """Safely convert a datetime/Timestamp to UTC-aware pd.Timestamp."""
+    ts = pd.Timestamp(dt)
+    if ts.tzinfo is None:
+        return ts.tz_localize("UTC")
+    return ts.tz_convert("UTC")
+
 # Macro asset universe (mirrors macro_backfill.py)
 MACRO_ASSETS = {
     "SPY":       ("S&P 500 ETF",              "equity_index"),
@@ -179,7 +187,10 @@ def get_registry_from_db() -> pd.DataFrame:
     """Load the asset registry from Postgres."""
     conn = get_conn()
     try:
-        return pd.read_sql("SELECT symbol, coingecko_id FROM asset_registry WHERE coingecko_id IS NOT NULL", conn)
+        cur = conn.cursor()
+        cur.execute("SELECT symbol, coingecko_id FROM asset_registry WHERE coingecko_id IS NOT NULL")
+        rows = cur.fetchall()
+        return pd.DataFrame(rows, columns=["symbol", "coingecko_id"])
     finally:
         conn.close()
 
@@ -285,7 +296,7 @@ def update_prices():
 
             # Only keep rows newer than what we have
             if last:
-                df = df[df["timestamp"] > pd.Timestamp(last, tz="UTC")]
+                df = df[df["timestamp"] > to_utc_ts(last)]
 
             if df.empty:
                 print("up to date")
@@ -365,7 +376,7 @@ def update_marketcap():
             df = df.drop_duplicates(subset=["timestamp"], keep="last")
 
             if last:
-                df = df[df["timestamp"] > pd.Timestamp(last, tz="UTC")]
+                df = df[df["timestamp"] > to_utc_ts(last)]
 
             if df.empty:
                 print("up to date")
@@ -443,7 +454,7 @@ def update_volume():
             df = df.drop_duplicates(subset=["timestamp"], keep="last")
 
             if last:
-                df = df[df["timestamp"] > pd.Timestamp(last, tz="UTC")]
+                df = df[df["timestamp"] > to_utc_ts(last)]
 
             if df.empty:
                 print("up to date")
@@ -537,7 +548,7 @@ def update_coingecko_combined():
                 df = df.drop_duplicates(subset=["timestamp"], keep="last")
 
                 if last_ts:
-                    df = df[df["timestamp"] > pd.Timestamp(last_ts, tz="UTC")]
+                    df = df[df["timestamp"] > to_utc_ts(last_ts)]
 
                 if df.empty:
                     continue
@@ -817,7 +828,7 @@ def update_derivatives():
                     ls = _bybit_ls_recent(exch_sym)
                     # Filter to only new rows
                     if not ls.empty and last_ls_ts:
-                        ls = ls[ls["timestamp"] > pd.Timestamp(last_ls_ts, tz="UTC")]
+                        ls = ls[ls["timestamp"] > to_utc_ts(last_ls_ts)]
 
                 if not ls.empty:
                     ls["coingecko_id"] = cg_id
@@ -931,7 +942,7 @@ def update_macro():
                 # Only keep rows newer than what we have
                 last_h = latest_hourly.get(ticker)
                 if last_h:
-                    df = df[df["timestamp"] > pd.Timestamp(last_h, tz="UTC")]
+                    df = df[df["timestamp"] > to_utc_ts(last_h)]
 
                 if not df.empty:
                     df["ticker"]      = ticker
