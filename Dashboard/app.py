@@ -23,8 +23,9 @@ from api.bitcoin  import (handle_btc_epochs, handle_btc_cycles, handle_btc_gold,
 from api.altcoins import (handle_price, handle_alt_scatter,
                            handle_alt_altseason, handle_alt_beta, handle_alt_heatmap,
                            handle_alt_ath_drawdown, handle_alt_funding_heatmap,
-                           handle_alt_drawdown_ts)
 from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_dxy_btc,
+                           handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin)
+from api.crypto_market import handle_total_mcap
 from api.crypto_market import handle_total_mcap
                            handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin)
 
