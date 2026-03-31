@@ -223,13 +223,16 @@ def cg_get(url: str, params: dict = {}) -> dict:
 
 
 def exch_get(url: str, params: dict = {}) -> dict | list:
-    """Exchange API request with retries (Binance/Bybit)."""
+    """Exchange API request with retries (Binance/Bybit). Does not retry 400s."""
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             r = SESSION.get(url, params=params, timeout=30)
             if r.status_code == 429:
                 time.sleep(RETRY_BACKOFF * attempt)
                 continue
+            if r.status_code == 400:
+                # Bad request — won't succeed on retry, return empty
+                return {} if not url.endswith("fundingRate") else []
             r.raise_for_status()
             return r.json()
         except Exception as e:
@@ -768,7 +771,10 @@ def update_derivatives():
             try:
                 # ── Funding ───────────────────────────────────────────────
                 last_fr = latest_fr.get((cg_id, exchange))
-                since_ms = int(last_fr.timestamp() * 1000) + 1 if last_fr else 0
+                if last_fr:
+                    since_ms = int(last_fr.timestamp() * 1000) + 1
+                else:
+                    since_ms = int((datetime.now(timezone.utc) - timedelta(days=30)).timestamp() * 1000)
 
                 if exchange == "binance":
                     fr = _binance_funding_since(exch_sym, since_ms)
@@ -788,7 +794,10 @@ def update_derivatives():
 
                 # ── OI daily ──────────────────────────────────────────────
                 last_oid = latest_oid.get((cg_id, exchange))
-                since_ms = int(last_oid.timestamp() * 1000) + 1 if last_oid else 0
+                if last_oid:
+                    since_ms = int(last_oid.timestamp() * 1000) + 1
+                else:
+                    since_ms = int((datetime.now(timezone.utc) - timedelta(days=30)).timestamp() * 1000)
 
                 if exchange == "binance":
                     oi = _binance_oi_since(exch_sym, "1d", since_ms)
@@ -808,7 +817,10 @@ def update_derivatives():
 
                 # ── OI hourly ─────────────────────────────────────────────
                 last_oih = latest_oih.get((cg_id, exchange))
-                since_ms = int(last_oih.timestamp() * 1000) + 1 if last_oih else 0
+                if last_oih:
+                    since_ms = int(last_oih.timestamp() * 1000) + 1
+                else:
+                    since_ms = int((datetime.now(timezone.utc) - timedelta(days=7)).timestamp() * 1000)
 
                 if exchange == "binance":
                     oih = _binance_oi_since(exch_sym, "1h", since_ms)
@@ -828,7 +840,10 @@ def update_derivatives():
 
                 # ── Long/short ratio ──────────────────────────────────────
                 last_ls_ts = latest_ls.get((cg_id, exchange))
-                since_ms = int(last_ls_ts.timestamp() * 1000) + 1 if last_ls_ts else 0
+                if last_ls_ts:
+                    since_ms = int(last_ls_ts.timestamp() * 1000) + 1
+                else:
+                    since_ms = int((datetime.now(timezone.utc) - timedelta(days=30)).timestamp() * 1000)
 
                 if exchange == "binance":
                     ls = _binance_ls_since(exch_sym, "1d", since_ms)
