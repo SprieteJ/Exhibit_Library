@@ -994,6 +994,109 @@ def update_macro():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# 7. DVOL — Deribit Implied Volatility Index (BTC + ETH)
+# ══════════════════════════════════════════════════════════════════════════════
+
+DERIBIT_BASE    = "https://www.deribit.com/api/v2"
+DVOL_CURRENCIES = ["BTC", "ETH"]
+DVOL_CHUNK_DAYS = 600
+DVOL_DEFAULT_START = datetime(2021, 3, 1, tzinfo=timezone.utc)
+
+
+def _fetch_dvol_chunk(currency: str, start_ms: int, end_ms: int) -> pd.DataFrame:
+    url = f"{DERIBIT_BASE}/public/get_volatility_index_data"
+    params = {"currency": currency, "start_timestamp": start_ms, "end_timestamp": end_ms, "resolution": "1D"}
+    for attempt in range(3):
+        try:
+            r = SESSION.get(url, params=params, timeout=30)
+            if r.status_code == 429:
+                time.sleep(5 * (attempt + 1))
+                continue
+            if r.status_code == 400:
+                return pd.DataFrame()
+            r.raise_for_status()
+            data = r.json().get("result", {}).get("data", [])
+            if not data:
+                return pd.DataFrame()
+            df = pd.DataFrame(data, columns=["timestamp_ms", "open", "high", "low", "close"])
+            df["timestamp"] = pd.to_datetime(df["timestamp_ms"], unit="ms", utc=True)
+            return df[["timestamp", "open", "high", "low", "close"]].drop_duplicates("timestamp").sort_values("timestamp")
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(3 * (attempt + 1))
+            else:
+                raise
+    return pd.DataFrame()
+
+
+def update_dvol():
+    """Incremental update for Deribit DVOL index (BTC + ETH)."""
+    print("\n" + "=" * 70)
+    print("UPDATING: dvol_daily (Deribit Implied Volatility Index)")
+    print("=" * 70)
+
+    now_utc_dt = datetime.now(timezone.utc)
+    now_utc = now_utc_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    today = now_utc_dt.date()
+    total_inserted = 0
+
+    for currency in DVOL_CURRENCIES:
+        # Get latest
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT MAX(timestamp) FROM dvol_daily WHERE currency = %s", (currency,))
+            row = cur.fetchone()
+            last = row[0] if row and row[0] else None
+        finally:
+            conn.close()
+
+        if last:
+            start = last + timedelta(hours=1)
+            gap_days = (now_utc_dt - start).days
+            if gap_days <= 0:
+                print(f"  [{currency}] up to date")
+                continue
+            print(f"  [{currency}] {gap_days}d gap … ", end="", flush=True)
+        else:
+            start = DVOL_DEFAULT_START
+            print(f"  [{currency}] no data — full fetch … ", end="", flush=True)
+
+        # Fetch in chunks
+        all_dfs = []
+        current = start
+        while current < now_utc_dt:
+            chunk_end = min(current + timedelta(days=DVOL_CHUNK_DAYS), now_utc_dt)
+            df = _fetch_dvol_chunk(currency, int(current.timestamp() * 1000), int(chunk_end.timestamp() * 1000))
+            if not df.empty:
+                all_dfs.append(df)
+            current = chunk_end
+            time.sleep(0.3)
+
+        if not all_dfs:
+            print("no data")
+            continue
+
+        combined = pd.concat(all_dfs, ignore_index=True).drop_duplicates("timestamp").sort_values("timestamp")
+        combined = combined[combined["timestamp"].dt.date < today]
+
+        if combined.empty:
+            print("up to date")
+            continue
+
+        combined["currency"]    = currency
+        combined["source"]      = "deribit"
+        combined["ingested_at"] = now_utc
+        combined = combined[["timestamp", "currency", "open", "high", "low", "close", "source", "ingested_at"]]
+
+        n = bulk_upsert("dvol_daily", combined, ["timestamp", "currency"])
+        total_inserted += n
+        print(f"+{n} rows")
+
+    print(f"\n[dvol_daily] done — {total_inserted} total rows inserted")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -1010,6 +1113,7 @@ def main():
         update_coingecko_combined()   # price + mcap + volume in one pass
         update_derivatives()
         update_macro()
+        update_dvol()
     elif target in ("prices", "price"):
         update_coingecko_combined()
     elif target in ("derivatives", "derivs"):
@@ -1020,6 +1124,8 @@ def main():
         update_volume()
     elif target == "marketcap":
         update_marketcap()
+    elif target in ("dvol",):
+        update_dvol()
     else:
         print(f"Unknown target: {target}")
         print("Usage: python daily_update.py [all|prices|derivatives|macro|volume|marketcap]")
