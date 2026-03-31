@@ -65,7 +65,7 @@ def handle_btc_cycles(params):
     PEAKS = {
         "2017/18 Bear": "2017-12-17",
         "2021/22 Bear": "2021-11-10",
-        "2025 Bear (ongoing)": peak_2025,  # ATH ~$126k on 2025-10-06
+        "2025 Bear (ongoing)": peak_2025,
     }
 
     conn   = get_conn()
@@ -153,7 +153,6 @@ def handle_btc_gold(params):
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    # BTC from price_daily
     cur.execute("""
         SELECT timestamp::date as date, price_usd
         FROM price_daily
@@ -164,7 +163,6 @@ def handle_btc_gold(params):
     """, (date_from, date_to))
     btc_rows = cur.fetchall()
 
-    # Gold from macro_daily (GLD ETF)
     tbl = macro_table(granularity)
     cur.execute(f"""
         SELECT timestamp::date as date, close as price
@@ -250,7 +248,6 @@ def handle_btc_realvol(params):
 
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    # fetch extra history for the 180d window
     try:
         dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=190)).strftime("%Y-%m-%d")
     except:
@@ -293,7 +290,6 @@ def handle_btc_realvol(params):
     v90  = rolling_vol(90)
     v180 = rolling_vol(180)
 
-    # trim to requested date range
     trimmed = [(d, a, b, c) for d, a, b, c in zip(all_dates, v30, v90, v180) if d >= date_from]
     if not trimmed:
         return {"dates": [], "vol_30d": [], "vol_90d": [], "vol_180d": []}
@@ -309,7 +305,6 @@ def handle_btc_drawdown_ath(params):
 
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    # Fetch all BTC history to compute running max
     cur.execute("""
         SELECT timestamp::date as date, price_usd
         FROM price_daily
@@ -381,47 +376,47 @@ def handle_btc_gold_ratio(params):
 
 
 def handle_btc_dominance(params):
-    """BTC mcap / total crypto mcap * 100 per day."""
+    """BTC mcap / total crypto mcap * 100 per day.
+    Uses CoinGecko global total market cap (total_marketcap_daily) for accuracy.
+    Falls back to summing our 584 assets if the global table is empty."""
     date_from = params.get("from", ["2020-01-01"])[0]
     date_to   = params.get("to",   ["2099-01-01"])[0]
 
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    cur.execute("""
-        SELECT m.timestamp::date as date,
-               b.market_cap_usd as btc_mcap,
-               total.total_mcap
-        FROM marketcap_daily b
-        JOIN (
-            SELECT timestamp::date as date, SUM(market_cap_usd) as total_mcap
-            FROM marketcap_daily
-            WHERE timestamp >= %s AND timestamp <= %s
-              AND market_cap_usd > 0
-            GROUP BY timestamp::date
-        ) total ON b.timestamp::date = total.date
-        JOIN marketcap_daily m ON m.timestamp::date = b.timestamp::date AND m.coingecko_id = b.coingecko_id
-        WHERE b.coingecko_id = (
-            SELECT coingecko_id FROM price_daily WHERE symbol = 'BTC' LIMIT 1
-        )
-          AND b.timestamp >= %s AND b.timestamp <= %s
-          AND b.market_cap_usd > 0
-        ORDER BY m.timestamp::date
-    """, (date_from, date_to, date_from, date_to))
-    rows = cur.fetchall()
-    conn.close()
+    # Primary: use CoinGecko global total market cap
+    rows = []
+    try:
+        cur.execute("""
+            SELECT b.timestamp::date as date,
+                   b.market_cap_usd as btc_mcap,
+                   t.total_mcap_usd as total_mcap
+            FROM marketcap_daily b
+            JOIN total_marketcap_daily t
+              ON b.timestamp::date = t.timestamp::date
+            WHERE b.coingecko_id = (
+                SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1
+            )
+              AND b.timestamp >= %s AND b.timestamp <= %s
+              AND b.market_cap_usd > 0
+              AND t.total_mcap_usd > 0
+            ORDER BY b.timestamp::date
+        """, (date_from, date_to))
+        rows = cur.fetchall()
+    except Exception:
+        pass
 
+    # Fallback: sum our tracked assets
     if not rows:
-        # fallback: simpler query
-        conn2 = get_conn()
-        cur2  = conn2.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur2.execute("""
-            SELECT b.timestamp::date as date, b.market_cap_usd as btc_mcap,
+        cur.execute("""
+            SELECT b.timestamp::date as date,
+                   b.market_cap_usd as btc_mcap,
                    t.total_mcap
             FROM (
                 SELECT timestamp::date as date, market_cap_usd
                 FROM marketcap_daily
-                WHERE coingecko_id IN (SELECT coingecko_id FROM price_daily WHERE symbol='BTC' LIMIT 1)
+                WHERE coingecko_id IN (SELECT coingecko_id FROM asset_registry WHERE symbol='BTC' LIMIT 1)
                   AND timestamp >= %s AND timestamp <= %s AND market_cap_usd > 0
             ) b
             JOIN (
@@ -432,8 +427,9 @@ def handle_btc_dominance(params):
             ) t ON b.date = t.date
             ORDER BY b.date
         """, (date_from, date_to, date_from, date_to))
-        rows = cur2.fetchall()
-        conn2.close()
+        rows = cur.fetchall()
+
+    conn.close()
 
     dates, values = [], []
     for row in rows:
@@ -479,19 +475,19 @@ def handle_btc_funding(params):
 
 
 def handle_btc_oi(params):
-    """Total BTC OI in USD per day + BTC price overlay."""
-    date_from = params.get("from", ["2024-01-01"])[0]
+    """Total BTC OI in USD per day (Binance + Bybit) + BTC price overlay.
+    Bybit doesn't provide oi_usd, so we compute it: oi_contracts * btc_price."""
+    date_from = params.get("from", ["2020-01-01"])[0]
     date_to   = params.get("to",   ["2099-01-01"])[0]
 
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     cur.execute("""
-        SELECT timestamp::date as date, SUM(oi_usd) as total_oi
+        SELECT timestamp::date as date, exchange, oi_usd, oi_contracts
         FROM open_interest_daily
         WHERE symbol = 'BTC'
           AND timestamp >= %s AND timestamp <= %s
-        GROUP BY timestamp::date
         ORDER BY timestamp::date
     """, (date_from, date_to))
     oi_rows = cur.fetchall()
@@ -508,12 +504,25 @@ def handle_btc_oi(params):
     conn.close()
 
     price_map = {str(r['date']): float(r['price_usd']) for r in price_rows}
-    dates, oi_values, btc_prices = [], [], []
+
+    # Aggregate OI per day: sum across exchanges, converting Bybit contracts to USD
+    daily_oi = {}
     for row in oi_rows:
         d = str(row['date'])
-        dates.append(d)
-        oi_values.append(float(row['total_oi']) if row['total_oi'] is not None else None)
-        btc_prices.append(price_map.get(d))
+        oi_usd = float(row['oi_usd']) if row['oi_usd'] is not None else None
+
+        # If no oi_usd (Bybit), compute from contracts * price
+        if oi_usd is None and row['oi_contracts'] is not None:
+            btc_price = price_map.get(d)
+            if btc_price:
+                oi_usd = float(row['oi_contracts']) * btc_price
+
+        if oi_usd is not None:
+            daily_oi[d] = daily_oi.get(d, 0) + oi_usd
+
+    dates = sorted(daily_oi.keys())
+    oi_values  = [round(daily_oi[d], 2) for d in dates]
+    btc_prices = [price_map.get(d) for d in dates]
 
     return {"dates": dates, "oi_values": oi_values, "btc_prices": btc_prices}
 
@@ -554,23 +563,16 @@ def handle_btc_funding_delta(params):
     price_rows = cur.fetchall()
     conn.close()
 
-    # Build ordered lists (funding and price may have different dates)
     f_dates = [str(r["date"]) for r in funding_rows if r["avg_rate"] is not None]
     f_vals  = [float(r["avg_rate"]) for r in funding_rows if r["avg_rate"] is not None]
     p_dates = [str(r["date"]) for r in price_rows]
     p_vals  = [float(r["price_usd"]) for r in price_rows]
 
-    # Use price dates as the master series (daily, complete)
-    # For each date, look up the value exactly `window` calendar days ago
     dates, funding_delta, price_delta = [], [], []
     for i, d in enumerate(p_dates):
         if d < date_from:
             continue
-
-        # Target date `window` calendar days before d
         target = (datetime.strptime(d, "%Y-%m-%d") - timedelta(days=window)).strftime("%Y-%m-%d")
-
-        # Price: find nearest price date <= target
         pi = bisect.bisect_right(p_dates, target) - 1
         if pi < 0:
             continue
@@ -578,8 +580,6 @@ def handle_btc_funding_delta(params):
         p_past = p_vals[pi]
         if p_past == 0:
             continue
-
-        # Funding: find nearest funding date <= d and <= target
         fi_now  = bisect.bisect_right(f_dates, d) - 1
         fi_past = bisect.bisect_right(f_dates, target) - 1
         if fi_now < 0 or fi_past < 0:
@@ -588,7 +588,7 @@ def handle_btc_funding_delta(params):
         f_past = f_vals[fi_past]
 
         dates.append(d)
-        funding_delta.append(round((f_now - f_past) * 10000, 4))  # bps
-        price_delta.append(round((p_now / p_past - 1) * 100, 4))  # %
+        funding_delta.append(round((f_now - f_past) * 10000, 4))
+        price_delta.append(round((p_now / p_past - 1) * 100, 4))
 
     return {"dates": dates, "funding_delta": funding_delta, "price_delta": price_delta, "window": window}
