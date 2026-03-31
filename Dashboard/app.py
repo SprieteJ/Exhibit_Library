@@ -21,7 +21,8 @@ from api.bitcoin  import (handle_btc_epochs, handle_btc_cycles, handle_btc_gold,
                            handle_btc_funding_delta)
 from api.altcoins import (handle_price, handle_alt_scatter,
                            handle_alt_altseason, handle_alt_beta, handle_alt_heatmap,
-                           handle_alt_ath_drawdown, handle_alt_funding_heatmap)
+                           handle_alt_ath_drawdown, handle_alt_funding_heatmap,
+                           handle_alt_drawdown_ts)
 from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_dxy_btc,
                            handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin)
 
@@ -111,6 +112,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/alt-heatmap":       self.send_json(handle_alt_heatmap(params))
             elif p == "/api/alt-ath-drawdown":  self.send_json(handle_alt_ath_drawdown(params))
             elif p == "/api/alt-funding-heatmap": self.send_json(handle_alt_funding_heatmap(params))
+            elif p == "/api/alt-drawdown-ts":    self.send_json(handle_alt_drawdown_ts(params))
 
             elif p == "/api/macro-matrix":      self.send_json(handle_macro_matrix(params))
             elif p == "/api/macro-dxy-btc":     self.send_json(handle_macro_dxy_btc(params))

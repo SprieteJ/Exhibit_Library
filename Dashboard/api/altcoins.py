@@ -542,3 +542,76 @@ def handle_alt_funding_heatmap(params):
         matrix[sym] = [data[sym].get(d) for d in all_dates]
 
     return {"symbols": present, "dates": all_dates, "matrix": matrix}
+
+
+def handle_alt_drawdown_ts(params):
+    """
+    Max drawdown over time for top-N altcoins.
+    Returns {dates: [...], series: {SYM: {dates: [...], drawdowns: [...]}, ...}}
+    Each value in drawdowns is the % drawdown from the running ATH at that date.
+    """
+    topn      = min(int(params.get("topn", ["20"])[0]), 100)
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT p.symbol, p.coingecko_id
+        FROM price_daily p
+        JOIN (
+            SELECT coingecko_id, market_cap_usd
+            FROM marketcap_daily
+            WHERE timestamp::date = (
+                SELECT MAX(timestamp::date) FROM marketcap_daily WHERE timestamp <= NOW()
+            ) AND market_cap_usd > 0
+        ) m ON p.coingecko_id = m.coingecko_id
+        WHERE p.symbol NOT IN ('BTC','USDT','USDC','DAI','BUSD','TUSD','USDP','FDUSD','PYUSD')
+        GROUP BY p.symbol, p.coingecko_id, m.market_cap_usd
+        ORDER BY m.market_cap_usd DESC
+        LIMIT %s
+    """, (topn,))
+    symbols = [r['symbol'] for r in cur.fetchall()]
+
+    if not symbols:
+        conn.close()
+        return {"dates": [], "series": {}}
+
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = ANY(%s)
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY symbol, timestamp
+    """, (symbols, date_from, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    prices = {}
+    for row in rows:
+        sym = row['symbol']
+        if sym not in prices:
+            prices[sym] = {'dates': [], 'values': []}
+        prices[sym]['dates'].append(str(row['date']))
+        prices[sym]['values'].append(float(row['price_usd']))
+
+    series = {}
+    all_dates = set()
+    for sym in symbols:
+        if sym not in prices or len(prices[sym]['values']) < 2:
+            continue
+        dates = prices[sym]['dates']
+        vals  = prices[sym]['values']
+        ath = vals[0]
+        drawdowns = []
+        for v in vals:
+            if v > ath:
+                ath = v
+            dd = round((v / ath - 1) * 100, 2) if ath > 0 else 0
+            drawdowns.append(dd)
+        series[sym] = {'dates': dates, 'drawdowns': drawdowns}
+        all_dates.update(dates)
+
+    return {"dates": sorted(all_dates), "series": series}

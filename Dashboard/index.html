@@ -562,6 +562,7 @@ const TABS = {
       ]},
       { label: "Drawdown", children: [
         { key:"alt-ath-drawdown",     label:"Distance from ATH",       sub:"How beaten-down is each alt? Current drawdown from all-time high, sorted worst-first.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-drawdown-ts",     label:"Drawdown over time",      sub:"How has each alt drawdown from its running ATH evolved over time? Multi-line chart for top alts.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Derivatives", children: [
         { key:"alt-funding-heatmap",  label:"Funding rate heatmap",    sub:"Where is the derivatives market most crowded across alts? Heatmap of funding rates by asset over time.", src:"CoinGecko Pro + Derivatives" },
@@ -806,7 +807,7 @@ async function selectView(tab, key) {
     'ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
     'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
-    'alt-altseason','alt-beta','alt-ath-drawdown',
+    'alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
@@ -820,7 +821,7 @@ async function selectView(tab, key) {
 const NEW_AUTO_KEYS = new Set([
   'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
-  'alt-altseason','alt-beta','alt-ath-drawdown',
+  'alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
@@ -1430,6 +1431,7 @@ async function fetchCurrent() {
       case 'alt-altseason':  await fetchAltAltseason(from, to); break;
       case 'alt-beta':       await fetchAltBeta(to); break;
       case 'alt-ath-drawdown': await fetchAltATHDrawdown(); break;
+      case 'alt-drawdown-ts':  await fetchAltDrawdownTS(from, to); break;
       case 'mac-matrix':     await fetchMacroMatrix(from, to); break;
       case 'mac-dxy-btc':    await fetchMacroDxyBtc(from, to); break;
       case 'mac-risk':       await fetchMacroRisk(from, to); break;
@@ -3600,6 +3602,65 @@ async function fetchAltATHDrawdown() {
       plugins: { legend: { display: false } }
     });
     setTitle('Altcoin Drawdown from ATH (Top 30)', 'Source: CoinGecko · all-time high');
+  } catch(e) { showErr(e); }
+}
+
+
+// ── Alt: Drawdown Over Time ───────────────────────────────────────────────────
+async function fetchAltDrawdownTS(from, to) {
+  spinOn();
+  try {
+    const topN = parseInt(document.getElementById('rp-topn')?.value || '10');
+    const data = await fetch(`/api/alt-drawdown-ts?from=${from}&to=${to}&topn=${topN}`).then(r=>r.json());
+    if (!data.series || !Object.keys(data.series).length) throw new Error('no data');
+
+    const syms = Object.keys(data.series).slice(0, 10);
+    const datasets = syms.map((sym, i) => {
+      const s = data.series[sym];
+      const dateMap = {};
+      s.dates.forEach((d, j) => dateMap[d] = s.drawdowns[j]);
+      return {
+        label: sym,
+        data: data.dates.map(d => dateMap[d] !== undefined ? dateMap[d] : null),
+        borderColor: PAL[i % PAL.length],
+        backgroundColor: 'transparent',
+        borderWidth: 1.4,
+        pointRadius: 0,
+        tension: 0.1,
+        spanGaps: true,
+      };
+    });
+
+    mkChart('line', {
+      labels: data.dates,
+      datasets,
+    }, {
+      scales: {
+        x: {
+          type: 'category',
+          ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8,
+            callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } },
+          grid: XGRID,
+        },
+        y: {
+          max: 0,
+          ticks: { ...YTICK, callback: v => v + '%' },
+          grid: YGRID,
+        },
+      },
+      plugins: {
+        legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              return v != null ? ` ${ctx.dataset.label}  ${v.toFixed(1)}%` : null;
+            }
+          }
+        }
+      },
+    });
+    setTitle(`Altcoin Drawdown from Running ATH (Top ${syms.length})`, 'Source: CoinGecko · running all-time high');
   } catch(e) { showErr(e); }
 }
 
