@@ -1,0 +1,585 @@
+Symbol,Market Cap (M),Sector,Use Case,Sub Use Case,Tech Stack,Sub Tech Stack,Tertiary Tech Stack,Ecosystem,Region,Custodies,CoinGecko ID,CoinGecko Symbol,CoinGecko Name,CoinMarketCap ID,CoinMarketCap Symbol,CoinMarketCap Name,CoinMarketCap Slug,CoinMetrics ID,CoinMetrics Name
+BTC,1362802962054,Currency Networks,Store of Value,,Blockchain Network,Layer 1,PoW,Bitcoin,,Copper; Coinbase Custody; Gemini Custody; BitGo Custody; Zodia; Anchorage Digital,bitcoin,btc,Bitcoin,1,BTC,Bitcoin,bitcoin,btc,Bitcoin
+ETH,237555739960,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Ethereum,,Copper; BitGo Custody; Gemini Custody; Coinbase Custody; Zodia; Anchorage Digital,ethereum,eth,Ethereum,1027,ETH,Ethereum,ethereum,eth,Ethereum
+XRP,86769921840,Currency Networks,Settlement Network,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,US,Anchorage Digital; Coinbase Custody; BitGo Custody; Zodia; Copper,ripple,xrp,XRP,52,XRP,XRP,xrp,xrp,XRP
+BNB,83574510475,Centralized Finance,Exchange,,Blockchain Network,Layer 1,PoS,BNB,,Anchorage Digital; BitGo Custody; Coinbase Custody; Zodia,binancecoin,bnb,BNB,1839,BNB,BNB,bnb,bnb,BNB
+SOL,47856969448,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Solana,US,BitGo Custody; Gemini Custody; Coinbase Custody; Anchorage Digital; Copper; Zodia,solana,sol,Solana,5426,SOL,Solana,solana,sol,Solana
+TRX,26838114466,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Tron,,BitGo Custody; Zodia; Copper,tron,trx,TRON,1958,TRX,TRON,tron,trx,TRON
+DOGE,16741567746,Meme,,,Blockchain Network,Layer 1,PoW,,US,Copper; Anchorage Digital; Coinbase Custody; Gemini Custody; BitGo Custody,dogecoin,doge,Dogecoin,74,DOGE,Dogecoin,dogecoin,doge,Dogecoin
+ADA,10090077141,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,US,Copper; Coinbase Custody; BitGo Custody; Zodia,cardano,ada,Cardano,2010,ADA,Cardano,cardano,ada,Cardano
+LEO,7901548272,Centralized Finance,Exchange,,Application,,,,,BitGo Custody,leo-token,leo,LEO Token,3957,LEO,UNUS SED LEO,unus-sed-leo,leo,UNUS SED LEO
+HYPE,7302111946,Decentralized Finance,Trading Platforms,Diversified/Other Trading Platforms,Blockchain Network,Layer 1,PoS,,,BitGo Custody; Anchorage Digital,hyperliquid,hype,Hyperliquid,32196,HYPE,Hyperliquid,hyperliquid,hype,Hyperliquid
+LINK,6154395477,Decentralized Finance,DeFi Infrastructure & Data,Oracles,Application,,,Ethereum,US,Coinbase Custody; Gemini Custody; BitGo Custody; Anchorage Digital; Zodia,chainlink,link,Chainlink,1975,LINK,Chainlink,chainlink,link,Chainlink
+CC,5978426649,General Purpose Blockchain Networks,Settlement Network,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Zodia; Copper; BitGo Custody,canton-network,cc,Canton,37263,CC,Canton,canton-network,cc,Canton Coin
+XLM,5310166696,Currency Networks,Settlement Network,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,US,Copper; Coinbase Custody; Anchorage Digital; BitGo Custody; Zodia,stellar,xlm,Stellar,512,XLM,Stellar,stellar,xlm,Stellar
+WBT,4419691648,Centralized Finance,Exchange,,Application,,,,,,whitebit,wbt,WhiteBIT Coin,21353,WBT,WhiteBIT Coin,whitebit-token,wbt,WhiteBIT Token
+HBAR,4265907400,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,US,Anchorage Digital; Copper; Coinbase Custody; BitGo Custody,hedera-hashgraph,hbar,Hedera,4642,HBAR,Hedera,hedera,hbar,Hedera
+LTC,4149126296,Currency Networks,Settlement Network,,Blockchain Network,Layer 1,PoW,,US,Copper; Coinbase Custody; Zodia; BitGo Custody; Gemini Custody; Anchorage Digital,litecoin,ltc,Litecoin,2,LTC,Litecoin,litecoin,ltc,Litecoin
+AVAX,4003925390,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Avalanche,US,Anchorage Digital; Coinbase Custody; BitGo Custody; Zodia; Copper,avalanche-2,avax,Avalanche,5805,AVAX,Avalanche,avalanche,avax,Avalanche
+SHIB,3719370043,Meme,,,Blockchain Network,Sidechain,Ethereum Sidechain,Ethereum,,Gemini Custody; BitGo Custody; Anchorage Digital; Coinbase Custody,shiba-inu,shib,Shiba Inu,5994,SHIB,Shiba Inu,shiba-inu,shib,Shiba Inu
+SUI,3657702470,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Sui,US,BitGo Custody; Coinbase Custody; Anchorage Digital; Copper,sui,sui,Sui,20947,SUI,Sui,sui,sui,Sui
+TON,3360968122,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,,TON,,Copper; BitGo Custody; Zodia,the-open-network,ton,Toncoin,11419,TON,Toncoin,toncoin,ton,Toncoin
+CRO,3211175793,Centralized Finance,Exchange,,Blockchain Network,Layer 1,PoS,Cosmos,,Anchorage Digital; Coinbase Custody; BitGo Custody; Zodia,crypto-com-chain,cro,Cronos,3635,CRO,Cronos,cronos,cro,Cronos
+WLFI,3136531965,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,,US,BitGo Custody,world-liberty-financial,wlfi,World Liberty Financial,33251,WLFI,World Liberty Financial,world-liberty-financial-wlfi,wlfi,World Liberty Financial
+DOT,2180885269,General Purpose Blockchain Networks,Interchain Connectivity Platforms,,Blockchain Network,Layer 0,,,,Copper; Zodia; BitGo Custody; Coinbase Custody,polkadot,dot,Polkadot,6636,DOT,Polkadot,polkadot-new,dot,Polkadot
+UNI,2170871674,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Ethereum,US,Anchorage Digital; Coinbase Custody; Gemini Custody; BitGo Custody; Zodia,uniswap,uni,Uniswap,7083,UNI,Uniswap,uniswap,uni,Uniswap
+MNT,2023671168,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Optimistic Rollup,,,BitGo Custody; Anchorage Digital,mantle,mnt,Mantle,27075,MNT,Mantle,mantle,mnt,Mantle
+AAVE,1904379858,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Ethereum,,BitGo Custody; Zodia; Anchorage Digital; Coinbase Custody; Gemini Custody,aave,aave,Aave,7278,AAVE,Aave,aave,aave,Aave
+PEPE,1766147768,Meme,,,Application,,,Ethereum,,Gemini Custody; Anchorage Digital; Coinbase Custody; BitGo Custody,pepe,pepe,Pepe,24478,PEPE,Pepe,pepe,pepe,Pepe
+ASTER,1751510799,Decentralized Finance,Trading Platforms,Diversified/Other Trading Platforms,Application,,,BNB,,Anchorage Digital; Copper; BitGo Custody,aster-2,aster,Aster,36341,ASTER,Aster,aster,aster,Aster
+TAO,1706196408,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Blockchain Network,Layer 1,PoS,,,BitGo Custody; Copper,bittensor,tao,Bittensor,22974,TAO,Bittensor,bittensor,tao_bittensor,Bittensor
+OKB,1675417346,Centralized Finance,Exchange,,Blockchain Network,Layer 2,ZK Rollup,,,Zodia; BitGo Custody,okb,okb,OKB,3897,OKB,OKB,okb,okb,OKB
+BGB,1650448835,Centralized Finance,Exchange,,Application,,,,,Anchorage Digital; BitGo Custody,bitget-token,bgb,Bitget Token,11092,BGB,Bitget Token,bitget-token-new,bgb,Bitget Token
+HTX,1622520702,Centralized Finance,Exchange,,Application,,,,,,htx-dao,htx,HTX DAO,29160,HTX,HTX,htx,htx,HTX
+PI,1595334316,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,pi-network,pi,Pi Network,35697,PI,Pi,pi,pi,Pi
+SKY,1448793428,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,Ethereum,,Anchorage Digital; Coinbase Custody; BitGo Custody; Zodia,sky,sky,Sky,33038,SKY,Sky,sky,sky_sky,Sky
+NEAR,1309089203,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,US,Coinbase Custody; BitGo Custody; Copper,near,near,NEAR Protocol,6535,NEAR,NEAR Protocol,near-protocol,near,NEAR Protocol
+ONDO,1289824278,Decentralized Finance,Asset Origination and Issuance,Security Token Platforms,Blockchain Network,Layer 1,PoS,Ethereum,US,Copper; Coinbase Custody; Anchorage Digital; BitGo Custody,ondo-finance,ondo,Ondo,21159,ONDO,Ondo,ondo-finance,ondo,Ondo
+ICP,1191979790,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Zodia; BitGo Custody; Coinbase Custody; Copper,internet-computer,icp,Internet Computer,8916,ICP,Internet Computer,internet-computer,icp,Internet Computer
+ATOM,1148462910,General Purpose Blockchain Networks,Interchain Connectivity Platforms,,Blockchain Network,Layer 0,,Cosmos,,Anchorage Digital; Coinbase Custody; Copper; BitGo Custody,cosmos,atom,Cosmos Hub,3794,ATOM,Cosmos,cosmos,atom,Cosmos
+POL,1127811946,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Hybrid / Other (Ethereum Layer 2),Polygon,,Zodia; Anchorage Digital; Copper; Gemini Custody; Coinbase Custody; BitGo Custody,polygon-ecosystem-token,pol,POL (ex-MATIC),28321,POL,Polygon (prev. MATIC),polygon-ecosystem-token,pol,POL (ex-MATIC)
+KCS,1113484914,Centralized Finance,Exchange,,Blockchain Network,Layer 1,PoS,,,,kucoin-shares,kcs,KuCoin,2087,KCS,KuCoin Token,kucoin-token,kcs,KuCoin Token
+WLD,1096063149,Blockchain Utilities & Tools,Identity & Authentication,,Blockchain Network,Layer 2,Optimistic Rollup,,,BitGo Custody; Anchorage Digital,worldcoin-wld,wld,Worldcoin,13502,WLD,Worldcoin,worldcoin-org,wld,Worldcoin
+ENA,915421022,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,Ethereum,,Anchorage Digital; Coinbase Custody; BitGo Custody; Zodia,ethena,ena,Ethena,30171,ENA,Ethena,ethena,ena,Ethena
+TRUMP,850631090,Meme,,,Application,,,Solana,US,BitGo Custody; Anchorage Digital; Gemini Custody,official-trump,trump,Official Trump,35336,TRUMP,OFFICIAL TRUMP,official-trump,trump,OFFICIAL TRUMP
+GT,825657822,Centralized Finance,Exchange,,Blockchain Network,Layer 1,PoS,,,,gatechain-token,gt,Gate,4269,GT,GateToken,gatetoken,gt,GateToken
+KAS,813689574,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoW,,,Zodia,kaspa,kas,Kaspa,20396,KAS,Kaspa,kaspa,kas,Kaspa
+ALGO,802053154,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,US,Coinbase Custody; BitGo Custody; Copper,algorand,algo,Algorand,4030,ALGO,Algorand,algorand,algo,Algorand
+QNT,797341357,Blockchain Utilities & Tools,Developer Tools,,Application,,,,,Zodia; Anchorage Digital; BitGo Custody; Gemini Custody; Coinbase Custody,quant-network,qnt,Quant,3155,QNT,Quant,quant,qnt,Quant
+FLR,792170391,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,Zodia; Copper; BitGo Custody,flare-networks,flr,Flare,7950,FLR,Flare,flare,flr,Flare
+RENDER,764929725,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Application,,,Solana,US,BitGo Custody; Coinbase Custody,render-token,render,Render,5690,RENDER,Render,render,render,Render
+PUMP,744106774,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Solana,,Gemini Custody; Copper; Anchorage Digital; Coinbase Custody,pump-fun,pump,Pump.fun,36507,PUMP,Pump.fun,pump-fun,pump,Pump Fun
+FIL,697462991,Decentralized Physical Infrastructure,Storage,File Storage,Blockchain Network,Specialized Utility Layer,,,US,Coinbase Custody; Anchorage Digital; Copper; Gemini Custody,filecoin,fil,Filecoin,2280,FIL,Filecoin,filecoin,fil,Filecoin
+XDC,696011699,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody; Anchorage Digital; Copper,xdce-crowd-sale,xdc,XDC Network,2634,XDC,XDC Network,xdc-network,xdc,XDC Network
+APT,675711661,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Move,US,Coinbase Custody; BitGo Custody; Copper; Anchorage Digital,aptos,apt,Aptos,21794,APT,Aptos,aptos,apt,Aptos
+VET,668592923,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Copper; BitGo Custody,vechain,vet,VeChain,3077,VET,VeChain,vechain,vet,VeChain
+MORPHO,580203939,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Ethereum,,Coinbase Custody; Anchorage Digital,morpho,morpho,Morpho,34104,MORPHO,Morpho,morpho,morpho,Morpho
+ARB,563216037,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Optimistic Rollup,Arbitrum,,Copper; Anchorage Digital; Coinbase Custody; Gemini Custody; BitGo Custody,arbitrum,arb,Arbitrum,11841,ARB,Arbitrum,arbitrum,arb,Arbitrum
+NEXO,557789417,Centralized Finance,Exchange,,Application,,,,,BitGo Custody,nexo,nexo,NEXO,2694,NEXO,Nexo,nexo,nexo,Nexo
+BONK,551029002,Meme,,,Application,,,Solana,,Coinbase Custody; Anchorage Digital; Gemini Custody,bonk,bonk,Bonk,23095,BONK,Bonk,bonk1,bonk,Bonk
+JUP,506420086,Decentralized Finance,Trading Platforms,Diversified/Other Trading Platforms,Application,,,Solana,,Coinbase Custody; BitGo Custody; Anchorage Digital,jupiter-exchange-solana,jup,Jupiter,29210,JUP,Jupiter,jupiter-ag,jup,Jupiter
+PIPPIN,492773094,Blockchain Utilities & Tools,AI Agents,AI Agent,Application,,,Solana,,,pippin,pippin,pippin,35053,PIPPIN,pippin,pippin,pippin,pippin
+KITE,486607094,Currency Networks,Settlement Network,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Coinbase Custody,kite-2,kite,Kite,38828,KITE,Kite,kite,kite,Kite
+SEI,475501287,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody; Coinbase Custody; Anchorage Digital,sei-network,sei,Sei,23149,SEI,Sei,sei,sei,Sei
+FTN,474375102,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,,fasttoken,ftn,Fasttoken,22615,FTN,Fasttoken,fasttoken,ftn,Fasttoken
+STX,456458167,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Hybrid / Other (Non-Ethereum Layer 2),Bitcoin,US,BitGo Custody; Copper; Anchorage Digital; Coinbase Custody,blockstack,stx,Stacks,4847,STX,Stacks,stacks,stx,Stacks
+PENGU,431303260,Meme,,,Application,,,Solana,US,Copper; BitGo Custody; Anchorage Digital; Gemini Custody,pudgy-penguins,pengu,Pudgy Penguins,34466,PENGU,Pudgy Penguins,pudgy-penguins,pengu,Pudgy Penguins
+VIRTUAL,424187922,Blockchain Utilities & Tools,Developer Tools,Artificial Intelligence (Developer Tools),Application,,,Base,,Anchorage Digital; BitGo Custody,virtual-protocol,virtual,Virtuals Protocol,29420,VIRTUAL,Virtuals Protocol,virtual-protocol,virtual,Virtuals Protocol
+CAKE,420501707,Decentralized Finance,Trading Platforms,Diversified/Other Trading Platforms,Application,,,BNB,,BitGo Custody; Anchorage Digital,pancakeswap-token,cake,PancakeSwap,7186,CAKE,PancakeSwap,pancakeswap,cake,PancakeSwap
+XTZ,415927977,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,US,Coinbase Custody,tezos,xtz,Tezos,2011,XTZ,Tezos,tezos,xtz,Tezos
+CHZ,396733505,"Media, Arts & Entertainment",Fan Tokens & Collectibles,,Blockchain Network,Layer 1,PoS,,,BitGo Custody; Coinbase Custody; Gemini Custody; Zodia; Anchorage Digital,chiliz,chz,Chiliz,4066,CHZ,Chiliz,chiliz,chz,Chiliz
+IP,386041061,Blockchain Utilities & Tools,Identity & Authentication,,Blockchain Network,Layer 1,PoS,Cosmos,,Coinbase Custody; BitGo Custody,story-2,ip,Story,35626,IP,Story,story-protocol,ip,Story
+FET,378583612,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Blockchain Network,Layer 1,PoS,,,BitGo Custody; Coinbase Custody; Anchorage Digital; Gemini Custody,fetch-ai,fet,Artificial Superintelligence Alliance,3773,FET,Artificial Superintelligence Alliance,artificial-superintelligence-alliance,fet,Artificial Superintelligence Alliance
+JST,377843534,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Tron,,,just,jst,JUST,5488,JST,JUST,just,jst,JUST
+LIT,368618137,Decentralized Finance,Trading Platforms,Diversified/Other Trading Platforms,Blockchain Network,Layer 2,ZK Rollup,Ethereum,,,lighter,lit,Lighter,39125,LIT,Lighter,lighter,lit_lighter,Lighter
+CRV,357445928,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Ethereum,,Gemini Custody; Coinbase Custody; Anchorage Digital; BitGo Custody,curve-dao-token,crv,Curve DAO,6538,CRV,Curve DAO Token,curve-dao-token,crv,Curve DAO Token
+ETHFI,344017970,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,Ethereum,,Anchorage Digital; BitGo Custody,ether-fi,ethfi,Ether.fi,29814,ETHFI,ether.fi,ether-fi-ethfi,ethfi,ether.fi
+NFT,342977700,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,Tron,,,apenft,nft,AINFT,9816,NFT,AINFT,apenft,nft,APENFT
+KAIA,341884194,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,,kaia,kaia,Kaia,32880,KAIA,Kaia,kaia,kaia,Kaia
+BTT,336882731,Decentralized Physical Infrastructure,Storage,P2P Hosting,Blockchain Network,Sidechain,Other (Sidechain),,,BitGo Custody,bittorrent,btt,BitTorrent,16086,BTT,BitTorrent [New],bittorrent-new,bttc,BitTorrent (new)
+INJ,325518905,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Cosmos,US,BitGo Custody; Gemini Custody; Copper; Coinbase Custody,injective-protocol,inj,Injective,7226,INJ,Injective,injective,inj,Injective
+SUN,325264905,Meme,,,Application,,,Tron,,BitGo Custody,sun-token,sun,Sun Token,10529,SUN,Sun [New],sun-token,sun,Sun Token
+SPX,317339212,Meme,,,Application,,,,,BitGo Custody; Anchorage Digital,spx6900,spx,SPX6900,28081,SPX,SPX6900,spx6900,spx,SPX6900
+GNO,312534317,Blockchain Utilities & Tools,Developer Tools,,Blockchain Network,Sidechain,Ethereum Sidechain,,,BitGo Custody; Coinbase Custody; Anchorage Digital,gnosis,gno,Gnosis,1659,GNO,Gnosis,gnosis-gno,gno,Gnosis
+PYTH,306239006,Decentralized Finance,DeFi Infrastructure & Data,Oracles,Blockchain Network,Layer 0,,Solana,,BitGo Custody; Gemini Custody; Zodia; Anchorage Digital; Coinbase Custody,pyth-network,pyth,Pyth Network,28177,PYTH,Pyth Network,pyth-network,pyth,Pyth Network
+ZRO,301952706,Blockchain Utilities & Tools,Interoperability,,Application,,,,,Coinbase Custody,layerzero,zro,LayerZero,26997,ZRO,LayerZero,layerzero,zro,LayerZero
+H,301139273,Blockchain Utilities & Tools,Identity & Authentication,,Blockchain Network,Layer 2,ZK Rollup,,,,humanity,h,Humanity,36922,H,Humanity Protocol,humanity-protocol,h,Humanity
+IOTA,295050450,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Zodia; BitGo Custody,iota,iota,IOTA,1720,IOTA,IOTA,iota,miota,IOTA
+AERO,293895838,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Base,,Coinbase Custody,aerodrome-finance,aero,Aerodrome Finance,29270,AERO,Aerodrome Finance,aerodrome-finance,aero,Aerodrome Finance
+FLOKI,291120512,Meme,,,Application,,,,,BitGo Custody; Anchorage Digital,floki,floki,FLOKI,10804,FLOKI,FLOKI,floki-inu,floki,FLOKI
+GRT,286470342,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,,,BitGo Custody; Gemini Custody; Coinbase Custody; Anchorage Digital,the-graph,grt,The Graph,6719,GRT,The Graph,the-graph,grt,The Graph
+TIA,285666387,Blockchain Utilities & Tools,Scalability & Performance,,Blockchain Network,Layer 1,PoS,Cosmos,,BitGo Custody; Coinbase Custody; Anchorage Digital,celestia,tia,Celestia,22861,TIA,Celestia,celestia,tia,Celestia
+JASMY,284856233,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,Ethereum,,BitGo Custody; Anchorage Digital; Coinbase Custody,jasmycoin,jasmy,JasmyCoin,8425,JASMY,JasmyCoin,jasmy,jasmy,JasmyCoin
+LDO,278739063,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,Ethereum,,Anchorage Digital; BitGo Custody; Gemini Custody; Coinbase Custody,lido-dao,ldo,Lido DAO,8000,LDO,Lido DAO,lido-dao,ldo,Lido DAO
+OP,276846556,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Optimistic Rollup,Optimism,US,Coinbase Custody; Gemini Custody; Copper,optimism,op,Optimism,11840,OP,Optimism,optimism-ethereum,op,Optimism
+OHM,272870691,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Ethereum,,,olympus,ohm,Olympus,9067,OHM,Olympus v2,olympus,ohm_2,Olympus v2
+HNT,270222437,Decentralized Physical Infrastructure,Sensor Networks,Wireless,Application,,,Solana,US,Anchorage Digital; Coinbase Custody; Gemini Custody,helium,hnt,Helium,5665,HNT,Helium,helium,hnt,Helium
+TEL,268687353,Centralized Finance,Payment Solution & On-ramp / Off-ramp,,Application,,,,US,Anchorage Digital; BitGo Custody; Coinbase Custody,telcoin,tel,Telcoin,2394,TEL,Telcoin,telcoin,tel,Telcoin
+CFX,267412794,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,BitGo Custody,conflux-token,cfx,Conflux,7334,CFX,Conflux,conflux-network,cfx,Conflux
+MYX,258186309,Decentralized Finance,Trading Platforms,Derivatives,Application,,,BNB,,Anchorage Digital,myx-finance,myx,MYX Finance,36410,MYX,MYX Finance,myx-finance,myx,MYX Finance
+STRK,253003699,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,ZK Rollup,,,BitGo Custody; Anchorage Digital; Coinbase Custody,starknet,strk,Starknet,22691,STRK,Starknet,starknet-token,strk,Starknet
+ENS,252563104,Blockchain Utilities & Tools,Identity & Authentication,,Application,,,Ethereum,,Anchorage Digital; Coinbase Custody; BitGo Custody; Zodia,ethereum-name-service,ens,Ethereum Name Service,13855,ENS,Ethereum Name Service,ethereum-name-service,ens,Ethereum Name Service
+2Z,251846536,Decentralized Physical Infrastructure,Other (DePIN),,Blockchain Network,Specialized Utility Layer,,Solana,,Coinbase Custody; BitGo Custody,doublezero,2z,DoubleZero,38515,2Z,DoubleZero,doublezero,2z,DoubleZero
+NEW,249552579,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Blockchain Network,Layer 1,PoS,,,,newton-project,ab,AB,3871,AB,AB,newton,new,Newton
+ULTIMA,227351205,Centralized Finance,Payment Solution & On-ramp / Off-ramp,,Application,,,,,,ultima,ultima,Ultima,28293,ULTIMA,Ultima,ultima,ultima,Ultima
+TWT,224552732,Blockchain Utilities & Tools,Wallets,,Application,,,,,Anchorage Digital; BitGo Custody,trust-wallet-token,twt,Trust Wallet,5964,TWT,Trust Wallet Token,trust-wallet-token,twt,Trust Wallet Token
+SAND,224116303,"Media, Arts & Entertainment",Metaverse,,Application,,,Ethereum,,Anchorage Digital; BitGo Custody; Gemini Custody; Coinbase Custody; Zodia,the-sandbox,sand,The Sandbox,6210,SAND,The Sandbox,the-sandbox,sand,The Sandbox
+MON,223812685,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,Anchorage Digital; BitGo Custody,monad,mon,Monad,30495,MON,Monad,monad,mon_monad,Monad
+WIF,220286121,Meme,,,Application,,,Solana,,Gemini Custody; Anchorage Digital; BitGo Custody; Coinbase Custody,dogwifcoin,wif,dogwifhat,28752,WIF,dogwifhat,dogwifhat,wif,dogwifhat
+AXS,220256535,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,Coinbase Custody; Anchorage Digital; Gemini Custody; Zodia; BitGo Custody,axie-infinity,axs,Axie Infinity,6783,AXS,Axie Infinity,axie-infinity,axs,Axie Infinity
+VVV,205411999,Blockchain Utilities & Tools,AI Platforms,AI Platform,Application,,,Base,,,venice-token,vvv,Venice Token,35509,VVV,Venice Token,venice-token,vvv,Venice Token
+ZBCN,203981721,Currency Networks,Settlement Network,,Application,,,Solana,,,zebec-network,zbcn,Zebec Network,30636,ZBCN,Zebec Network,zebec-network,zbcn,Zebec Network
+PENDLE,197986097,Decentralized Finance,Managed Yield Services,Vaults,Application,,,Ethereum,,Anchorage Digital; BitGo Custody,pendle,pendle,Pendle,9481,PENDLE,Pendle,pendle,pendle,Pendle
+BORG,193360129,Centralized Finance,Exchange,,Application,,,,,BitGo Custody,swissborg,borg,SwissBorg,2499,BORG,SwissBorg,swissborg,borg,SwissBorg
+THETA,192643139,Decentralized Physical Infrastructure,Computation,Specific Purpose Compute,Blockchain Network,Layer 1,PoS,,US,,theta-token,theta,Theta Network,2416,THETA,Theta Network,theta-network,theta,Theta Network
+NEO,191680661,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Neo,,,neo,neo,NEO,1376,NEO,Neo,neo,neo,Neo
+CVX,190991809,Decentralized Finance,Managed Yield Services,Vaults,Application,,,,,Anchorage Digital; BitGo Custody,convex-finance,cvx,Convex Finance,9903,CVX,Convex Finance,convex-finance,cvx,Convex Finance
+MANA,190892819,"Media, Arts & Entertainment",Metaverse,,Application,,,Ethereum,,Gemini Custody; Anchorage Digital; Zodia; Coinbase Custody; BitGo Custody,decentraland,mana,Decentraland,1966,MANA,Decentraland,decentraland,mana,Decentraland
+XCN,188940307,Blockchain Utilities & Tools,Developer Tools,,Blockchain Network,Layer 3,Optimistic Rollup,Ethereum,,Coinbase Custody; Anchorage Digital; BitGo Custody,chain-2,xcn,Onyxcoin,18679,XCN,Onyxcoin,onyxcoin,xcn,Onyxcoin
+VSN,188131749,Blockchain Utilities & Tools,Wallets,,Application,,,,,,vision-3,vsn,Vision,37322,VSN,Vision,vision-token,vsn,Vision
+FF,185709895,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,Ethereum,,,falcon-finance-ff,ff,Falcon Finance,38482,FF,Falcon Finance,falcon-finance-ff,ff,Falcon Finance
+ZK,184732039,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,ZK Rollup,,,Coinbase Custody; Anchorage Digital,zksync,zk,ZKsync,24091,ZK,ZKsync,zksync,zk,ZKsync
+FARTCOIN,184026857,Meme,,,Application,,,Solana,,Anchorage Digital; Copper; BitGo Custody,fartcoin,fartcoin,Fartcoin,33597,FARTCOIN,Fartcoin,fartcoin,fartcoin,Fartcoin
+GALA,182811803,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Gemini Custody; BitGo Custody; Zodia; Coinbase Custody,gala,gala,GALA,7080,GALA,Gala,gala,gala,Gala
+BAT,181138313,"Media, Arts & Entertainment",Advertising,,Application,,,,US,BitGo Custody; Anchorage Digital; Zodia; Gemini Custody; Coinbase Custody,basic-attention-token,bat,Basic Attention,1697,BAT,Basic Attention Token,basic-attention-token,bat,Basic Attention Token
+COMP,176555279,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Ethereum,US,Zodia; Coinbase Custody; Gemini Custody; Anchorage Digital; BitGo Custody,compound-governance-token,comp,Compound,5692,COMP,Compound,compound,comp,Compound
+RAY,176356518,Decentralized Finance,Trading Platforms,Diversified/Other Trading Platforms,Application,,,Solana,,BitGo Custody; Anchorage Digital; Gemini Custody,raydium,ray,Raydium,8526,RAY,Raydium,raydium,ray,Raydium
+BARD,170946381,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,Ethereum,,BitGo Custody; Anchorage Digital,lombard-protocol,bard,Lombard,38408,BARD,Lombard,lombard,bard,Lombard
+GLM,168865531,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Application,,,,,Coinbase Custody; BitGo Custody,golem,glm,Golem,1455,GLM,Golem,golem-network-tokens,glm,Golem
+XPL,168219416,Currency Networks,Settlement Network,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,plasma,xpl,Plasma,36645,XPL,Plasma,plasma-xpl,xpl,Plasma
+MX,165411212,Centralized Finance,Exchange,,Application,,,,,,mx-token,mx,MX,4041,MX,MX Token,mx-token,mx,MX Token
+FLUID,161543834,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Ethereum,,BitGo Custody; Copper,instadapp,fluid,Fluid,10508,FLUID,Fluid,instadapp,fluid,Fluid
+SENT,159379543,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Application,,,,,,sentient,sent,Sentient,38868,SENT,Sentient,sentient,sent,Sentient
+XEC,157211793,Currency Networks,Settlement Network,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,ecash,xec,eCash,10791,XEC,eCash,ecash,xec,eCash
+TRAC,149759016,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Blockchain Network,Specialized Utility Layer,,,,Coinbase Custody; BitGo Custody,origintrail,trac,OriginTrail,2467,TRAC,OriginTrail,origintrail,trac,OriginTrail
+WEMIX,143067500,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Blockchain Network,Layer 1,PoS,,,BitGo Custody,wemix-token,wemix,WEMIX,7548,WEMIX,WEMIX,wemix,wemix,WEMIX
+TIBBIR,142660391,Blockchain Utilities & Tools,AI Agents,,Application,,,Base,,,ribbita-by-virtuals,tibbir,Ribbita by Virtuals,36743,TIBBIR,Ribbita by Virtuals,ribbita-by-virtuals,tibbir,Ribbita by Virtuals
+RUNE,140791651,Decentralized Finance,Trading Platforms,Spot / Swaps,Blockchain Network,Layer 1,PoS,Cosmos,,BitGo Custody,thorchain,rune,THORChain,4157,RUNE,THORChain,thorchain,rune,THORChain
+0G,140420223,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Blockchain Network,Layer 1,PoS,,,BitGo Custody,zero-gravity,0g,0G,38337,0G,0G,zero-gravity,0g,0G
+SFP,140085059,Blockchain Utilities & Tools,Wallets,,Application,,,,,Anchorage Digital; BitGo Custody,safepal,sfp,SafePal,8119,SFP,SafePal,safepal,sfp,SafePal
+JTO,137820257,Blockchain Utilities & Tools,Other (Blockchain Utilities & Tools),,Application,,,Solana,,Anchorage Digital; BitGo Custody; Coinbase Custody; Copper,jito-governance-token,jto,Jito,28541,JTO,Jito,jito,jto,Jito
+IMX,137035549,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Layer 2,ZK Rollup,,,Anchorage Digital; Gemini Custody; BitGo Custody; Coinbase Custody,immutable-x,imx,Immutable,10603,IMX,Immutable,immutable-x,imx,Immutable
+B,134977789,Meme,,,Application,,,BNB,,,build-on,b,BUILDon,36532,B,BUILDon,buildon,b,BUILDon
+WAL,133173143,Decentralized Physical Infrastructure,Storage,File Storage,Application,,,Sui,,BitGo Custody; Anchorage Digital,walrus-2,wal,Walrus,36119,WAL,Walrus,walrus-xyz,wal,Walrus
+EGLD,133098988,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody; Copper; Coinbase Custody,elrond-erd-2,egld,MultiversX,6892,EGLD,MultiversX,multiversx-egld,egld,MultiversX
+A,132909372,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,,vaulta,a,Vaulta,36462,A,Vaulta,vaulta,a,Vaulta
+1INCH,130218789,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Ethereum,,BitGo Custody; Coinbase Custody; Anchorage Digital; Gemini Custody,1inch,1inch,1INCH,8104,1INCH,1inch,1inch,1inch,1inch
+BAN,129879594,Meme,,,Application,,,Solana,,,comedian,ban,Comedian,33881,BAN,Comedian,comedian,ban,Comedian
+SNX,129737492,Decentralized Finance,Trading Platforms,Derivatives,Application,,,,,Gemini Custody; Coinbase Custody; BitGo Custody; Zodia; Anchorage Digital,havven,snx,Synthetix,2586,SNX,Synthetix,synthetix,snx,Synthetix
+AR,129425041,Decentralized Physical Infrastructure,Storage,File Storage,Blockchain Network,Specialized Utility Layer,,,,Anchorage Digital; Copper,arweave,ar,Arweave,5632,AR,Arweave,arweave,ar,Arweave
+S,128405704,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Sonic,,BitGo Custody,sonic-3,s,Sonic,32684,S,Sonic,sonic,s,Sonic (prev. FTM)
+AMP,128383708,Decentralized Finance,Risk Management & Insurance,,Application,,,,,BitGo Custody; Gemini Custody; Coinbase Custody; Anchorage Digital,amp-token,amp,Amp,6945,AMP,Amp,amp,amp,Amp
+RLB,128043107,Decentralized Finance,Trading Platforms,Diversified/Other Trading Platforms,Application,,,Ethereum,,,rollbit-coin,rlb,Rollbit Coin,15271,RLB,Rollbit Coin,rollbit-coin,rlb,Rollbit Coin
+LION,127087267,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Application,,,Cronos,,,loaded-lions,lion,Loaded Lions,35954,LION,Loaded Lions,loaded-lions,lion_loadedlions,Loaded Lions
+KTA,126900020,Blockchain Utilities & Tools,Interoperability,,Blockchain Network,Layer 1,PoS,Base,,,keeta,kta,Keeta,36066,KTA,Keeta,keeta,kta,Keeta
+BERA,126631732,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Zodia; BitGo Custody; Coinbase Custody,berachain-bera,bera,Berachain,24647,BERA,Berachain,berachain,bera,Berachain
+EIGEN,117158005,Blockchain Utilities & Tools,Scalability & Performance,,Application,,,Ethereum,,Anchorage Digital; BitGo Custody; Coinbase Custody,eigenlayer,eigen,EigenCloud (prev. EigenLayer),30494,EIGEN,EigenCloud,eigencloud,eigen,EigenLayer
+MELANIA,116184267,Meme,,,Application,,,Solana,US,Anchorage Digital; BitGo Custody,melania-meme,melania,Melania Meme,35347,MELANIA,Official Melania Meme,melania-meme,melania,Official Melania Meme
+LPT,115374842,Decentralized Physical Infrastructure,Computation,Specific Purpose Compute,Application,,,,,Anchorage Digital; Gemini Custody; Coinbase Custody; BitGo Custody,livepeer,lpt,Livepeer,3640,LPT,Livepeer,livepeer,lpt,Livepeer
+SKR,115322653,Decentralized Physical Infrastructure,Other (DePIN),,Application,,,Solana,,,seeker,skr,Seeker,39377,SKR,Seeker,solana-mobile-seeker,skr,Seeker
+BEAM,115201618,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Sidechain,Subnet,,,Coinbase Custody; BitGo Custody,beam-2,beam,Beam,28298,BEAM,Beam,onbeam,beamx,BEAM (Merit Circle)
+COW,114377407,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Ethereum,,Anchorage Digital,cow-protocol,cow,CoW Protocol,19269,COW,CoW Protocol,cow-protocol,cow,CoW Protocol
+KMNO,111155945,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Solana,,Anchorage Digital; Coinbase Custody; BitGo Custody,kamino,kmno,Kamino,30986,KMNO,Kamino,kamino-finance,kmno,Kamino
+W,108909074,Blockchain Utilities & Tools,Interoperability,,Application,,,Solana,,BitGo Custody; Coinbase Custody; Anchorage Digital,wormhole,w,Wormhole,29587,W,Wormhole,wormhole,w,Wormhole
+MET,106236575,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Solana,,Anchorage Digital; BitGo Custody,meteora,met,Meteora,38353,MET,Meteora,meteora,met_meteora,Meteora
+EDU,104993955,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Blockchain Network,Layer 3,,Arbitrum,,BitGo Custody,edu-coin,edu,Open Campus,24613,EDU,Open Campus,open-campus,edu,Open Campus
+DEXE,104860907,Blockchain Utilities & Tools,DAO Creation / Management,,Application,,,,,,dexe,dexe,DeXe,7326,DEXE,DeXe,dexe,dexe,DeXe
+TFUEL,104660843,Decentralized Physical Infrastructure,Computation,Specific Purpose Compute,Application,,,,,,theta-fuel,tfuel,Theta Fuel,3822,TFUEL,Theta Fuel,theta-fuel,tfuel,Theta Fuel
+ZEN,103292092,Blockchain Utilities & Tools,Scalability & Performance,,Blockchain Network,Layer 1,PoW,,US,Anchorage Digital; Coinbase Custody,zencash,zen,Horizen,1698,ZEN,Horizen,horizen,zen,Horizen
+QTUM,99654904,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,,qtum,qtum,Qtum,1684,QTUM,Qtum,qtum,qtum,Qtum
+YFI,99596458,Decentralized Finance,Managed Yield Services,Vaults,Application,,,Ethereum,,Zodia; Coinbase Custody; Gemini Custody; Anchorage Digital; BitGo Custody,yearn-finance,yfi,yearn.finance,5864,YFI,yearn.finance,yearn-finance,yfi,yearn.finance
+RVN,97839236,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoW,,,,ravencoin,rvn,Ravencoin,2577,RVN,Ravencoin,ravencoin,rvn,Ravencoin
+ATH,97416204,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Application,,,,,BitGo Custody,aethir,ath,Aethir,30083,ATH,Aethir,aethir,ath,Aethir
+ROSE,95911826,Blockchain Utilities & Tools,Privacy (Utilities & Tools),,Blockchain Network,Layer 1,PoS,,,Anchorage Digital; Coinbase Custody; Copper,oasis-network,rose,Oasis,7653,ROSE,Oasis,oasis-network,rose,Oasis
+AKT,95594832,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Blockchain Network,Layer 1,PoS,Cosmos,US,Coinbase Custody,akash-network,akt,Akash Network,7431,AKT,Akash Network,akash-network,akt,Akash Network
+ZORA,93975838,"Media, Arts & Entertainment",Social Networks,,Application,,,Base,,Anchorage Digital,zora,zora,Zora,35931,ZORA,ZORA,zora,zora,Zora
+DOG,93633086,Meme,,,Application,,,Bitcoin,,,dog-go-to-the-moon-rune,dog,Dog (Bitcoin),30933,DOG,Dog (Bitcoin),dog-go-to-the-moon-rune,dog,Dog (Runes)
+FOGO,92109888,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,,fogo,fogo,Fogo,38356,FOGO,Fogo,fogo,fogo,Fogo
+RSR,91452151,Decentralized Finance,Managed Yield Services,Vaults,Application,,,Ethereum,US,Coinbase Custody; Anchorage Digital; BitGo Custody,reserve-rights-token,rsr,Reserve Rights,3964,RSR,Reserve Rights,reserve-rights,rsr,Reserve Rights
+CORE,91384860,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,BitGo Custody; Copper; Coinbase Custody,coredaoorg,core,Core,23254,CORE,Core,core-dao,core,Core
+CHEEMS,91360735,Meme,,,Application,,,BNB,,,cheems-token,cheems,Cheems Token,33280,CHEEMS,Cheems (cheems.pet),cheems-pet,cheems,Cheems Token
+ZRX,90749181,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,US,Coinbase Custody; Zodia; Anchorage Digital; BitGo Custody; Gemini Custody,0x,zrx,0x Protocol,1896,ZRX,0x Protocol,0x,zrx,0x
+TOSHI,90044114,Meme,,,Application,,,Base,,Anchorage Digital; BitGo Custody,toshi,toshi,Toshi,27750,TOSHI,Toshi,toshithecat,toshi,Toshi
+KSM,83172441,General Purpose Blockchain Networks,Interchain Connectivity Platforms,,Blockchain Network,Layer 0,,,,Copper; Coinbase Custody,kusama,ksm,Kusama,5034,KSM,Kusama,kusama,ksm,Kusama
+AIOZ,83141310,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Blockchain Network,Layer 1,PoS,,,Anchorage Digital; Coinbase Custody,aioz-network,aioz,AIOZ Network,9104,AIOZ,AIOZ Network,aioz-network,aioz,AIOZ Network
+CTC,83038266,Decentralized Finance,Lending & Borrowing,Real World Asset lending platforms,Blockchain Network,Layer 1,PoW,,,,creditcoin-2,ctc,Creditcoin,5198,CTC,Creditcoin,creditcoin,ctc,Creditcoin
+APE,81241758,"Media, Arts & Entertainment",Metaverse,,Application,,,Ethereum,,Anchorage Digital; BitGo Custody; Gemini Custody; Coinbase Custody,apecoin,ape,ApeCoin,18876,APE,ApeCoin,apecoin-ape,ape,ApeCoin
+MINA,80985845,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,Coinbase Custody; Copper,mina-protocol,mina,Mina Protocol,8646,MINA,Mina,mina,mina,Mina
+DYDX,80941160,Decentralized Finance,Trading Platforms,Derivatives,Blockchain Network,Layer 1,PoS,Cosmos,US,Anchorage Digital; Zodia; Coinbase Custody; BitGo Custody,dydx-chain,dydx,dYdX,28324,DYDX,dYdX,dydx-chain,dydx,dYdX
+OM,80787209,Decentralized Finance,Asset Origination and Issuance,Security Token Platforms,Blockchain Network,Layer 1,PoS,Cosmos,,BitGo Custody; Coinbase Custody; Anchorage Digital,mantra-dao,om,MANTRA,6536,OM,MANTRA,mantra,om,MANTRA
+ZIL,80445987,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Copper; BitGo Custody,zilliqa,zil,Zilliqa,2469,ZIL,Zilliqa,zilliqa,zil,Zilliqa
+MOVE,80024577,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Sidechain,Ethereum Sidechain,,US,Anchorage Digital,movement,move,Movement,32452,MOVE,Movement,movement,move,Movement
+T,78999025,Decentralized Finance,DeFi Infrastructure & Data,Bridges & Bridge Aggregators,Application,,,,,Anchorage Digital; Coinbase Custody; BitGo Custody,threshold-network-token,t,Threshold Network,17751,T,Threshold,threshold,t,Threshold
+CKB,77715666,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoW,,,,nervos-network,ckb,Nervos Network,4948,CKB,Nervos Network,nervos-network,ckb,Nervos Network
+SUPER,77085283,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Application,,,Ethereum,,BitGo Custody; Anchorage Digital; Coinbase Custody,superfarm,super,SuperVerse,8290,SUPER,SuperVerse,superverse,super,SuperVerse
+BRETT,76731208,Meme,,,Application,,,Base,,BitGo Custody,based-brett,brett,Brett,29743,BRETT,Brett (Based),based-brett,brett,Brett (Based)
+RON,76725963,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Sidechain,Ethereum Sidechain,,,BitGo Custody,ronin,ron,Ronin,14101,RON,Ronin,ronin,ron,Ronin
+SAFE,76207875,Blockchain Utilities & Tools,Wallets,,Application,,,Ethereum,,Anchorage Digital; BitGo Custody,safe,safe,Safe,21585,SAFE,Safe,safe1,safe,Safe
+ALEO,74944028,Blockchain Utilities & Tools,Privacy (Utilities & Tools),,Blockchain Network,Layer 1,PoS,,,,aleo,aleo,ALEO,32193,ALEO,Aleo,aleo,aleo,Aleo
+SOON,74406275,Blockchain Utilities & Tools,Scalability & Performance,,Blockchain Network,Layer 2,Hybrid / Other (Non-Ethereum Layer 2),Solana,,BitGo Custody,soon-2,soon,SOON,36542,SOON,SOON,soon,soon,SOON
+TURBO,74186251,Meme,,,Application,,,Ethereum,,Copper; BitGo Custody; Anchorage Digital,turbo,turbo,Turbo,24911,TURBO,Turbo,turbo,turbo,Turbo
+DEEP,74009069,Decentralized Finance,Other (DeFi),,Application,,,Sui,,Anchorage Digital; BitGo Custody,deep,deep,DeepBook,33391,DEEP,DeepBook Protocol,deepbook-protocol,deep,DeepBook
+DGB,73942647,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoW,,,Copper,digibyte,dgb,DigiByte,109,DGB,DigiByte,digibyte,dgb,DigiByte
+KAITO,72548901,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,Base,,Coinbase Custody; Anchorage Digital,kaito,kaito,KAITO,35763,KAITO,KAITO,kaito,kaito,KAITO
+XNO,71021011,Currency Networks,Settlement Network,,Blockchain Network,Layer 1,PoS,,,,nano,xno,Nano,1567,XNO,Nano,nano,xno,Nano
+KUB,70683158,Centralized Finance,Exchange,,Blockchain Network,Layer 1,PoS,,,,bitkub-coin,kub,KUB Coin,16093,KUB,KUB Coin,bitkub-coin,kub,KUB Coin
+ORCA,70482615,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Solana,,Coinbase Custody; Gemini Custody; Anchorage Digital; BitGo Custody,orca,orca,Orca,11165,ORCA,Orca,orca,orca,Orca
+GMX,70067745,Decentralized Finance,Trading Platforms,Derivatives,Application,,,Arbitrum,,,gmx,gmx,GMX,11857,GMX,GMX,gmx,gmx,GMX
+HOT,69797700,Decentralized Physical Infrastructure,Storage,P2P Hosting,Application,,,,,BitGo Custody; Coinbase Custody,holotoken,hot,Holo,2682,HOT,Holo,holo,hot_holo,Holo
+BABYDOGE,69727433,Meme,,,Application,,,BNB,,,baby-doge-coin,babydoge,Baby Doge Coin,10407,BabyDoge,Baby Doge Coin,baby-doge-coin,babydoge,Baby Doge Coin
+ALCH,69181875,Blockchain Utilities & Tools,Developer Tools,Artificial Intelligence (Developer Tools),Application,,,Solana,,,alchemist-ai,alch,Alchemist AI,34880,ALCH,Alchemist AI,alchemist-ai,alch,Alchemist AI
+MOG,68776307,Meme,,,Application,,,Ethereum,,Anchorage Digital; Gemini Custody; BitGo Custody,mog-coin,mog,Mog Coin,27659,MOG,Mog Coin,mog-coin,mog,Mog Coin
+NXPC,66824731,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Sidechain,Subnet,Avalanche,,,nexpace,nxpc,Nexpace,36044,NXPC,NEXPACE,maplestory-universe,nxpc,Nexpace
+VVS,66495418,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Cronos,,,vvs-finance,vvs,VVS Finance,14519,VVS,VVS Finance,vvs-finance,vvs,VVS Finance
+FLOW,65814352,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,Anchorage Digital,flow,flow,Flow,4558,FLOW,Flow,flow,flow,Flow
+ZETA,65807749,General Purpose Blockchain Networks,Interchain Connectivity Platforms,,Blockchain Network,Layer 1,,,,Coinbase Custody; BitGo Custody,zetachain,zeta,ZetaChain,21259,ZETA,ZetaChain,zetachain,zeta,ZetaChain
+ELF,65096908,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,aelf,elf,aelf,2299,ELF,aelf,aelf,elf,aelf
+QUBIC,64707719,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoW,,,,qubic-network,qubic,Qubic,29169,QUBIC,Qubic,qubic,qubic,Qubic
+ASTR,64535916,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Sidechain,Parachain,,,,astar,astr,Astar,12885,ASTR,Astar,astar,astr,Astar
+AXL,64274300,Blockchain Utilities & Tools,Interoperability,,Blockchain Network,Layer 1,PoS,Cosmos,,Coinbase Custody; Copper; Anchorage Digital; BitGo Custody,axelar,axl,Axelar,17799,AXL,Axelar,axelar,axl,Axelar
+SC,64200241,Decentralized Physical Infrastructure,Storage,File Storage,Blockchain Network,Specialized Utility Layer,,,,,siacoin,sc,Siacoin,1042,SC,Siacoin,siacoin,sc,Siacoin
+PCI,63699594,Currency Networks,Settlement Network,,Blockchain Network,Layer 1,PoS,,,,pay-coin,pci,Paycoin,5275,PCI,Paycoin,payprotocol,pci,Paycoin
+ISLM,63290628,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Cosmos,,,islamic-coin,islm,Islamic Coin,26220,ISLM,ISLM,islamic-coin,islm,Islamic Coin
+FRAX,63152930,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,,,Anchorage Digital; BitGo Custody,frax-share,frax,Frax (prev. FXS),6953,FRAX,Frax (prev. FXS),frax-share,fxs,Frax Share
+NMR,63140798,Blockchain Utilities & Tools,Data & Analytics Providers,Artificial Intelligence (Data & Analytics Providers),Application,,,,,Coinbase Custody; Gemini Custody; BitGo Custody; Anchorage Digital,numeraire,nmr,Numeraire,1732,NMR,Numeraire,numeraire,nmr,Numeraire
+NPC,62835241,Meme,,,Application,,,Ethereum,,,non-playable-coin,npc,Non-Playable Coin,27960,NPC,Non-Playable Coin,non-playable-coin,npc,Non-Playable Coin
+MOCA,62745068,Blockchain Utilities & Tools,Identity & Authentication,,Application,,,Ethereum,,BitGo Custody,mocaverse,moca,Moca Network,31526,MOCA,Moca Network,mocaverse,moca,Moca Coin
+MERL,62226342,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,ZK Rollup,Bitcoin,,,merlin-chain,merl,Merlin Chain,30712,MERL,Merlin Chain,merlin-chain,merl,Merlin Chain
+GEOD,60788252,Decentralized Physical Infrastructure,Sensor Networks,Environmental,Application,,,,,BitGo Custody; Anchorage Digital,geodnet,geod,Geodnet,20969,GEOD,GEODNET,geodnet,geod,Geodnet
+PROVE,60543245,Blockchain Utilities & Tools,Developer Tools,,Blockchain Network,Specialized Utility Layer,,,,BitGo Custody; Coinbase Custody,succinct,prove,Succinct,37593,PROVE,Succinct,succinct,prove,Succinct
+XYO,59526396,Decentralized Physical Infrastructure,Sensor Networks,Geolocation,Application,,,,,Coinbase Custody,xyo-network,xyo,XYO Network,2765,XYO,XYO,xyo,xyo,XYO
+VELO,59360996,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,BNB,,BitGo Custody,velo,velo,Velo,7127,VELO,Velo,velo,velo,Velo
+BIO,58375030,Decentralized Finance,Other (DeFi),,Application,,,,,,bio-protocol,bio,Bio Protocol,34812,BIO,Bio Protocol,bio,bio,Bio Protocol
+ME,57108800,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,Solana,,,magic-eden,me,Magic Eden,32197,ME,Magic Eden,magiceden,me,Magic Eden
+SUSHI,56933905,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,BitGo Custody; Gemini Custody; Coinbase Custody,sushi,sushi,Sushi,6758,SUSHI,SushiSwap,sushiswap,sushi,SushiSwap
+BLUR,56153475,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,Ethereum,US,Gemini Custody; Coinbase Custody; BitGo Custody; Anchorage Digital,blur,blur,Blur,23121,BLUR,Blur,blur-token,blur,Blur
+KAVA,56043757,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,kava,kava,Kava,4846,KAVA,Kava,kava,kava,Kava
+MEW,55409308,Meme,,,Application,,,Solana,,Anchorage Digital; Gemini Custody; BitGo Custody,cat-in-a-dogs-world,mew,cat in a dogs world,30126,MEW,cat in a dogs world,mew,mew,cat in a dogs world
+MOODENG,55384454,Meme,,,Application,,,Solana,,Gemini Custody; Anchorage Digital,moo-deng,moodeng,Moo Deng,33093,MOODENG,Moo Deng (moodengsol.com),moo-deng-solana,moodeng,Moo Deng (moodengsol.com)
+ORDI,54385757,Meme,,,Application,,,Bitcoin,,,ordinals,ordi,ORDI,25028,ORDI,ORDI,ordi,ordi,ORDI
+RED,54199711,Decentralized Finance,DeFi Infrastructure & Data,Oracles,Application,,,,,Anchorage Digital,redstone-oracles,red,RedStone,21707,RED,RedStone,redstone,red,RedStone
+HSK,52813516,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Optimistic Rollup,,,,hashkey-ecopoints,hsk,HashKey Platform Token,33849,HSK,HashKey Platform Token,hashkey-platform-token,hsk,HashKey Platform Token
+RPL,52806552,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,Ethereum,,BitGo Custody; Coinbase Custody; Anchorage Digital,rocket-pool,rpl,Rocket Pool,2943,RPL,Rocket Pool,rocket-pool,rpl,Rocket Pool
+BIRB,52526582,"Media, Arts & Entertainment",NFT Infrastructure,,Application,,,Solana,,,moonbirds,birb,Moonbirds,19765,BIRB,Moonbirds,moonbirds,birb,Moonbirds
+DESO,52264892,"Media, Arts & Entertainment",Social Networks,,Blockchain Network,Layer 1,PoS,,,Coinbase Custody,deso,deso,Decentralized Social,10442,DESO,Decentralized Social,deso,deso,Decentralized Social
+REQ,52262649,Decentralized Finance,Other (DeFi),,Application,,,,,BitGo Custody; Coinbase Custody,request-network,req,Request,2071,REQ,Request,request,req,Request
+LINEA,52167368,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,ZK Rollup,,,Anchorage Digital; BitGo Custody,linea,linea,Linea,27657,LINEA,Linea,linea,linea,Linea
+SPK,51744569,Decentralized Finance,Managed Yield Services,Vaults,Application,,,Ethereum,,,spark-2,spk,Spark,36569,SPK,Spark,spark,spk,Spark
+XVS,51144896,Decentralized Finance,Lending & Borrowing,,Application,,,,,BitGo Custody,venus,xvs,Venus,7288,XVS,Venus,venus,xvs,Venus
+IOTX,50702220,Decentralized Physical Infrastructure,Sensor Networks,,Blockchain Network,Layer 1,PoS,,,Anchorage Digital; Gemini Custody; Coinbase Custody,iotex,iotx,IoTeX,2777,IOTX,IoTeX,iotex,iotx,IoTeX
+POPCAT,50248724,Meme,,,Application,,,Solana,,Gemini Custody; BitGo Custody,popcat,popcat,Popcat,28782,POPCAT,Popcat (SOL),popcat-sol,popcat,Popcat (SOL)
+PLUME,49700503,Decentralized Finance,Asset Origination and Issuance,Security Token Platforms,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,BitGo Custody,plume,plume,Plume,35364,PLUME,Plume,plume,plume,Plume
+WAVES,49612986,Blockchain Utilities & Tools,Developer Tools,Other (Developer Tools),Blockchain Network,Layer 1,PoS,,,,waves,waves,Waves,1274,WAVES,Waves,waves,waves,Waves
+AVNT,49175780,Decentralized Finance,Trading Platforms,Derivatives,Application,,,Base,,BitGo Custody,avantis,avnt,Avantis,38299,AVNT,Avantis,avantis,avnt,Avantis
+PNUT,48774696,Meme,,,Application,,,Solana,,Gemini Custody,peanut-the-squirrel,pnut,Peanut the Squirrel,33788,PNUT,Peanut the Squirrel,peanut-the-squirrel,pnut,Peanut the Squirrel
+DRIFT,48117784,Decentralized Finance,Trading Platforms,Derivatives,Application,,,Solana,,Anchorage Digital; Coinbase Custody; BitGo Custody,drift-protocol,drift,Drift Protocol,31278,DRIFT,Drift,drift,drift,Drift
+CELO,46041845,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Optimistic Rollup,,,BitGo Custody; Anchorage Digital,celo,celo,Celo,5567,CELO,Celo,celo,celo,Celo
+LCX,45904815,Centralized Finance,Exchange,,Application,,,,,Coinbase Custody,lcx,lcx,LCX,4950,LCX,LCX,lcx,lcx,LCX
+SSV,45687734,Blockchain Utilities & Tools,Other (Blockchain Utilities & Tools),,Application,,,Ethereum,,BitGo Custody,ssv-network,ssv,SSV Network,12999,SSV,ssv.network,ssv-network,ssv,ssv.network
+POLYX,45343914,Decentralized Finance,Asset Origination and Issuance,Security Token Platforms,Blockchain Network,Layer 1,PoS,,,BitGo Custody,polymesh,polyx,Polymesh,20362,POLYX,Polymesh,polymesh,polyx,Polymesh
+VANA,45251521,Blockchain Utilities & Tools,Data & Analytics Providers,Artificial Intelligence (Utilities & Tools),Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,vana,vana,Vana,34619,VANA,Vana,vana,vana,Vana
+GRASS,45010655,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Application,,,Solana,,Anchorage Digital,grass,grass,Grass,32956,GRASS,Grass,grass,grass,Grass
+ANKR,44913579,Blockchain Utilities & Tools,Developer Tools,,Application,,,,,Coinbase Custody; Anchorage Digital; BitGo Custody; Gemini Custody,ankr,ankr,Ankr Network,3783,ANKR,Ankr,ankr,ankr,Ankr
+MASK,44737585,"Media, Arts & Entertainment",Social Networks,,Application,,,,,Coinbase Custody; Gemini Custody; BitGo Custody; Anchorage Digital,mask-network,mask,Mask Network,8536,MASK,Mask Network,mask-network,mask,Mask Network
+ARDR,44574687,Blockchain Utilities & Tools,Developer Tools,Other (Developer Tools),Blockchain Network,Layer 1,PoS,,,,ardor,ardr,Ardor,1320,ARDR,Ardor,ardor,ardr,Ardor
+VR,44434709,"Media, Arts & Entertainment",Metaverse,,Application,,,,,Coinbase Custody,victoria-vr,vr,Victoria VR,14822,VR,Victoria VR,victoria-vr,vr,Victoria VR
+ALT,44394569,Blockchain Utilities & Tools,Interoperability,,Application,,,,,BitGo Custody,altlayer,alt,AltLayer,29073,ALT,Altlayer,altlayer,alt,Altlayer
+ZAMA,44336203,Blockchain Utilities & Tools,Privacy (Utilities & Tools),,Blockchain Network,Specialized Utility Layer,,,,,zama,zama,Zama,39332,ZAMA,Zama,zama,zama,Zama
+BORA,44321759,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Application,,,Kaia,,,bora,bora,BORA,3801,BORA,BORA,bora,bora,BORA
+ORBS,43990502,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Blockchain Network,Layer 0,,,,Coinbase Custody; BitGo Custody,orbs,orbs,Orbs,3835,ORBS,Orbs,orbs,orbs,Orbs
+CSPR,43830080,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,casper-network,cspr,Casper Network,5899,CSPR,Casper,casper,cspr,Casper
+SNT,43519574,Blockchain Utilities & Tools,Other (Blockchain Utilities & Tools),,Application,,,,,BitGo Custody,status,snt,Status,1759,SNT,Status,status,snt,Status
+USELESS,43017450,Meme,,,Application,,,Solana,,Anchorage Digital; BitGo Custody,useless-3,useless,Useless Coin,36828,USELESS,Useless Coin,theuselesscoin,useless,Useless Coin
+SNEK,42923204,Meme,,,Application,,,Cardano,,BitGo Custody,snek,snek,Snek,25264,SNEK,Snek,snek,snek,Snek
+UMA,42529516,Decentralized Finance,DeFi Infrastructure & Data,Oracles,Application,,,,,Gemini Custody; BitGo Custody; Coinbase Custody,uma,uma,UMA,5617,UMA,UMA,uma,uma,UMA
+LRC,42492685,Decentralized Finance,Trading Platforms,Spot / Swaps,Blockchain Network,Layer 2,ZK Rollup,,,Gemini Custody; Anchorage Digital; Coinbase Custody; BitGo Custody,loopring,lrc,Loopring,1934,LRC,Loopring,loopring,lrc,Loopring
+MEME,42177908,Meme,,,Application,,,,,BitGo Custody,memecoin-2,meme,Memecoin,28301,MEME,Memecoin,meme,meme,Memecoin
+PUNDIX,41607988,Centralized Finance,Payment Solution & On-ramp / Off-ramp,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,pundi-x-2,pundix,Pundi X,9040,PUNDIX,Pundi X (New),pundix-new,pundix,Pundi X
+TRB,41561357,Decentralized Finance,DeFi Infrastructure & Data,Oracles,Application,,,,,Coinbase Custody,tellor,trb,Tellor Tributes,4944,TRB,Tellor,tellor,trb,Tellor
+ONT,41396493,Blockchain Utilities & Tools,Identity & Authentication,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,ontology,ont,Ontology,2566,ONT,Ontology,ontology,ont,Ontology
+SIGN,40889995,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,,,Anchorage Digital; Coinbase Custody,sign-global,sign,Sign,35600,SIGN,Sign,sign,sign,Sign
+SKL,40608090,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Sidechain,Ethereum Sidechain,,US,Coinbase Custody; BitGo Custody; Gemini Custody,skale,skl,SKALE,5691,SKL,SKALE,skale-network,skl,SKALE
+BAND,40535009,Decentralized Finance,DeFi Infrastructure & Data,Oracles,Blockchain Network,Layer 1,PoS,,,Coinbase Custody; BitGo Custody,band-protocol,band,Band,4679,BAND,Band,band-protocol,band,Band Protocol
+LA,39445857,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,,,,lagrange,la,Lagrange,36510,LA,Lagrange,lagrange,la,Lagrange
+XCH,39220803,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,chia,xch,Chia,9258,XCH,Chia,chia-network,xch,Chia
+DAG,38946698,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,US,,constellation-labs,dag,Constellation,2868,DAG,Constellation,constellation,dag,Constellation
+MVL,38912712,Decentralized Physical Infrastructure,Sensor Networks,Mobility,Application,,,,,BitGo Custody,mass-vehicle-ledger,mvl,MVL,2982,MVL,MVL,mvl,mvl,MVL
+SWFTC,38853096,Decentralized Finance,DeFi Infrastructure & Data,Bridges & Bridge Aggregators,Application,,,,,Coinbase Custody; Anchorage Digital,swftcoin,swftc,SWFTCOIN,2341,SWFTC,SwftCoin,swftcoin,swftc,SwftCoin
+ENJ,38766759,"Media, Arts & Entertainment",NFT Infrastructure,,Blockchain Network,Layer 1,PoS,,,Gemini Custody; BitGo Custody; Zodia; Coinbase Custody,enjincoin,enj,Enjin Coin,2130,ENJ,Enjin Coin,enjin-coin,enj,Enjin Coin
+IOST,38258550,Blockchain Utilities & Tools,Interoperability,,Blockchain Network,Layer 1,PoS,,,,iostoken,iost,IOST,2405,IOST,IOST,iostoken,iost,IOST
+NOT,37988660,"Media, Arts & Entertainment",Gaming,Games,Application,,,TON,,BitGo Custody,notcoin,not,Notcoin,28850,NOT,Notcoin,notcoin,not,Notcoin
+ONE,37326192,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,,harmony,one,Harmony,3945,ONE,Harmony,harmony,one_harmony,Harmony
+DEP,37246523,"Media, Arts & Entertainment",Metaverse,,Blockchain Network,Sidechain,Other (Sidechain),,,BitGo Custody,deapcoin,dep,DEAPCOIN,5429,DEP,DEAPcoin,deapcoin,dep,DEAPcoin
+GMT,37166467,"Media, Arts & Entertainment",Gaming,Games,Application,,,Solana,,Anchorage Digital; Coinbase Custody; Gemini Custody; BitGo Custody,stepn,gmt,GMT,18069,GMT,GMT,green-metaverse-token,gmt,GMT
+ACH,36704558,Centralized Finance,Payment Solution & On-ramp / Off-ramp,,Application,,,,,Anchorage Digital; Coinbase Custody; Gemini Custody; BitGo Custody,alchemy-pay,ach,Alchemy Pay,6958,ACH,Alchemy Pay,alchemy-pay,ach,Alchemy Pay
+ARK,36316395,Blockchain Utilities & Tools,Developer Tools,Other (Developer Tools),Blockchain Network,Layer 1,PoS,,,,ark,ark,ARK,1586,ARK,Ark,ark,ark,Ark
+POWR,35866514,Decentralized Physical Infrastructure,Sensor Networks,Energy,Blockchain Network,Layer 1,PoS,,,BitGo Custody; Coinbase Custody,power-ledger,powr,Powerledger,2132,POWR,Powerledger,power-ledger,powr,Powerledger
+HIVE,35354334,Decentralized Physical Infrastructure,Sensor Networks,Mobility,Application,,,Solana,,,hive,hive,Hive,5370,HIVE,Hive,hive-blockchain,hive,Hive
+RIF,35167618,Blockchain Utilities & Tools,Developer Tools,,Application,,,,,BitGo Custody,rif-token,rif,Rootstock Infrastructure Framework,3701,RIF,Rootstock Infrastructure Framework,rsk-infrastructure-framework,rif,RSK Infrastructure Framework
+CYBER,34964656,Blockchain Utilities & Tools,Data & Analytics Providers,Artificial Intelligence (Data & Analytics Providers),Application,,,,,,cyberconnect,cyber,CYBER,24781,CYBER,Cyber,cyberconnect,cyber,Cyber
+ELON,34962061,Meme,,,Application,,,,,Gemini Custody; Coinbase Custody,dogelon-mars,elon,Dogelon Mars,9436,ELON,Dogelon Mars,dogelon,elon,Dogelon Mars
+PEOPLE,34908272,Decentralized Finance,Other (DeFi),,Application,,,,,,constitutiondao,people,ConstitutionDAO,14806,PEOPLE,ConstitutionDAO,constitutiondao,people,ConstitutionDAO
+CHEX,34868426,Decentralized Finance,Asset Origination and Issuance,Security Token Platforms,Blockchain Network,Layer 1,PoS,,,BitGo Custody,chex-token,chex,Chintai,8534,CHEX,Chintai,chex-token,chex,CHEX Token
+AUCTION,34288352,Decentralized Finance,Other (DeFi),,Application,,,,,Coinbase Custody,auction,auction,Bounce,8602,AUCTION,Bounce Token,bounce-token,auction,Bounce Token
+MANTA,33447332,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,ZK Rollup,,,,manta-network,manta,Manta Network,13631,MANTA,Manta Network,manta-network,manta,Manta Network
+BREV,33156442,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Blockchain Network,Specialized Utility Layer,,,,,brevis,brev,Brevis,39159,BREV,Brevis,brevis,brev,Brevis
+STRAX_REPLACED,32711540,Blockchain Utilities & Tools,Developer Tools,,Blockchain Network,Layer 1,PoS,,,,stratis,strax,Xertra,30168,STRAX,Xertra,stratis-new,strax,Stratis
+SOMI,32566014,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Layer 1,PoS,,,BitGo Custody; Anchorage Digital,somnia,somi,Somnia,37637,SOMI,Somnia,somnia,somi,Somnia
+SPELL,32505244,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,,,BitGo Custody; Coinbase Custody,spell-token,spell,Spell,11289,SPELL,Spell Token,spell-token,spell,Spell Token
+IO,32364832,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Application,,,Solana,US,,io,io,io.net,29835,IO,io.net,io-net,io,io.net
+SOLO,32337170,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Ripple,,,solo-coin,solo,Sologenic,5279,SOLO,Sologenic,sologenic,solo,Sologenic
+WOO,32326175,Centralized Finance,Exchange,,Application,,,,,Coinbase Custody; Anchorage Digital; BitGo Custody,woo-network,woo,WOO,7501,WOO,WOO,wootrade,woo,WOO
+COTI,32130394,Centralized Finance,Payment Solution & On-ramp / Off-ramp,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,BitGo Custody; Coinbase Custody,coti,coti,COTI,3992,COTI,COTI,coti,coti,COTI
+SHX,32054323,Centralized Finance,Other (Centralized Finance),,Application,,,Stellar,,,stronghold-token,shx,Stronghold,3661,SHX,Stronghold SHx,stronghold-token,shx,Stronghold Token
+MNGO,31450861,Decentralized Finance,Trading Platforms,Derivatives,Application,,,,,Coinbase Custody,mango-markets,mngo,Mango,11171,MNGO,Mango,mango-markets,mngo,Mango
+CLANKER,31379023,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Base,,Anchorage Digital,tokenbot-2,clanker,tokenbot,34285,CLANKER,tokenbot,tokenbot-2,clanker,tokenbot
+PEAQ,31369405,Decentralized Physical Infrastructure,Other (DePIN),,Blockchain Network,Layer 1,PoS,,,BitGo Custody,peaq-2,peaq,peaq,14588,PEAQ,peaq,peaq,peaq,peaq
+BNT,31358023,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,Coinbase Custody; Anchorage Digital; BitGo Custody,bancor,bnt,Bancor Network,1727,BNT,Bancor,bancor,bnt,Bancor
+NEIRO,31176076,Meme,,,Application,,,Ethereum,,,neiro-3,neiro,Neiro,32521,NEIRO,Neiro,neiro,neirocto,First Neiro On Ethereum
+SXT,30980459,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,space-and-time,sxt,Space and Time,36405,SXT,Space and Time,space-and-time,sxt,Space and Time
+RLC,30727545,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Blockchain Network,Specialized Utility Layer,,,,Coinbase Custody; BitGo Custody,iexec-rlc,rlc,iExec RLC,1637,RLC,iExec RLC,rlc,rlc,iExec RLC
+BIGTIME,30665854,"Media, Arts & Entertainment",Gaming,Games,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,big-time,bigtime,Big Time,28230,BIGTIME,Big Time,big-time,bigtime,Big Time
+ZENT,30601091,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Application,,,,,,zentry,zent,Zentry,30963,ZENT,Zentry,zentry,zent,Zentry
+CARV,30525150,Blockchain Utilities & Tools,Data & Analytics Providers,Artificial Intelligence (Utilities & Tools),Blockchain Network,Layer 2,ZK Rollup,Base,,,carv,carv,CARV,33372,CARV,CARV,carv,carv,CARV
+IQ,30420470,Decentralized Physical Infrastructure,Other (DePIN),,Application,,,,,BitGo Custody,everipedia,iq,IQ,2930,IQ,IQ,iq,iq,IQ
+BLAST,29524248,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Optimistic Rollup,Blast,,Coinbase Custody,blast,blast,Blast,28480,BLAST,Blast,blast,blast,Blast
+AUDIO,29478194,"Media, Arts & Entertainment",Streaming Platforms,,Application,,,,,Coinbase Custody; Gemini Custody; BitGo Custody,audius,audio,Audius,7455,AUDIO,Audius,audius,audio,Audius
+BOME,29074571,Meme,,,Application,,,Solana,,BitGo Custody; Gemini Custody,book-of-meme,bome,BOOK OF MEME,29870,BOME,BOOK OF MEME,book-of-meme,bome,BOOK OF MEME
+GIGGLE,28996981,Meme,,,Application,,,BNB,,,giggle-fund,giggle,Giggle Fund,38470,GIGGLE,Giggle Fund,giggle-fund,giggle,Giggle Fund
+YGG,28528015,"Media, Arts & Entertainment",Gaming,Guild / DAOs,Application,,,,,BitGo Custody; Coinbase Custody,yield-guild-games,ygg,Yield Guild Games,10688,YGG,Yield Guild Games,yield-guild-games,ygg,Yield Guild Games
+LQTY,28494790,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,,,Coinbase Custody; Gemini Custody; Anchorage Digital,liquity,lqty,Liquity,7429,LQTY,Liquity,liquity,lqty,Liquity
+ANIME,28474963,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Blockchain Network,Layer 3,Optimistic Rollup,Arbitrum,,,anime,anime,Animecoin,35319,ANIME,Animecoin,anime,anime,Animecoin
+POKT,28460291,Blockchain Utilities & Tools,Developer Tools,Other (Developer Tools),Blockchain Network,Layer 1,PoS,Cosmos,,,pocket-network,pokt,Pocket Network,11823,POKT,Pocket Network,pocket-network,pokt,Pocket Network
+UQC,28121465,"Media, Arts & Entertainment",Loyalty Programs,,Application,,,,,BitGo Custody,uquid-coin,uqc,Uquid Coin,2273,UQC,Uquid Coin,uquid-coin,uqc,Uquid Coin
+G,28083768,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,g-token,g,Gravity (by Galxe),32120,G,Gravity (by Galxe),gravity-token,g,Gravity
+OSMO,27965870,Decentralized Finance,Trading Platforms,Spot / Swaps,Blockchain Network,Layer 1,PoS,Cosmos,,Anchorage Digital; BitGo Custody,osmosis,osmo,Osmosis,12220,OSMO,Osmosis,osmosis,osmo,Osmosis
+VENOM,27637748,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 0,,,,,venom,venom,Venom,22059,VENOM,Venom,venom,venom,Venom
+C98,27457020,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,Coinbase Custody; Copper,coin98,c98,Coin98,10903,C98,Coin98,coin98,c98,Coin98
+FLUX,27168295,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Blockchain Network,Layer 1,PoW,,,,zelcash,flux,Flux,3029,FLUX,Flux,zel,flux,Flux
+STEEM,27115369,"Media, Arts & Entertainment",Social Networks,,Blockchain Network,Layer 1,PoS,,,,steem,steem,Steem,1230,STEEM,Steem,steem,steem,Steem
+STG,27099336,Decentralized Finance,DeFi Infrastructure & Data,Bridges & Bridge Aggregators,Application,,,,,BitGo Custody; Anchorage Digital; Coinbase Custody; Gemini Custody,stargate-finance,stg,Stargate Finance,18934,STG,Stargate Finance,stargate-finance,stg,Stargate Finance
+CVC,26850755,Blockchain Utilities & Tools,Identity & Authentication,,Application,,,,,Coinbase Custody; Gemini Custody; BitGo Custody,civic,cvc,Civic,1816,CVC,Civic,civic,cvc,Civic
+METIS,26789575,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Optimistic Rollup,,,Gemini Custody; Coinbase Custody,metis-token,metis,Metis,9640,METIS,Metis,metisdao,metis,Metis
+MMT,26313202,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Sui,,,momentum-3,mmt,Momentum,38231,MMT,Momentum,momentum-token,mmt,Momentum
+API3,26134597,Decentralized Finance,DeFi Infrastructure & Data,Oracles,Application,,,,,Coinbase Custody; Anchorage Digital; BitGo Custody; Gemini Custody,api3,api3,Api3,7737,API3,API3,api3,api3,API3
+ILV,26046655,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,Gemini Custody; Coinbase Custody,illuvium,ilv,Illuvium,8719,ILV,Illuvium,illuvium,ilv,Illuvium
+USUAL,25922732,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,,,,usual,usual,Usual,33979,USUAL,Usual,usual,usual,Usual (Pre-Market)
+ARKM,25309628,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,,,Coinbase Custody,arkham,arkm,Arkham,27565,ARKM,Arkham,arkham,arkm,Arkham
+MTL,24772244,Centralized Finance,Payment Solution & On-ramp / Off-ramp,,Application,,,,,Coinbase Custody; BitGo Custody,metal,mtl,Metal DAO,1788,MTL,Metal DAO,metal,mtl_metal,Metal DAO
+ACX,24764760,Decentralized Finance,DeFi Infrastructure & Data,Bridges & Bridge Aggregators,Application,,,,,Coinbase Custody; Anchorage Digital; BitGo Custody,across-protocol,acx,Across Protocol,22620,ACX,Across Protocol,across-protocol,acx,Across Protocol
+TAIKO,24393390,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Hybrid / Other (Ethereum Layer 2),,,BitGo Custody,taiko,taiko,Taiko,31525,TAIKO,Taiko,taiko,taiko,Taiko
+AEVO,24232212,Decentralized Finance,Trading Platforms,Derivatives,Blockchain Network,Layer 2,Optimistic Rollup,,,Coinbase Custody; BitGo Custody,aevo-exchange,aevo,Aevo,29676,AEVO,Aevo,aevo,aevo,Aevo
+PROM,24197364,"Media, Arts & Entertainment",NFT Infrastructure,,Application,,,,,Coinbase Custody,prometeus,prom,Prom,4120,PROM,Prom,prom,prom,Prom
+QKC,23837769,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,BitGo Custody,quark-chain,qkc,QuarkChain,2840,QKC,QuarkChain,quarkchain,qkc,QuarkChain
+SLP,23768793,"Media, Arts & Entertainment",Gaming,In-Game Currencies,Application,,,,,BitGo Custody; Gemini Custody,smooth-love-potion,slp,Smooth Love Potion,5824,SLP,Smooth Love Potion,smooth-love-potion,slp,Smooth Love Potion
+RESOLV,23624631,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,,,Anchorage Digital,resolv,resolv,Resolv,36713,RESOLV,Resolv,resolv,resolv,Resolv
+SATS,23595260,Meme,,,Application,,,Bitcoin,,,sats-ordinals,sats,SATS (Ordinals),28194,SATS,SATS (Ordinals),sats-ordinals,sats,SATS (Ordinals)
+BFC,23540587,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,Coinbase Custody,bifrost,bfc,Bifrost,7817,BFC,Bifrost,bifrost,bfc,Bifrost
+XRD,23469014,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Copper,radix,xrd,Radix,11948,XRD,Radix,radix-protocol,xrd,Radix
+KNC,23318052,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,Coinbase Custody; BitGo Custody; Gemini Custody; Zodia,kyber-network-crystal,knc,Kyber Network Crystal,9444,KNC,Kyber Network Crystal v2,kyber-network-crystal-v2,knc,Kyber Network Crystal
+DIA,23132899,Decentralized Finance,DeFi Infrastructure & Data,Oracles,Application,,,,,Coinbase Custody; BitGo Custody,dia-data,dia,DIA,6138,DIA,DIA,dia,dia,DIA
+TON_TOKAMAK,23067639,Blockchain Utilities & Tools,Developer Tools,Other (Developer Tools),Application,,,,,,tokamak-network,ton,Tokamak Network,6731,TOKAMAK,Tokamak Network,tokamak-network,ton_tokamaknetwork,Tokamak Network
+CTSI,22924480,Blockchain Utilities & Tools,Scalability & Performance,,Blockchain Network,Layer 2,Optimistic Rollup,,,Coinbase Custody; BitGo Custody,cartesi,ctsi,Cartesi,5444,CTSI,Cartesi,cartesi,ctsi,Cartesi
+BICO,22803697,Blockchain Utilities & Tools,Developer Tools,,Application,,,,,Coinbase Custody; BitGo Custody,biconomy,bico,Biconomy,9543,BICO,Biconomy,biconomy,bico,Biconomy
+MAGIC,22381806,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,BitGo Custody,magic,magic,Treasure,14783,MAGIC,Treasure,magic-token,magic,Treasure
+GOAT,22146048,Meme,,,Application,,,Solana,,Gemini Custody; BitGo Custody,goatseus-maximus,goat,Goatseus Maximus,33440,GOAT,Goatseus Maximus,goatseus-maximus,goat,Goatseus Maximus
+PRO,21470861,Centralized Finance,Other (Centralized Finance),,Application,,,,,Coinbase Custody; BitGo Custody,propy,pro,Propy,1974,PRO,Propy,propy,pro,Propy
+ORDER,21388828,Decentralized Finance,DeFi Infrastructure & Data,Trading Infrastructure,Blockchain Network,Layer 2,Optimistic Rollup,,,BitGo Custody,orderly-network,order,Orderly,32809,ORDER,Orderly,orderly-network,order,Orderly Network
+NYM,21124658,Blockchain Utilities & Tools,Privacy (Utilities & Tools),,Blockchain Network,Layer 0,,,,BitGo Custody,nym,nym,Nym,17591,NYM,NYM,nym,nym,NYM
+ID,21012619,Blockchain Utilities & Tools,Identity & Authentication,,Application,,,,,,space-id,id,SPACE ID,21846,ID,SPACE ID,space-id,id,SPACE ID
+F,20965129,Decentralized Finance,Trading Platforms,Derivatives,Application,,,Base,,BitGo Custody,synfutures,f,SynFutures,34297,F,SynFutures,synfutures,f,SynFutures
+PHA,20588250,Blockchain Utilities & Tools,Developer Tools,,Blockchain Network,Sidechain,Parachain,,,Anchorage Digital,pha,pha,PHALA,6841,PHA,Phala Network,phala-network,pha,Phala Network
+POND,20398851,Decentralized Physical Infrastructure,Computation,General Purpose Compute,Application,,,,,Coinbase Custody,marlin,pond,Marlin,7497,POND,Marlin,marlin,pond,Marlin
+AIXBT,20366387,Blockchain Utilities & Tools,Data & Analytics Providers,Artificial Intelligence (Data & Analytics Providers),Application,,,Base,,BitGo Custody,aixbt,aixbt,aixbt,34103,AIXBT,aixbt,aixbt,aixbt,aixbt by Virtuals
+KERNEL,20358610,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,,,Coinbase Custody; Anchorage Digital,kernel-2,kernel,KernelDAO,36180,KERNEL,KernelDAO,kerneldao,kernel,KernelDAO
+GIGA,20321091,Meme,,,Application,,,Solana,,,gigachad-2,giga,Gigachad,30063,GIGA,Gigachad,gigachad-meme,giga,Gigachad
+BITCOIN,20256784,Meme,,,Application,,,,,,harrypotterobamasonic10in,bitcoin,HarryPotterObamaSonic10Inu (ETH),25220,BITCOIN,HarryPotterObamaSonic10Inu (ERC-20),harrypotterobamasonic10inu-eth,hpos10i_eth,HarryPotterObamaSonic10Inu on Ethereum
+XAI,20017128,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Layer 3,Optimistic Rollup,Arbitrum,,BitGo Custody,xai-blockchain,xai,Xai,28933,XAI,Xai,xai-games,xai,Xai
+HONEY,19964193,Decentralized Physical Infrastructure,Sensor Networks,Mobility,Application,,,Solana,,BitGo Custody; Coinbase Custody,hivemapper,honey,Hivemapper,22850,HONEY,Hivemapper,hivemapper,honey,Hivemapper
+DYM,19952984,General Purpose Blockchain Networks,Interchain Connectivity Platforms,,Blockchain Network,Layer 0,,,,,dymension,dym,Dymension,28932,DYM,Dymension,dymension,dym,Dymension
+WET,19873165,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Solana,,BitGo Custody; Anchorage Digital,humidifi,wet,HumidiFi,39049,WET,Humidifi,humidifi,wet,Humidifi
+CHR,19785825,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody; Coinbase Custody,chromaway,chr,Chromia,3978,CHR,Chromia,chromia,chr,Chromia
+CPOOL,19757461,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,,,,clearpool,cpool,Clearpool,12573,CPOOL,Clearpool,clearpool,cpool,Clearpool
+CET,19623076,Centralized Finance,Exchange,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,coinex-token,cet,CoinEx,2941,CET,CoinEx Token,coinex-token,cet,CoinEx
+AGI,18933428,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Application,,,,,BitGo Custody,delysium,agi,Delysium,24007,AGI,Delysium,delysium,agi_delysium,Delysium
+AGLD,18928489,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Layer 2,Optimistic Rollup,,,Coinbase Custody,adventure-gold,agld,Adventure Gold,11568,AGLD,Adventure Gold,adventure-gold,agld,Adventure Gold
+PONKE,18909639,Meme,,,Application,,,Solana,,,ponke,ponke,PONKE,29150,PONKE,Ponke,ponke,ponke,Ponke
+SOPH,18763475,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,ZK Rollup,,,,sophon,soph,Sophon,32087,SOPH,Sophon,sophon,soph,Sophon
+KEEP,18517543,Decentralized Finance,DeFi Infrastructure & Data,Bridges & Bridge Aggregators,Application,,,,,Coinbase Custody; Anchorage Digital; Gemini Custody; BitGo Custody,keep-network,keep,Keep Network,5566,KEEP,Keep Network,keep-network,keep,Keep Network
+AURORA,18263761,Blockchain Utilities & Tools,Developer Tools,,Blockchain Network,Layer 1,PoS,,,,aurora-near,aurora,Aurora,14803,AURORA,Aurora,aurora-near,aurora,Aurora
+CGPT,18255456,Blockchain Utilities & Tools,AI Platforms,AI Platform,Application,,,BNB,,,chaingpt,cgpt,ChainGPT,23756,CGPT,ChainGPT,chaingpt,cgpt,ChainGPT
+BANANA,18070164,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,TON,,,banana-gun,banana,Banana Gun,28066,BANANA,Banana Gun,banana-gun,banana,Banana Gun
+INIT,17911757,Blockchain Utilities & Tools,Developer Tools,Other (Developer Tools),Blockchain Network,Layer 1,PoS,Cosmos,,BitGo Custody,initia,init,Initia,33120,INIT,Initia,initia,init,Initia
+GNS,17885702,Decentralized Finance,Trading Platforms,Derivatives,Application,,,,,,gains-network,gns,Gains Network,13663,GNS,Gains Network,gains-network,gns,Gains Network
+FIDA,17714728,Blockchain Utilities & Tools,Identity & Authentication,,Application,,,Solana,,Coinbase Custody; Anchorage Digital,bonfida,fida,Bonfida,7978,FIDA,Bonfida,bonfida-sns,fida,Solana Name Service (Bonfida)
+TROLL,17305939,Meme,,,Application,,,Solana,,,troll-2,troll,TROLL,36313,TROLL,TROLL (SOL),troll-sol,troll,Troll
+PRIME,17129951,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Application,,,,,Anchorage Digital; Coinbase Custody,echelon-prime,prime,Echelon Prime,23711,PRIME,Echelon Prime,echelon-prime,prime,Echelon Prime
+META,17049382,Blockchain Utilities & Tools,Identity & Authentication,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,BitGo Custody,metadium,meta,Metadium,3418,META,Metadium,metadium,meta,Metadium
+ABT,16965452,Blockchain Utilities & Tools,Developer Tools,,Application,,,,,BitGo Custody; Coinbase Custody,arcblock,abt,Arcblock,2545,ABT,ArcBlock,arcblock,abt,Arcblock
+DORA_BNB,16808336,Meme,,,Application,,,BNB,,,dora-2,dora,DORA,37482,DORA,DORA,dora,dora_dora,DORA
+TNSR,16552682,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,Solana,,BitGo Custody; Coinbase Custody,tensor,tnsr,Tensor,30449,TNSR,Tensor,tensor,tnsr,Tensor
+RARE,15833832,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,,,BitGo Custody; Gemini Custody; Coinbase Custody,superrare,rare,SuperRare,11294,RARE,SuperRare,superrare,rare,SuperRare
+PAAL,15724308,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Application,,,,,,paal-ai,paal,PAAL AI,27178,PAAL,PAAL AI,paal-ai,paal,PAAL AI
+MPLX,15704995,Blockchain Utilities & Tools,Developer Tools,,Application,,,Solana,,BitGo Custody,metaplex,mplx,Metaplex,21870,MPLX,Metaplex,metaplex,mplx,Metaplex
+ELA,15566510,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Coinbase Custody,elastos,ela,Elastos,2492,ELA,Elastos,elastos,ela,Elastos
+NEWT,15406025,Blockchain Utilities & Tools,Developer Tools,Artificial Intelligence (Developer Tools),Blockchain Network,Layer 1,PoS,,,,newton-protocol,newt,Newton Protocol,36861,NEWT,Newton Protocol,newton-protocol,newt,Newton Protocol
+DEGEN,15231837,Meme,,,Blockchain Network,Layer 3,Optimistic Rollup,Base,,Anchorage Digital,degen-base,degen,Degen,30096,DEGEN,Degen,degen-base,degen,Degen
+CETUS,15101011,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Sui,,,cetus-protocol,cetus,Cetus Protocol,25114,CETUS,Cetus Protocol,cetus-protocol,cetus,Cetus Protocol
+COREUM,15055803,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,Ripple,,BitGo Custody,coreum,coreum,Coreum,16399,COREUM,Coreum,coreum,coreum,Coreum
+CELR,14844674,Blockchain Utilities & Tools,Interoperability,,Blockchain Network,Layer 2,Hybrid / Other (Non-Ethereum Layer 2),,,Coinbase Custody; BitGo Custody,celer-network,celr,Celer Network,3814,CELR,Celer Network,celer-network,celr,Celer Network
+DOGS,14799857,Meme,,,Application,,,TON,,BitGo Custody,dogs-2,dogs,Dogs,32698,DOGS,DOGS,dogs,dogs,Dogs
+OGN,14698270,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,,,BitGo Custody; Coinbase Custody,origin-protocol,ogn,Origin Token,5117,OGN,Origin Protocol,origin-protocol,ogn,Origin Protocol
+PEPECOIN,14679095,Meme,,,Application,,,Ethereum,,,pepecoin-2,pepecoin,PepeCoin,24835,PEPECOIN,PepeCoin,pepecoin,pepecoin,PepeCoin
+YB,14636598,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Ethereum,,,yield-basis,yb,Yield Basis,38651,YB,YieldBasis,yieldbasis,yb,Yield Basis
+ACE,14407199,"Media, Arts & Entertainment",Gaming,Games,Blockchain Network,Sidechain,,,,BitGo Custody,endurance,ace,Fusionist,28674,ACE,Fusionist,fusionist,ace_fusionist,Fusionist
+JOE,14406867,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Avalanche,,BitGo Custody,joe,joe,JOE,11396,JOE,JOE,joe,joe,JOE
+FUN,14406791,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Application,,,Ethereum,,BitGo Custody,funfair,fun,FUNToken,1757,FUN,FUNToken,funtoken,fun,FUNToken
+GLMR,14285514,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Sidechain,Parachain,Polkadot,,,moonbeam,glmr,Moonbeam,6836,GLMR,Moonbeam,moonbeam,glmr,Moonbeam
+QI,14216349,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,,,,benqi,qi,BENQI,9288,QI,BENQI,benqi,qi,BENQI
+ALI,14098847,Blockchain Utilities & Tools,Developer Tools,,Application,,,,,,alethea-artificial-liquid-intelligence-token,ali,Artificial Liquid Intelligence,16876,ALI,Artificial Liquid Intelligence,alethea-artificial-liquid-intelligence-token,ali,Artificial Liquid Intelligence
+ACT,14093502,Meme,,,Application,,,Solana,,,act-i-the-ai-prophecy,act,Act I The AI Prophecy,33566,ACT,Act I : The AI Prophecy,act-i-the-ai-prophecy,act,Act I The AI Prophecy
+B3,14036822,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Layer 3,,Base,,Coinbase Custody,b3,b3,B3 (Base),35690,B3,B3 (Base),b3,b3,B3 (Base)
+AQT,14022077,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,,,BitGo Custody,alpha-quark-token,aqt,Alpha Quark,7460,AQT,Alpha Quark Token,alpha-quark-token,aqt,Alpha Quark Token
+NCT,14012089,Blockchain Utilities & Tools,Data & Analytics Providers,Risk Detection Data Providers,Application,,,,,BitGo Custody; Coinbase Custody,polyswarm,nct,PolySwarm,2630,NCT,PolySwarm,polyswarm,nct,PolySwarm
+AVAIL,14010389,Blockchain Utilities & Tools,Scalability & Performance,,Blockchain Network,Specialized Utility Layer,,,,,avail,avail,Avail,32376,AVAIL,Avail,avail,avail,Avail
+GODS,13966784,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,Anchorage Digital; BitGo Custody; Coinbase Custody,gods-unchained,gods,Gods Unchained,10631,GODS,Gods Unchained,gods-unchained,gods,Gods Unchained
+STORJ,13712907,Decentralized Physical Infrastructure,Storage,P2P Hosting,Application,,,,,Coinbase Custody; BitGo Custody; Gemini Custody,storj,storj,Storj,1772,STORJ,Storj,storj,storj,Storj
+DENT,13475001,Decentralized Physical Infrastructure,Sensor Networks,Wireless,Application,,,,,BitGo Custody; Coinbase Custody,dent,dent,Dent,1886,DENT,Dent,dent,dent,Dent
+WILD,13279979,"Media, Arts & Entertainment",Metaverse,,Application,,,,,BitGo Custody,wilder-world,wild,Wilder World,9674,WILD,Wilder World,wilder-world,wild,Wilder World
+VELO_OP,13040683,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Optimism,,,velodrome-finance,velo,Velodrome Finance,20435,VELO,Velodrome Finance,velodrome-finance,velo_velodromefinance,Velodrome Finance
+SXP,12972892,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,swipe,sxp,Solar,4279,SXP,Solar,sxp,sxp,Solar
+GEMS,12947454,Decentralized Finance,Asset Origination and Issuance,Launchpads & IDO Platforms,Application,,,Ethereum,,,gems-vip,gems,Gems VIP,31750,GEMS,Gems,gems-vip,gem,Gems
+HUNT,12932804,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Application,,,,,Coinbase Custody,hunt-token,hunt,Hunt,5380,HUNT,Hunt Town,hunt,hunt,Hunt Town
+BB,12930291,Centralized Finance,Exchange,,Blockchain Network,Layer 1,PoS,,,,bouncebit,bb,BounceBit,30746,BB,BounceBit,bouncebit,bb,BounceBit
+COOKIE,12847722,Blockchain Utilities & Tools,Data & Analytics Providers,Artificial Intelligence (Data & Analytics Providers),Application,,,,,Copper; Anchorage Digital,cookie,cookie,Cookie DAO,31838,COOKIE,Cookie DAO,cookie,cookie,Cookie
+ALCX,12806763,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,,,Coinbase Custody; Gemini Custody,alchemix,alcx,Alchemix,8613,ALCX,Alchemix,alchemix,alcx,Alchemix
+MOC,12757851,"Media, Arts & Entertainment",Metaverse,,Application,,,,,BitGo Custody,mossland,moc,Mossland,2915,MOC,Moss Coin,moss-coin,moc,Moss Coin
+PUFFER,12555689,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,Ethereum,,Coinbase Custody; BitGo Custody,puffer-finance,puffer,Puffer,32325,PUFFER,Puffer,puffer,puffer,Puffer
+INV,12478100,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,,,Coinbase Custody,inverse-finance,inv,Inverse Finance,8720,INV,Inverse Finance,inverse-finance,inv,Inverse Finance
+FORTH,12231971,Decentralized Finance,Asset Origination and Issuance,Stablecoin System,Application,,,,,Coinbase Custody; BitGo Custody,ampleforth-governance-token,forth,Ampleforth Governance,9421,FORTH,Ampleforth Governance Token,ampleforth-governance-token,forth,Ampleforth Governance Token
+RAD,12127063,Blockchain Utilities & Tools,Other (Blockchain Utilities & Tools),,Application,,,,,Coinbase Custody; BitGo Custody; Gemini Custody,radicle,rad,Radworks,6843,RAD,Radworks,radworks,rad,Radworks
+CAT,12118595,Meme,,,Application,,,BNB,,,simon-s-cat,cat,Simon's Cat,32724,CAT,Simon's Cat,simonscat,cat,Simon's Cat
+HFT,11915512,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,Coinbase Custody,hashflow,hft,Hashflow,22461,HFT,Hashflow,hashflow,hft,Hashflow
+SUPRA,11906812,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),Move,,,supra,supra,Supra,34240,SUPRA,SUPRA,supra,supra,Supra
+WCT,11638004,Blockchain Utilities & Tools,Interoperability,,Blockchain Network,Specialized Utility Layer,,,,Anchorage Digital; BitGo Custody; Gemini Custody,connect-token-wct,wct,WalletConnect Token,33152,WCT,WalletConnect Token,walletconnect-token,wct,WalletConnect Token
+HMSTR,11626485,"Media, Arts & Entertainment",Gaming,Games,Application,,,TON,,,hamster-kombat,hmstr,Hamster Kombat,32195,HMSTR,Hamster Kombat,hamster-kombat,hmstr,Hamster Kombat
+OSAK,11589254,Meme,,,Application,,,Ethereum,,,osaka-protocol,osak,Osaka Protocol,27533,OSAK,Osaka Protocol,osaka-protocol,osak,Osaka Protocol
+ADX,11536149,"Media, Arts & Entertainment",Advertising,,Application,,,,,Coinbase Custody,adex,adx,AdEx,1768,ADX,AdEx,adx-net,adx,AdEx
+SAGA,11479751,Blockchain Utilities & Tools,Developer Tools,,Blockchain Network,Layer 1,PoS,,,,saga-2,saga,Saga,30372,SAGA,Saga,saga,saga,Saga
+CHILLGUY,11479609,Meme,,,Application,,,Solana,,Gemini Custody,chill-guy,chillguy,Just a chill guy,34125,CHILLGUY,Just a chill guy,just-a-chill-guy,chillguy,Just a chill guy
+BETA,11345738,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,,,Coinbase Custody,beta-finance,beta,Beta Finance,11307,BETA,Beta Finance,beta-finance,beta,Beta Finance
+DODO,11272119,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,Anchorage Digital; BitGo Custody; Coinbase Custody,dodo,dodo,DODO,7224,DODO,DODO,dodo,dodo,DODO
+FAI,11205482,Blockchain Utilities & Tools,AI Agents,AI Agent,Application,,,Base,,,freysa-ai,fai,Freysa AI,34330,FAI,Freysa,freysa-ai,fai,Freysa AI
+LMWR,11047578,"Media, Arts & Entertainment",Streaming Platforms,,Application,,,,,BitGo Custody,limewire-token,lmwr,LimeWire,24476,LMWR,LimeWire,limewire,lmwr,LimeWire
+ANYONE,11019245,Decentralized Physical Infrastructure,Virtual Private Network,,Blockchain Network,Specialized Utility Layer,,,,,airtor-protocol,anyone,ANyONe Protocol,32037,ANYONE,ANyONe Protocol,anyone-protocol,anyone,ANyONe Protocol
+GFI,10989036,Decentralized Finance,Lending & Borrowing,Real World Asset lending platforms,Application,,,,,Gemini Custody; Coinbase Custody; BitGo Custody,goldfinch,gfi,Goldfinch,13967,GFI,Goldfinch,goldfinch-protocol,gfi,Goldfinch
+MLN,10980073,Decentralized Finance,Asset Origination and Issuance,Security Token Platforms,Application,,,,,Coinbase Custody; BitGo Custody,melon,mln,Enzyme,1552,MLN,Enzyme,enzyme,mln,Enzyme
+SD,10586155,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,,,BitGo Custody,stader,sd,Stader,12623,SD,Stader,stader,sd,Stader
+ALICE,10438100,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,Coinbase Custody; Anchorage Digital; BitGo Custody,my-neighbor-alice,alice,My Neighbor Alice,8766,ALICE,MyNeighborAlice,myneighboralice,alice,My Neighbor Alice
+ZKJ,10432753,Blockchain Utilities & Tools,Interoperability,,Application,,,,,Coinbase Custody,polyhedra-network,zkj,Polyhedra Network,29779,ZKJ,Polyhedra Network,polyhedra-network,zkj,Polyhedra Network
+OXT,10417527,Decentralized Physical Infrastructure,Virtual Private Network,,Application,,,,,Coinbase Custody; BitGo Custody; Gemini Custody,orchid-protocol,oxt,Orchid Protocol,5026,OXT,Orchid,orchid,oxt,Orchid
+FORT,10346852,Blockchain Utilities & Tools,Data & Analytics Providers,Risk Detection Data Providers,Application,,,,,Anchorage Digital; Coinbase Custody,forta,fort,Forta,20622,FORT,Forta,forta,fort,Forta
+APU,10279238,Meme,,,Application,,,Ethereum,,,apu-s-club,apu,Apu Apustaja,30008,APU,Apu Apustaja,apu-apustaja,apu,Apu Apustaja
+ANDY,10225394,Meme,,,Application,,,Ethereum,,,andy-the-wisguy,andy,ANDY ETH,29879,ANDY,ANDY (ETH),boysclubandy,andy_eth,ANDY on Ethereum
+BOBA,10195339,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,Optimistic Rollup,,,Anchorage Digital; Coinbase Custody; BitGo Custody,boba-network,boba,Boba Network,14556,BOBA,Boba Network,boba-network,boba,Boba Network
+BAL,10036843,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,Gemini Custody; Coinbase Custody; BitGo Custody; Zodia,balancer,bal,Balancer,5728,BAL,Balancer,balancer,bal,Balancer
+ALPH,9985439,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoW,,,,alephium,alph,Alephium,14878,ALPH,Alephium,alephium,alph,Alephium
+PROMPT,9874920,Blockchain Utilities & Tools,Interoperability,,Application,,,,,,wayfinder,prompt,Wayfinder,36223,PROMPT,Wayfinder,wayfinder,prompt,Wayfinder
+OLAS,9691972,Blockchain Utilities & Tools,Developer Tools,Artificial Intelligence (Developer Tools),Application,,,,,Anchorage Digital,autonolas,olas,Autonolas,28458,OLAS,Autonolas,autonolas,olas,Autonolas
+NTRN_REPLACED,9666293,Blockchain Utilities & Tools,Developer Tools,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,neutron-3,ntrn,Neutron,26680,NTRN,Neutron,neutron-ntrn,ntrn,Neutron
+ARPA,9598706,Decentralized Physical Infrastructure,Computation,Specific Purpose Compute,Application,,,,,Coinbase Custody,arpa,arpa,ARPA,4039,ARPA,ARPA,arpa-chain,arpa,ARPA
+DEXT,9525789,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,,,Coinbase Custody,dextools,dext,DexTools,5866,DEXT,DEXTools,dextools,dext,DEXTools
+AITECH,9487505,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Application,,,BNB,,BitGo Custody,solidus-aitech,aitech,Solidus Ai Tech,19055,AITECH,Solidus Ai Tech,solidus-ai-tech,aitech,Solidus Ai Tech
+SYN,9182445,Decentralized Finance,DeFi Infrastructure & Data,Bridges & Bridge Aggregators,Blockchain Network,Layer 2,Optimistic Rollup,,,BitGo Custody; Coinbase Custody,synapse-2,syn,Synapse,12147,SYN,Synapse,synapse-2,syn,Synapse
+WOLF,9156033,Meme,,,Application,,,Ethereum,,,landwolf-0x67,wolf,LandWolf,30902,WOLF,Landwolf 0x67,landwolf-coin,wolf_landwolf0x67,Landwolf 0x67
+GRIFFAIN,9146203,Blockchain Utilities & Tools,Developer Tools,Artificial Intelligence (Developer Tools),Application,,,Solana,,,griffain,griffain,GRIFFAIN,34792,GRIFFAIN,GRIFFAIN,griffain,griffain,GRIFFAIN
+SCR,8801731,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 2,ZK Rollup,,,Anchorage Digital,scroll,scr,Scroll,26998,SCR,Scroll,scroll,scr,Scroll
+ACS,8611935,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Application,,,,,Anchorage Digital; Coinbase Custody,access-protocol,acs,Access Protocol,23195,ACS,Access Protocol,access-protocol,acs,Access Protocol
+BOSON,8502073,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,,,Coinbase Custody,boson-protocol,boson,Boson,8827,BOSON,Boson Protocol,boson-protocol,boson,Boson Protocol
+NOS,8326816,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Application,,,Solana,,BitGo Custody,nosana,nos,Nosana,16612,NOS,Nosana,nosana,nos,Nosana
+PYR,7820477,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,BitGo Custody,vulcan-forged,pyr,Vulcan Forged,9308,PYR,Vulcan Forged (PYR),vulcan-forged-pyr,pyr,Vulcan Forged (PYR)
+ATA,7146710,Blockchain Utilities & Tools,Identity & Authentication,,Blockchain Network,Layer 2,Optimistic Rollup,,,Coinbase Custody,automata,ata,Automata,10188,ATA,Automata Network,automata-network,ata,Automata Network
+DNT,7105802,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Application,,,,,,district0x,dnt,district0x,1856,DNT,district0x,district0x,dnt,district0x
+FLIP,5157437,Decentralized Finance,Trading Platforms,Spot / Swaps,Blockchain Network,Layer 1,PoS,,,BitGo Custody,chainflip,flip,Chainflip,13268,FLIP,Chainflip,chainflip,flip,Chainflip
+AI,2945403,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,,sleepless-ai,ai,Sleepless AI,28846,AI,Sleepless AI,sleepless-ai,ai_sleeplessai,Sleepless AI
+MAVIA,1801942,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,,heroes-of-mavia,mavia,Heroes of Mavia,28829,MAVIA,Heroes of Mavia,heroes-of-mavia,mavia,Heroes of Mavia
+$DOGE,,Meme,,,Application,,,Solana,,,department-of-government-efficiency,doge,Department Of Government Efficiency,32778,DOGE,Department Of Government Efficiency (dogegov.com),department-of-government-efficiency-token,dogegov,Department Of Government Efficiency (dogegov.com)
+$MICHI,,Meme,,,Application,,,Solana,,,michicoin,$michi,michi,30943,$MICHI,michi (SOL),michi,michi,michi
+$WEN,,Meme,,,Application,,,Solana,,BitGo Custody,wen-4,wen,Wen,29175,WEN,Wen,wen,wen_sol,Wen on Solana
+0x0,,Blockchain Utilities & Tools,Privacy (Utilities & Tools),,Application,,,,,,0x0-ai-ai-smart-contract,0x0,0x0.ai: AI Smart Contract,23355,0x0,0x0.ai,0x0-ai-ai-smart-contract,0x0,0x0.ai: AI Smart Contract
+AIDOGE,,Meme,,,Application,,,Arbitrum,,,arbdoge-ai,aidoge,ArbDoge AI,24477,AIDOGE,ArbDoge AI,arbdoge-ai,aidoge,ArbDoge AI
+ALPHA,,Decentralized Finance,Managed Yield Services,Vaults,Application,,,,,BitGo Custody; Coinbase Custody,alpha-finance,alpha,Stella,7232,ALPHA,Stella,alpha-finance-lab,alpha,Stella
+ATLAS,,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,,star-atlas,atlas,Star Atlas,11212,ATLAS,Star Atlas,star-atlas,atlas,Star Atlas
+AVA,,Blockchain Utilities & Tools,AI Agents,AI Agent,Application,,,Solana,,,ava-ai,ava,Ava AI,34116,AVA,AVA,ava-sol,avaai,Ava AI
+AZERO,,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,,,,,aleph-zero,azero,Aleph Zero,11976,AZERO,Aleph Zero,aleph-zero,azero,Aleph Zero
+BADGER,,Decentralized Finance,Managed Yield Services,Vaults,Application,,,,,Coinbase Custody; BitGo Custody,badger-dao,badger,Badger,7859,BADGER,Badger DAO,badger-dao,badger,Badger DAO
+BAKE,,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,,bakerytoken,bake,BakerySwap,7064,BAKE,BakeryToken,bakerytoken,bake,BakeryToken
+BASEDAI,,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Blockchain Network,Layer 1,Hybrid / Other (Layer 1),Ethereum,,,basedai,basedai,BasedAI,30584,BASEDAI,BasedAI,basedai,basedai,BasedAI
+BLUE,,Decentralized Finance,Trading Platforms,Derivatives,Application,,,Sui,,,bluefin,blue,Bluefin,8724,BLUE,Bluefin,bluefin,blue,Bluefin
+BLZ,,Decentralized Physical Infrastructure,Storage,File Storage,Blockchain Network,Layer 1,PoS,,,Coinbase Custody; Anchorage Digital,bluzelle,blz,Bluzelle,2505,BLZ,Bluzelle,bluzelle,blz,Bluzelle
+BUZZ,,Blockchain Utilities & Tools,AI Agents,AI Agent,Application,,,Solana,,,hive-ai,buzz,Hive AI,35188,BUZZ,Hive AI,hive-ai,buzz,Hive AI
+BZZ,,Decentralized Physical Infrastructure,Storage,File Storage,Application,,,,,BitGo Custody,swarm-bzz,bzz,Swarm,10293,BZZ,Swarm,ethereum-swarm,bzz,Swarm
+CFG,,Decentralized Finance,Asset Origination and Issuance,Security Token Platforms,Blockchain Network,Layer 1,PoS,,,Anchorage Digital,centrifuge,cfg,Centrifuge [OLD],6748,CFG,Centrifuge,centrifuge,cfg,Centrifuge
+CHEEL,,"Media, Arts & Entertainment",Social Networks,,Application,,,BNB,,,cheelee,cheel,Cheelee,23054,CHEEL,Cheelee,cheelee,cheel,Cheelee
+COQ,,Meme,,,Application,,,,,,coq-inu,coq,Coq Inu,28675,COQ,Coq Inu,coq-inu,coq,Coq Inu
+CTX,,Decentralized Finance,Trading Platforms,Derivatives,Application,,,,,Gemini Custody; BitGo Custody; Coinbase Custody,cryptex-finance,ctx,Cryptex Finance,10368,CTX,Cryptex Finance,cryptex-finance,ctx,Cryptex Finance
+D,,Blockchain Utilities & Tools,Developer Tools,Artificial Intelligence (Developer Tools),Application,,,,,,dar-open-network,d,Dar Open Network,11374,D,DAR Open Network,mines-of-dalarnia,d,Dar Open Network
+DAO,,Decentralized Finance,Asset Origination and Issuance,Launchpads & IDO Platforms,Application,,,,,BitGo Custody; Coinbase Custody,dao-maker,dao,DAO Maker,8420,DAO,DAO Maker,dao-maker,dao,DAO Maker
+DATA,,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,,,BitGo Custody,streamr,data,Streamr,2143,DATA,Streamr,streamr,data,Streamr
+DIMO,,Decentralized Physical Infrastructure,Sensor Networks,Mobility,Application,,,,,Coinbase Custody,dimo,dimo,DIMO,22837,DIMO,DIMO,dimo,dimo,DIMO
+EVER,,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,everscale,ever,Everscale,7505,EVER,Everscale,everscale,ever,Everscale
+FARM,,Decentralized Finance,Managed Yield Services,Vaults,Application,,,,,Coinbase Custody,harvest-finance,farm,Harvest Finance,6859,FARM,Harvest Finance,harvest-finance,farm,Harvest Finance
+FIS,,Decentralized Finance,Managed Yield Services,Liquid Staking,Blockchain Network,Layer 1,PoS,,,Coinbase Custody,stafi,fis,Stafi,5882,FIS,StaFi,stafi,fis,StaFi
+FOX,,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,Coinbase Custody,shapeshift-fox-token,fox,ShapeShift FOX,8200,FOX,Shapeshift FOX Token,fox-token,fox,Shapeshift FOX Token
+FWOG,,Meme,,,Application,,,Solana,,,fwog,fwog,Fwog,33291,FWOG,Fwog (SOL),fwog-solana,fwog,Fwog
+GHST,,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,,aavegotchi,ghst,Aavegotchi,7046,GHST,Aavegotchi,aavegotchi,ghst,Aavegotchi
+GOG,,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,BitGo Custody,guild-of-guardians,gog,Guild of Guardians,10630,GOG,Guild of Guardians,guild-of-guardians,gog,Guild of Guardians
+GTC,,Blockchain Utilities & Tools,Other (Blockchain Utilities & Tools),,Application,,,,,BitGo Custody; Coinbase Custody,gitcoin,gtc,Gitcoin,10052,GTC,Gitcoin,gitcoin,gtc,Gitcoin
+HIGH,,"Media, Arts & Entertainment",Metaverse,,Application,,,,,Coinbase Custody,highstreet,high,Highstreet,11232,HIGH,Highstreet,highstreet,high,Highstreet
+HIPPO,,Meme,,,Application,,,Sui,,,sudeng,hippo,sudeng,33258,HIPPO,sudeng,sudeng,hippo,sudeng
+HOOK,,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Application,,,,,BitGo Custody,hooked-protocol,hook,Hooked Protocol,22764,HOOK,Hooked Protocol,hooked-protocol,hook,Hooked Protocol
+HOPR,,Blockchain Utilities & Tools,Privacy (Utilities & Tools),,Application,,,,,Coinbase Custody,hopr,hopr,HOPR,6520,HOPR,HOPR,hopr,hopr,HOPR
+IDEX,,Decentralized Finance,Trading Platforms,Derivatives,Application,,,,,Coinbase Custody; BitGo Custody,aurora-dao,idex,IDEX,3928,IDEX,IDEX,idex,idex,IDEX
+KDA,,Decentralized Finance,Other (DeFi),,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,kadena,kda,Kadena,5647,KDA,Kadena,kadena,kda,Kadena
+KIN,,Currency Networks,Settlement Network,,Application,,,Solana,,BitGo Custody,kin,kin,Kin,1993,KIN,Kin,kin,kin,Kin
+KRL,,Decentralized Finance,Other (DeFi),,Application,,,,,Coinbase Custody,kryll,krl,KRYLL,2949,KRL,Kryll,kryll,krl,Kryll
+LADYS,,Meme,,,Application,,,,,,milady-meme-coin,ladys,Milady Meme Coin,25023,LADYS,Milady Meme Coin,milady-meme-coin,ladys,Milady Meme Coin
+LOFI,,Meme,,,Application,,,Sui,,,lofi-2,lofi,LOFI,34187,LOFI,LOFI,lofitheyeti,lofi,LOFI
+LOKA,,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,Anchorage Digital,league-of-kingdoms,loka,League of Kingdoms,17145,LOKA,League of Kingdoms Arena,league-of-kingdoms,loka,League of Kingdoms Arena
+LOOKS,,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,,,BitGo Custody; Coinbase Custody,looksrare,looks,LooksRare,17081,LOOKS,LooksRare,looksrare,looks,LooksRare
+LOOM,,General Purpose Blockchain Networks,Interchain Connectivity Platforms,,Blockchain Network,Layer 1,PoS,,,Coinbase Custody; BitGo Custody,loom-network-new,loom,Loom Network (NEW),2588,LOOM,Loom Network,loom-network,loom,Loom Network
+MATH,,Blockchain Utilities & Tools,Wallets,,Application,,,,,Coinbase Custody,math,math,MATH,5616,MATH,MATH,math,math,MATH
+MDT,,Blockchain Utilities & Tools,Data & Analytics Providers,Data Indexing and Analysis,Application,,,,,Coinbase Custody,measurable-data-token,mdt,Measurable Data,2348,MDT,Measurable Data Token,measurable-data-token,mdt,Measurable Data Token
+MIGGLES,,Meme,,,Application,,,Base,,,mister-miggles,miggles,Mr. Miggles,32289,MIGGLES,Mr Miggles,mr-miggles,miggles,Mr Miggles
+MNDE,,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,Solana,,BitGo Custody,marinade,mnde,Marinade,13803,MNDE,Marinade,mnde,mnde,Marinade
+MODE,,Decentralized Finance,DeFi Infrastructure & Data,,Blockchain Network,Layer 2,Optimistic Rollup,,,,mode,mode,Mode,31016,MODE,Mode,mode,mode,Mode
+MONKY,,Meme,,,Application,,,BNB,,,wise-monkey,monky,Wise Monkey,34610,MONKY,Wise Monkey,wise-monkey,monky,Wise Monkey
+MYRO,,Meme,,,Application,,,Solana,,,myro,$myro,Myro,28382,MYRO,Myro,myro,myro,Myro
+MYTH,,"Media, Arts & Entertainment",Gaming,Gaming Infrastructure & Tooling,Blockchain Network,Sidechain,Parachain,,,Anchorage Digital,mythos,myth,Mythos,22125,MYTH,Mythos,mythos,myth,Mythos
+NAVX,,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Sui,,,navi,navx,NAVI Protocol,29296,NAVX,NAVI Protocol,navi-protocol,navx,NAVI Protocol
+NEIROETH,,Meme,,,Application,,,,,,neiro-on-eth,neiro,Neiro on ETH,32461,NEIRO,Neiro Ethereum,neiro-eth,neiroeth,Neiro Ethereum
+NKN,,Decentralized Physical Infrastructure,Sensor Networks,Wireless,Blockchain Network,Specialized Utility Layer,,,,Coinbase Custody,nkn,nkn,NKN,2780,NKN,NKN,nkn,nkn,NKN
+NS,,Blockchain Utilities & Tools,Identity & Authentication,,Application,,,Sui,,BitGo Custody; Copper,suins-token,ns,SuiNS Token,32942,NS,Sui Name Service,sui-name-service,ns,SuiNS Token
+ORAI,,Blockchain Utilities & Tools,Data & Analytics Providers,Artificial Intelligence (Data & Analytics Providers),Blockchain Network,Layer 1,PoS,,,BitGo Custody; Coinbase Custody,oraichain-token,orai,Oraichain,7533,ORAI,Oraichain,oraichain-token,orai,Oraichain
+OX,,Decentralized Finance,Trading Platforms,Derivatives,Application,,,,,,ox-fun,ox,OX Coin,29530,OX,OX Coin,ox-coin,ox,OX Coin
+PERP,,Decentralized Finance,Trading Platforms,Derivatives,Application,,,,,BitGo Custody; Coinbase Custody,perpetual-protocol,perp,Perpetual Protocol,6950,PERP,Perpetual Protocol,perpetual-protocol,perp,Perpetual Protocol
+PIRATE,,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,,pirate-token,pirate,Pirate Nation Token,31704,PIRATE,Pirate Nation,pirate-nation,pirate,Pirate Nation
+PNG,,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,BitGo Custody,pangolin,png,Pangolin,8422,PNG,Pangolin,pangolin,png,Pangolin
+POLS,,Decentralized Finance,Asset Origination and Issuance,Launchpads & IDO Platforms,Application,,,,,Coinbase Custody,polkastarter,pols,Polkastarter,7208,POLS,Polkastarter,polkastarter,pols,Polkastarter
+PORK,,Meme,,,Application,,,Ethereum,,,pepefork,pork,PepeFork,29220,PORK,PepeFork,pepefork,pork,PepeFork
+PRCL,,Decentralized Finance,Trading Platforms,Diversified/Other Trading Platforms,Application,,,Solana,,,parcl,prcl,Parcl,30661,PRCL,Parcl,parcl,prcl,Parcl
+PSP,,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,,,Anchorage Digital; Coinbase Custody,paraswap,psp,ParaSwap,14534,PSP,ParaSwap,paraswap,psp,ParaSwap
+QUICK,,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Polygon,,BitGo Custody; Coinbase Custody,quickswap,quick,Quickswap,19966,QUICK,Quickswap [New],quickswap-new,quick_new,Quickswap
+RARI,,Decentralized Finance,Trading Platforms,NFT Marketplaces,Application,,,,,Coinbase Custody; BitGo Custody,rarible,rari,RARI,5877,RARI,Rarible,rarible,rari,RARI
+REN,,Blockchain Utilities & Tools,Interoperability,,Application,,,,,Gemini Custody; Coinbase Custody,republic-protocol,ren,Ren,2539,REN,Ren,ren,ren,Ren
+RETARDIO,,Meme,,,Application,,,Solana,,,retardio,retardio,RETARDIO,31921,RETARDIO,RETARDIO,retardio,retardio,RETARDIO
+RSS3,,Blockchain Utilities & Tools,Data & Analytics Providers,Artificial Intelligence (Data & Analytics Providers),Blockchain Network,Specialized Utility Layer,,,,,rss3,rss3,RSS3,17917,RSS3,RSS3,rss3,rss3,RSS3
+SAMO,,Meme,,,Application,,,Solana,,Gemini Custody,samoyedcoin,samo,Samoyedcoin,9721,SAMO,Samoyedcoin,samoyedcoin,samo,Samoyedcoin
+SAROS,,Decentralized Finance,Trading Platforms,Spot / Swaps,Application,,,Solana,,,saros-finance,saros,Saros,29082,SAROS,Saros,saros,saros,Saros
+SCA,,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Sui,,,scallop-2,sca,Scallop,29679,SCA,Scallop,scallop-protocol,sca,Scallop
+SEND,,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,Sui,,,suilend,send,Suilend,34611,SEND,Suilend,suilend,send,Suilend
+SHDW,,Decentralized Physical Infrastructure,Storage,File Storage,Blockchain Network,Specialized Utility Layer,,Solana,,,genesysgo-shadow,shdw,Shadow Token,16868,SHDW,Shadow Token,genesysgo-shadow,shdw,Shadow Token
+SKI,,Meme,,,Application,,,Base,,,ski-mask-dog,ski,Ski Mask Dog,31173,SKI,Ski Mask Dog,ski-mask-dog,ski,Ski Mask Dog
+SLERF,,Meme,,,Application,,,Solana,,,slerf,slerf,Slerf [OLD],29920,SLERF,SLERF (OLD),slerf-old,slerf,SLERF
+SPEC,,Decentralized Physical Infrastructure,Computation,Artificial Intelligence (DePIN),Application,,,Ethereum,,,spectral,spec,Spectral,32925,SPEC,Spectral,spectral,spec,Spectral
+STRD,,Decentralized Finance,Managed Yield Services,Liquid Staking,Application,,,,,,stride,strd,Stride,21781,STRD,Stride,stride,strd,Stride
+SUKU,,Blockchain Utilities & Tools,Wallets,,Application,,,,,Coinbase Custody,suku,suku,SUKU,6180,SUKU,Suku,suku,suku,SUKU
+SUNDOG,,Meme,,,Application,,,Tron,,,sundog,sundog,Sundog,32717,SUNDOG,SUNDOG,sundog,sundog,SUNDOG
+SWARMS,,Blockchain Utilities & Tools,Developer Tools,Artificial Intelligence (Developer Tools),Application,,,Solana,,,swarms,swarms,Swarms,34993,SWARMS,Swarms,swarms,swarms,Swarms
+SWEAT,,"Media, Arts & Entertainment",Gaming,Games,Application,,,,,Coinbase Custody,sweatcoin,sweat,SWEAT,21351,SWEAT,SWEAT,sweat-economy,sweat,Sweat Economy
+TARA,,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,,taraxa,tara,Taraxa,8715,TARA,Taraxa,taraxa,tara,Taraxa
+TKX,,Centralized Finance,Exchange,,Application,,,,,,tokenize-xchange,tkx,Tokenize Xchange,4715,TKX,Tokenize Xchange,tokenize-xchange,tkx,Token TKX
+TLOS,,General Purpose Blockchain Networks,Smart Contract Platforms,,Blockchain Network,Layer 1,PoS,,,BitGo Custody,telos,tlos,Telos,4660,TLOS,Telos,telos,tlos,Telos
+TOKE,,Decentralized Finance,Managed Yield Services,Vaults,Application,,,,,Gemini Custody,tokemak,toke,Auto Finance [OLD],11202,TOKE,Tokemak,tokemak,toke,Tokemak
+TRU,,Decentralized Finance,Lending & Borrowing,Crypto Based Lending Platforms,Application,,,,,Coinbase Custody; BitGo Custody,truefi,tru,TrueFi,7725,TRU,TrueFi,truefi-token,tru,TrueFi
+UTK,,Centralized Finance,Payment Solution & On-ramp / Off-ramp,,Application,,,,,BitGo Custody; Coinbase Custody,utrust,utk,Utrust,2320,UTK,xMoney,utrust,utk,xMoney (Old)
+UXLINK,,"Media, Arts & Entertainment","Other (Media, Arts & Entertainment)",,Blockchain Network,Specialized Utility Layer,,,,BitGo Custody,uxlink,uxlink,UXLINK,32257,UXLINK,UXLINK,uxlink,uxlink,UXLINK
+VOXEL,,"Media, Arts & Entertainment",Gaming,,Application,,,,,,voxies,voxel,Voxies,15678,VOXEL,Voxies,voxies,voxel,Voxies
+WHY,,Meme,,,Application,,,BNB,,,why,why,WHY,30867,WHY,WHY,why,why,WHY
+WOJAK,,Meme,,,Application,,,Ethereum,,,wojak,wojak,Wojak Coin,24502,WOJAK,Wojak (wojaketh),wojakold,wojak,Wojak
+WUF,,Meme,,,Application,,,Solana,,,wuffi,wuf,WUFFI,30683,WUF,WUFFI,wuffi,wuf,WUFFI
+XEM,,Centralized Finance,Other (Centralized Finance),,Blockchain Network,Layer 1,Hybrid / Other (Layer 1),,,Copper,nem,xem,NEM,873,XEM,NEM,nem,xem,NEM
+YNE,,Blockchain Utilities & Tools,AI Agents,AI Agent,Application,,,Solana,,,yne,yne,yesnoerror,34854,YNE,yesnoerror,yesnoerror,yne,yesnoerror
+ZBU,,Currency Networks,Settlement Network,,Application,,,,,BitGo Custody,zeebu,zbu,Zeebu,27765,ZBU,Zeebu,zeebu,zbu,Zeebu
+ZEREBRO,,Blockchain Utilities & Tools,AI Agents,AI Agent,Application,,,Solana,,BitGo Custody,zerebro,zerebro,Zerebro,34083,ZEREBRO,Zerebro,zerebro,zerebro,Zerebro
+ZRC,,Decentralized Finance,Other (DeFi),,Blockchain Network,Layer 2,Optimistic Rollup,,,Anchorage Digital,zircuit,zrc,Zircuit,29711,ZRC,Zircuit,zircuit,zrc,Zircuit

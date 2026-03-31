@@ -1,0 +1,3774 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wintermute — Market Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:       #FAFAFA;
+  --logo-color: #000000;
+  --surface:  #FFFFFF;
+  --border:   #E4E4E2;
+  --spine:    #606663;
+  --graphite: #323935;
+  --muted:    #888B88;
+  --input-bg: #F0F0EE;
+  --tag-bg:   #EAEAE8;
+  --font:     'DM Sans', 'Helvetica Neue', sans-serif;
+  --mono:     'DM Mono', 'Courier New', monospace;
+  --radius:   6px;
+  --side-w:   268px;
+}
+
+[data-theme="dark"] {
+  --bg:       #0F1110;
+  --logo-color: #FAFAFA;
+  --surface:  #1A1D1B;
+  --border:   #2A2D2B;
+  --spine:    #606663;
+  --graphite: #E8EAE8;
+  --muted:    #666968;
+  --input-bg: #1E221F;
+  --tag-bg:   #1E221F;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--graphite);
+  font-family: var(--font);
+  font-size: 16px;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 52px 40px 1fr;
+  grid-template-columns: var(--side-w) 1fr var(--side-w);
+}
+
+/* ── Top header row ── */
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  background: var(--bg);
+}
+
+.logo-mark {
+  width: 26px; height: 26px;
+  background: var(--graphite);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-mark svg { width: 14px; height: 14px; }
+
+.logo-name {
+  font-size: 14px; font-weight: 600;
+  color: var(--graphite); letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+
+.header-divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+.header-spacer  { flex: 1; }
+
+.header-pill {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); background: var(--tag-bg);
+  padding: 4px 10px; border-radius: 20px;
+}
+
+/* Dark mode toggle */
+.dark-toggle {
+  width: 32px; height: 32px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.dark-toggle:hover { border-color: var(--spine); color: var(--graphite); }
+.dark-toggle svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; }
+
+/* ── Tab bar row ── */
+.tabbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  gap: 2px;
+}
+
+.tab {
+  padding: 0 14px;
+  height: 40px;
+  display: flex; align-items: center;
+  font-size: 13px; font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+  background: none; border-top: none; border-left: none; border-right: none;
+  font-family: var(--font);
+}
+
+.tab:hover { color: var(--graphite); }
+.tab.active { color: var(--graphite); border-bottom-color: var(--graphite); }
+
+.tab-spacer { flex: 1; }
+
+/* Granularity + align toggles in tabbar */
+.toggle-group {
+  display: flex; gap: 3px;
+  align-items: center;
+}
+
+.tgl-btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid var(--border); background: none;
+  color: var(--muted); cursor: pointer; transition: all 0.12s;
+}
+.tgl-btn:hover { border-color: var(--spine); color: var(--graphite); }
+.tgl-btn.active { background: var(--graphite); border-color: var(--graphite); color: #fff; }
+[data-theme="dark"] .tgl-btn.active { background: #E8EAE8; color: #0F1110; }
+
+.tgl-sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; }
+
+/* ── Content row ── */
+/* Left panel */
+.left-panel {
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg);
+}
+
+.panel-hdr {
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.07em;
+  text-transform: uppercase; flex-shrink: 0;
+}
+
+.view-tree { flex: 1; overflow-y: auto; padding: 4px 0; }
+.view-tree::-webkit-scrollbar { width: 3px; }
+.view-tree::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.tree-group { margin-bottom: 2px; }
+
+.tree-grp-hdr {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 16px; font-size: 13px; font-weight: 500;
+  color: var(--muted); cursor: pointer; user-select: none;
+  transition: color 0.1s;
+}
+.tree-grp-hdr:hover { color: var(--graphite); }
+
+.chevron {
+  width: 13px; height: 13px;
+  stroke: currentColor; fill: none; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  transition: transform 0.15s; flex-shrink: 0;
+}
+.tree-group.open .chevron { transform: rotate(90deg); }
+.tree-children { display: none; }
+.tree-group.open .tree-children { display: block; }
+
+.tree-leaf {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 16px 7px 34px;
+  font-size: 14px; color: var(--muted); cursor: pointer;
+  border-left: 2px solid transparent; transition: all 0.1s;
+}
+.tree-leaf:hover { color: var(--graphite); background: var(--tag-bg); }
+.tree-leaf.active { color: var(--graphite); border-left-color: var(--graphite); background: var(--tag-bg); font-weight: 500; }
+
+.tree-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.tree-leaf.active .tree-dot { background: #00D64A; }
+
+/* Main chart */
+.main {
+  display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+  background: var(--bg);
+}
+
+.chart-hdr {
+  padding: 16px 22px 0;
+  display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0;
+}
+.chart-title { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+.chart-sub   { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  padding: 7px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--graphite); cursor: pointer; transition: all 0.1s; white-space: nowrap;
+}
+.btn:hover { border-color: var(--spine); }
+.btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.perf-row { padding: 10px 22px 2px; display: flex; gap: 12px; flex-wrap: wrap; min-height: 30px; flex-shrink: 0; }
+.perf-item { display: flex; align-items: center; gap: 5px; }
+.perf-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.perf-sym  { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.perf-val  { font-family: var(--mono); font-size: 12px; padding: 2px 7px; border-radius: 10px; }
+.pos { background: #E6F9EE; color: #0A6E2A; }
+.neg { background: #FDEAEA; color: #9B2020; }
+.neu { background: var(--tag-bg); color: var(--muted); }
+[data-theme="dark"] .pos { background: #0A2E15; color: #4AE07A; }
+[data-theme="dark"] .neg { background: #2E0A0A; color: #E07A7A; }
+
+.chart-area { flex: 1; padding: 4px 22px 0; position: relative; min-height: 0; }
+canvas { display: block; width: 100% !important; height: 100% !important; }
+
+.empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--muted); gap: 10px;
+}
+.empty svg { width: 30px; height: 30px; stroke: var(--border); fill: none; stroke-width: 1; }
+.empty p { font-size: 14px; }
+
+.spinner-wrap {
+  position: absolute; inset: 0; display: none;
+  align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+}
+.spinner-wrap.on { display: flex; }
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border); border-top-color: var(--spine);
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.chart-src {
+  padding: 5px 22px 12px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; flex-shrink: 0;
+}
+.chart-info {
+  padding: 4px 22px 14px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted); line-height: 1.7; flex-shrink: 0;
+  border-top: 1px solid var(--border); margin-top: 2px; display: none;
+}
+
+/* Right panel */
+.right-panel {
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg);
+}
+
+.rp-block { padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.rp-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; }
+
+.search-wrap { position: relative; }
+.search-wrap svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; stroke: var(--muted); fill: none; stroke-width: 1.5; pointer-events: none;
+}
+
+input[type=text] {
+  width: 100%; background: var(--input-bg); border: 1px solid transparent;
+  border-radius: var(--radius); padding: 8px 10px 8px 32px;
+  font-family: var(--font); font-size: 14px; color: var(--graphite);
+  outline: none; transition: border-color 0.15s;
+}
+input[type=text]:focus { border-color: var(--spine); }
+input[type=text]::placeholder { color: var(--muted); }
+
+input[type=date], input[type=number] {
+  width: 100%; background: var(--input-bg); border: 1px solid transparent;
+  border-radius: var(--radius); padding: 7px 9px;
+  font-family: var(--mono); font-size: 13px; color: var(--graphite);
+  outline: none; transition: border-color 0.15s;
+}
+input[type=date]:focus, input[type=number]:focus { border-color: var(--spine); }
+
+.date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.date-grid label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+
+.presets { display: flex; gap: 3px; flex-wrap: wrap; }
+.preset {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 4px 9px; border-radius: 20px; border: 1px solid var(--border);
+  background: none; color: var(--muted); cursor: pointer; transition: all 0.12s;
+}
+.preset:hover { border-color: var(--spine); color: var(--graphite); }
+.preset.active { background: var(--graphite); border-color: var(--graphite); color: var(--bg); }
+
+.window-row { display: flex; align-items: center; gap: 8px; }
+.window-row label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+input[type=number] { width: 70px; }
+
+.versus-row { display: flex; gap: 6px; }
+.versus-btn {
+  flex: 1; padding: 6px 0; border-radius: var(--radius);
+  border: 1px solid var(--border); background: none;
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--muted); cursor: pointer; transition: all 0.12s; text-align: center;
+}
+.versus-btn:hover { border-color: var(--spine); color: var(--graphite); }
+.versus-btn.active { background: var(--graphite); border-color: var(--graphite); color: var(--bg); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 3px 8px 3px 9px; border-radius: 20px; color: #fff;
+}
+.tag-x { cursor: pointer; opacity: 0.7; font-size: 14px; line-height: 1; }
+.tag-x:hover { opacity: 1; }
+
+.rp-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
+.rp-list::-webkit-scrollbar { width: 3px; }
+.rp-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.list-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: var(--radius); cursor: pointer; transition: background 0.1s;
+}
+.list-item:hover { background: var(--tag-bg); }
+.list-item.active { background: var(--graphite); }
+.list-item.active .item-sym,
+.list-item.active .item-name,
+.list-item.active .item-count { color: var(--bg) !important; }
+.list-item.active .item-dot { background: #00D64A !important; }
+
+.item-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.item-sym  { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--graphite); min-width: 60px; }
+.item-name { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-count { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: auto; flex-shrink: 0; }
+
+/* Equity placeholder */
+.coming-soon {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--muted); gap: 12px; padding: 40px;
+}
+.coming-soon svg { width: 40px; height: 40px; stroke: var(--border); fill: none; stroke-width: 1; }
+.coming-soon h3 { font-size: 16px; font-weight: 500; color: var(--graphite); }
+.coming-soon p { font-size: 14px; text-align: center; line-height: 1.6; max-width: 280px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <svg class="wm-logo" viewBox="0 0 220 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:auto;flex-shrink:0">
+    <!-- Crystal mark -->
+    <g stroke="var(--logo-color)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+      <!-- outer diamond -->
+      <polygon points="20,2 36,14 20,38 4,14"/>
+      <!-- inner facets -->
+      <line x1="4"  y1="14" x2="20" y2="20"/>
+      <line x1="36" y1="14" x2="20" y2="20"/>
+      <line x1="20" y1="2"  x2="20" y2="20"/>
+      <line x1="20" y1="20" x2="20" y2="38"/>
+      <!-- mid horizontal -->
+      <line x1="4"  y1="14" x2="36" y2="14"/>
+      <!-- left inner triangle -->
+      <line x1="4"  y1="14" x2="12" y2="26"/>
+      <line x1="20" y1="20" x2="12" y2="26"/>
+      <!-- right inner triangle -->
+      <line x1="36" y1="14" x2="28" y2="26"/>
+      <line x1="20" y1="20" x2="28" y2="26"/>
+    </g>
+    <!-- WINTERMUTE wordmark -->
+    <text x="48" y="28" font-family="DM Sans, Helvetica Neue, sans-serif" font-size="18" font-weight="600" letter-spacing="3" fill="var(--logo-color)">WINTERMUTE</text>
+  </svg>
+  <div class="header-divider"></div>
+  <span style="font-size:13px;color:var(--muted)" id="bc-view">—</span>
+  <div class="header-spacer"></div>
+  <span class="header-pill" id="db-count">—</span>
+  <button class="dark-toggle" id="dark-toggle" title="Toggle dark mode">
+    <svg viewBox="0 0 24 24" id="dark-icon">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  </button>
+</header>
+
+<!-- Tab bar -->
+<div class="tabbar">
+  <button class="tab active" data-tab="sector">Sector</button>
+  <button class="tab" data-tab="bitcoin">Bitcoin</button>
+  <button class="tab" data-tab="altcoins">Altcoins</button>
+  <button class="tab" data-tab="macro">Macro</button>
+  <button class="tab" data-tab="equity">Equity</button>
+  <button class="tab" data-tab="data">
+    <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-right:4px;vertical-align:-2px" viewBox="0 0 16 16"><ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v4c0 1.1 2.69 2 6 2s6-.9 6-2V4"/><path d="M2 8v4c0 1.1 2.69 2 6 2s6-.9 6-2V8"/></svg>
+    Data
+  </button>
+  <div class="tab-spacer"></div>
+  <div class="toggle-group">
+    <button class="tgl-btn active" data-gran="daily" id="gran-daily">Daily</button>
+    <button class="tgl-btn" data-gran="hourly" id="gran-hourly">Hourly</button>
+  </div>
+  <div class="tgl-sep"></div>
+  <button class="tgl-btn" id="btn-log" title="Toggle log scale">Log</button>
+  <div class="tgl-sep"></div>
+  <div class="toggle-group">
+    <button class="tgl-btn active" data-align="own" id="align-own">Own start</button>
+    <button class="tgl-btn" data-align="common" id="align-common">Common start</button>
+  </div>
+</div>
+
+<!-- Content -->
+<aside class="left-panel">
+  <div class="panel-hdr">Views</div>
+  <div class="view-tree" id="view-tree"></div>
+</aside>
+
+<main class="main">
+  <div class="chart-hdr">
+    <div>
+      <div class="chart-title" id="chart-title">—</div>
+      <div class="chart-sub" id="chart-sub">—</div>
+    </div>
+    <button class="btn" id="btn-save">
+      <svg viewBox="0 0 16 16"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
+      Save PNG
+    </button>
+  </div>
+  <div class="perf-row" id="perf-row"></div>
+  <div class="chart-area">
+    <canvas id="main-chart"></canvas>
+    <div class="empty" id="chart-empty">
+      <svg viewBox="0 0 32 32"><polyline points="2,26 10,16 16,20 22,10 30,14"/><rect x="2" y="2" width="28" height="28" rx="2"/></svg>
+      <p id="empty-msg">Select items from the right panel</p>
+    </div>
+    <div class="spinner-wrap" id="chart-spin"><div class="spinner"></div></div>
+  </div>
+  <div class="chart-src" id="chart-src">Source: CoinGecko Pro — Wintermute OTC</div>
+  <div class="chart-info" id="chart-info"></div>
+</main>
+
+<aside class="right-panel" id="right-panel"></aside>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+const SECTOR_COLORS = {
+  "Memecoins":   "#F7931A",
+  "Layer 1":     "#2471CC",
+  "Layer 2":     "#746BE6",
+  "DeFi":        "#00D64A",
+  "DePIN":       "#DB33CB",
+  "Gaming":      "#EC5B5B",
+  "AI":          "#26A17B",
+  "Stablecoins": "#888B88",
+};
+const PAL = ['#00D64A','#2471CC','#746BE6','#DB33CB','#EC5B5B','#F7931A','#26A17B','#FFB800'];
+
+// ── View definitions ──────────────────────────────────────────────────────────
+const TABS = {
+  sector: {
+    label: "Sector",
+    groups: [
+      { label: "Price Action", children: [
+        { key:"sec-equal",  label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",        src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-mcap",   label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",    src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Market Cap", children: [
+        { key:"mc-total",       label:"Total market cap",       sub:"Sum of constituent market caps per sector (USD)",                                       src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"mc-median",      label:"Median market cap",      sub:"Median constituent market cap per sector (USD)",                                       src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-dominance",  label:"Dominance over time",    sub:"How is capital rotating between sectors? Each sector's mcap as % of total, 100% stacked area.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Correlation", children: [
+        { key:"sec-intra",      label:"Intracorrelation",       sub:"Rolling pairwise correlation between sectors",                                          src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"sec-vs",         label:"vs BTC / ETH / Alts",   sub:"Rolling correlation of sectors vs reference asset",                                     src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"sec-xheatmap",   label:"Cross-sector heatmap",  sub:"Which sectors move together? Rolling 30d pairwise Pearson correlation between all sector EW indices.", src:"CoinGecko Pro — Rolling Pearson" },
+      ]},
+      { label: "Momentum", children: [
+        { key:"sec-mom",        label:"30d Rolling return",     sub:"Rolling N-day return of equal-weighted sector index",                                   src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-zscore",     label:"Z-score of returns",     sub:"Z-score of daily returns vs rolling window",                                            src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-cumulative", label:"Cumulative returns ranking", sub:"Which sectors delivered the most total return over the chosen period? Bar chart sorted by return.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Volatility", children: [
+        { key:"sec-vol",        label:"Realized volatility",    sub:"Which sectors carry the most risk? 30d rolling annualized realized vol of EW daily log returns.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-drawdown",   label:"Drawdown from peak",     sub:"How far is each sector from its best recent level? Rolling drawdown from peak of EW index.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Breadth", children: [
+        { key:"sec-breadth",    label:"Breadth indicator",      sub:"Is a sector rally broad-based or carried by a few names? % of constituents above their 50d SMA.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Derivatives", children: [
+        { key:"sec-funding",    label:"Sector funding rate",    sub:"Is the derivatives market paying a premium to be long or short each sector? Avg 8h funding rate by sector.", src:"CoinGecko Pro + Derivatives" },
+        { key:"sec-oi",         label:"Sector open interest",  sub:"How much leveraged positioning is in each sector? Sum of OI (USD) across constituents.",  src:"CoinGecko Pro + Derivatives" },
+      ]},
+      { label: "Rotation", children: [
+        { key:"sec-rrg",        label:"RRG scatter",            sub:"Shows which sectors are leading the market, catching up, losing steam, or lagging — and which direction they're rotating.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Analysis", children: [
+        { key:"ana-bubble",     label:"Momentum vs correlation", sub:"Bubble · Y = momentum · X = autocorrelation · Size = market cap",                    src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"sec-sharpe",     label:"Risk-adjusted returns",  sub:"Which sectors deliver the best return per unit of risk? Scatter: x=30d vol, y=30d return.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+    ]
+  },
+  bitcoin: {
+    label: "Bitcoin",
+    groups: [
+      { label: "Cycle analysis", children: [
+        { key:"btc-epochs",   label:"Halving epochs",       sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5",            src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-cycles",   label:"Bear market cycles",   sub:"BTC indexed to peak (peak = 100) · Days since peak",                    src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-bull",     label:"Bull market cycles",   sub:"How does the current rally compare to prior bull runs? BTC indexed to cycle trough (=100), days since trough.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Rolling performance", children: [
+        { key:"btc-rolling",  label:"Rolling return",       sub:"BTC N-day rolling return (%) · Green = positive · Red = negative",      src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-realvol",  label:"Realized volatility",  sub:"Is BTC volatility expanding or contracting? 30d, 90d, and 180d rolling annualized vol plotted together.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-drawdown", label:"Drawdown from ATH",    sub:"How far is BTC from its all-time high? Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Bitcoin vs Gold", children: [
+        { key:"btc-gold",       label:"Bitcoin vs Gold",    sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)",            src:"CoinGecko Pro + yfinance" },
+        { key:"btc-gold-ratio", label:"BTC/Gold ratio",     sub:"Is BTC gaining or losing ground against gold? BTC price divided by gold price.", src:"CoinGecko Pro + yfinance" },
+      ]},
+      { label: "Dominance", children: [
+        { key:"btc-dominance", label:"BTC market dominance", sub:"Is capital flowing into or out of BTC relative to all crypto? BTC mcap as % of total crypto mcap.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Derivatives", children: [
+        { key:"btc-funding",       label:"Funding rate",       sub:"Is the futures market crowded long or short? BTC perpetual 8h funding rate, bar chart.", src:"CoinGecko Pro + Derivatives" },
+        { key:"btc-oi",            label:"Open interest",      sub:"How much leverage is in the BTC market? Total BTC OI in USD with price overlay.", src:"CoinGecko Pro + Derivatives" },
+        { key:"btc-funding-delta", label:"Funding rate delta", sub:"30d rolling change in BTC funding rate (bps) vs 30d rolling BTC price return (%). Spots regime shifts in sentiment.", src:"CoinGecko Pro + Derivatives" },
+      ]},
+    ]
+  },
+  altcoins: {
+    label: "Altcoins",
+    groups: [
+      { label: "Price Action", children: [
+        { key:"alt-price",            label:"Price comparison",        sub:"Altcoin price · Rebased to 100",                                                      src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Relative Performance", children: [
+        { key:"alt-scatter",          label:"Performance vs BTC",      sub:"Scatter · Y = % vs BTC · X = volatility vs BTC · period-adjusted",                   src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-altseason",        label:"Altseason indicator",     sub:"Is it altseason? % of top-50 alts (ex-BTC) outperforming BTC over a rolling 90d window.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-beta",             label:"Beta to BTC",             sub:"Which alts amplify BTC moves? Scatter: x=60d beta to BTC, y=60d alpha (annualized).", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Correlation", children: [
+        { key:"alt-heatmap",          label:"Correlation heatmap",     sub:"Which altcoins move together and which provide genuine diversification? Rolling 30d pairwise Pearson correlations.", src:"CoinGecko Pro — Rolling Pearson" },
+      ]},
+      { label: "Drawdown", children: [
+        { key:"alt-ath-drawdown",     label:"Distance from ATH",       sub:"How beaten-down is each alt? Current drawdown from all-time high, sorted worst-first.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Derivatives", children: [
+        { key:"alt-funding-heatmap",  label:"Funding rate heatmap",    sub:"Where is the derivatives market most crowded across alts? Heatmap of funding rates by asset over time.", src:"CoinGecko Pro + Derivatives" },
+      ]},
+    ]
+  },
+  macro: {
+    label: "Macro",
+    groups: [
+      { label: "Price Action", children: [
+        { key:"mac-price",        label:"Price comparison",             sub:"Macro assets · Rebased to 100",                                                          src:"Yahoo Finance via yfinance" },
+      ]},
+      { label: "Correlation", children: [
+        { key:"mac-matrix",       label:"Macro vs crypto correlation",  sub:"How correlated is crypto to traditional markets? 30d Pearson correlation heatmap: macro assets vs crypto sectors.", src:"Yahoo Finance + CoinGecko Pro" },
+        { key:"mac-dxy-btc",      label:"DXY vs BTC",                  sub:"Is dollar strength suppressing crypto? DXY and BTC plotted together with rolling correlation.", src:"Yahoo Finance + CoinGecko Pro" },
+      ]},
+      { label: "Risk Regime", children: [
+        { key:"mac-risk",         label:"Risk-on / Risk-off indicator", sub:"Is the macro environment supportive for crypto? Composite score from VIX + credit spreads + DXY.", src:"Yahoo Finance" },
+      ]},
+      { label: "Rates", children: [
+        { key:"mac-real-yields",  label:"Real yields vs BTC",           sub:"Are falling real yields driving crypto? 10Y real yield (^TNX) vs BTC.",                  src:"Yahoo Finance + CoinGecko Pro" },
+      ]},
+      { label: "Flows", children: [
+        { key:"mac-stablecoin",   label:"Stablecoin supply",            sub:"Is new capital entering crypto via stablecoins? Total market cap of stablecoin-sector assets over time.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+    ]
+  },
+
+
+  equity: {
+    label: "Equity",
+    groups: []
+  },
+  data: {
+    label: "Data",
+    groups: []
+  },
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let chart      = null;
+let allItems   = [];
+let allSectors = [];
+let selected   = [];
+let activeTab  = 'sector';
+let activeView = null;
+let granularity   = 'daily';
+let alignMode     = 'own';
+let darkMode      = false;
+let logScale      = false;
+let rrgGran       = 'daily';
+let rrgBenchmark  = 'market';
+let dbLatestDate  = null; // Latest date available in DB
+
+// ── Dark mode ─────────────────────────────────────────────────────────────────
+document.getElementById('dark-toggle').addEventListener('click', () => {
+  darkMode = !darkMode;
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  if (chart) {
+    updateChartTheme();
+    chart.update();
+  }
+});
+
+function themeColor() {
+  return darkMode ? '#E8EAE8' : '#323935';
+}
+
+function updateChartTheme() {
+  if (!chart) return;
+  const tc = darkMode ? '#E8EAE8' : '#606663';
+  chart.options.scales.x.ticks.color   = tc;
+  chart.options.scales.x.border.color  = tc;
+  chart.options.scales.y.ticks.color   = tc;
+  chart.options.scales.y.border.color  = tc;
+  chart.options.plugins.tooltip.backgroundColor = darkMode ? '#1A1D1B' : '#fff';
+  chart.options.plugins.tooltip.titleColor       = darkMode ? '#E8EAE8' : '#323935';
+  chart.options.plugins.tooltip.bodyColor        = darkMode ? '#888B88' : '#606663';
+  chart.options.plugins.tooltip.borderColor      = darkMode ? '#2A2D2B' : '#E4E4E2';
+}
+
+// ── Log scale ────────────────────────────────────────────────────────────────
+document.getElementById('btn-log')?.addEventListener('click', () => {
+  logScale = !logScale;
+  document.getElementById('btn-log').style.background = logScale ? 'var(--graphite)' : '';
+  document.getElementById('btn-log').style.color      = logScale ? 'var(--bg)'       : '';
+  document.getElementById('btn-log').style.borderColor= logScale ? 'var(--graphite)' : '';
+  if (chart && chart.options.scales.y) {
+    chart.options.scales.y.type = logScale ? 'logarithmic' : 'linear';
+    chart.update();
+  }
+});
+
+// ── Granularity ───────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-gran]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    granularity = btn.dataset.gran;
+    document.querySelectorAll('[data-gran]').forEach(b => b.classList.toggle('active', b.dataset.gran === granularity));
+    // When switching granularity, reset date range to sensible default
+    const fromEl = document.getElementById('rp-from');
+    const toEl   = document.getElementById('rp-to');
+    if (fromEl && toEl) {
+      if (granularity === 'hourly') {
+        // Cap to 90 days max
+        const to   = new Date();
+        const from = new Date();
+        from.setDate(from.getDate() - 30); // default to 1M for hourly
+        fromEl.min   = new Date(Date.now() - 90*24*60*60*1000).toISOString().split('T')[0];
+        fromEl.value = from.toISOString().split('T')[0];
+        toEl.value   = to.toISOString().split('T')[0];
+        // Update preset active state
+        document.querySelectorAll('#rp-presets .preset').forEach(b => b.classList.toggle('active', b.dataset.days === '30'));
+      } else {
+        // Reset to 6M for daily
+        const to   = new Date();
+        const from = new Date();
+        from.setDate(from.getDate() - 180);
+        fromEl.min   = '';
+        fromEl.value = from.toISOString().split('T')[0];
+        toEl.value   = to.toISOString().split('T')[0];
+        document.querySelectorAll('#rp-presets .preset').forEach(b => b.classList.toggle('active', b.dataset.days === '180'));
+      }
+    }
+    fetchCurrent();
+  });
+});
+
+// ── Align mode ────────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-align]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    alignMode = btn.dataset.align;
+    document.querySelectorAll('[data-align]').forEach(b => b.classList.toggle('active', b.dataset.align === alignMode));
+    fetchCurrent();
+  });
+});
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === activeTab));
+    selected = [];
+    if (activeTab === 'equity') {
+      hideDataView();
+      showEquityPlaceholder();
+    } else if (activeTab === 'data') {
+      showDataView();
+    } else {
+      hideDataView();
+      const ep = document.getElementById('equity-ph');
+      if (ep) ep.style.display = 'none';
+      const firstGroup = TABS[activeTab]?.groups[0];
+      const firstView  = firstGroup?.children[0];
+      if (firstView) selectView(activeTab, firstView.key);
+    }
+  });
+});
+
+// ── Build tree ────────────────────────────────────────────────────────────────
+function buildTree(tab) {
+  const def = TABS[tab];
+  if (!def || !def.groups.length) {
+    document.getElementById('view-tree').innerHTML = '';
+    return;
+  }
+  document.getElementById('view-tree').innerHTML = def.groups.map((g, gi) => `
+    <div class="tree-group open" data-gi="${gi}">
+      <div class="tree-grp-hdr" onclick="this.parentElement.classList.toggle('open')">
+        <svg class="chevron" viewBox="0 0 16 16"><polyline points="4,6 8,10 12,6"/></svg>
+        ${g.label}
+      </div>
+      <div class="tree-children">
+        ${g.children.map(c => `
+          <div class="tree-leaf ${activeView?.key === c.key ? 'active' : ''}" data-key="${c.key}"
+               onclick="selectView('${tab}','${c.key}')">
+            <div class="tree-dot"></div>${c.label}
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ── Select view ───────────────────────────────────────────────────────────────
+async function selectView(tab, key) {
+  let viewDef = null;
+  for (const g of (TABS[tab]?.groups || []))
+    for (const c of g.children)
+      if (c.key === key) viewDef = c;
+  if (!viewDef) return;
+
+  activeView = { tab, key, def: viewDef };
+  // Disable hourly for sector tab (too expensive + not meaningful)
+  const hourlyBtn = document.getElementById('gran-hourly');
+  if (tab === 'sector') {
+    hourlyBtn.disabled = true;
+    hourlyBtn.title = 'Hourly not available for sector views';
+    hourlyBtn.style.opacity = '0.35';
+    hourlyBtn.style.cursor = 'not-allowed';
+    if (granularity === 'hourly') {
+      granularity = 'daily';
+      document.getElementById('gran-daily').classList.add('active');
+      hourlyBtn.classList.remove('active');
+    }
+  } else {
+    hourlyBtn.disabled = false;
+    hourlyBtn.title = '';
+    hourlyBtn.style.opacity = '';
+    hourlyBtn.style.cursor = '';
+  }
+  selected   = [];
+  buildTree(tab);
+
+  document.getElementById('bc-view').textContent = `${TABS[tab].label} / ${viewDef.label}`;
+  document.getElementById('chart-title').textContent = viewDef.label;
+  document.getElementById('chart-sub').textContent   = viewDef.sub;
+  document.getElementById('chart-src').textContent   = `Source: ${viewDef.src}`;
+  const infoEl = document.getElementById('chart-info');
+  infoEl.style.display = 'none'; infoEl.innerHTML = '';
+
+  if (chart) { chart.destroy(); chart = null; }
+  logScale = false;
+  const logBtn = document.getElementById('btn-log');
+  if (logBtn) {
+    logBtn.style.display = '';
+    logBtn.style.background = ''; logBtn.style.color = ''; logBtn.style.borderColor = '';
+  }
+  document.getElementById('chart-empty').style.display = 'flex';
+  const isBtcAutoView = key === 'btc-epochs' || key === 'btc-cycles' || key === 'ana-bubble' || key === 'btc-tradfi' || key === 'btc-rolling' || key === 'sec-rrg';
+  document.getElementById('empty-msg').textContent = isBtcAutoView ? 'Loading…' : 'Select items from the right panel';
+  document.getElementById('perf-row').innerHTML = '';
+
+  // Load items for this tab
+  if (tab === 'sector') {
+    allItems = allSectors;
+  } else {
+    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab}`);
+    allItems  = await res.json();
+  }
+
+  buildRightPanel(tab, key);
+  // Views that auto-fetch without selection
+  const AUTO_VIEWS = new Set([
+    'ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
+    'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
+    'alt-altseason','alt-beta','alt-ath-drawdown',
+    'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+  ]);
+  if (AUTO_VIEWS.has(key)) {
+    document.getElementById('chart-empty').style.display = 'none';
+    document.getElementById('empty-msg').textContent = 'Loading…';
+    setTimeout(fetchCurrent, 100);
+  }
+}
+
+// ── Right panel ───────────────────────────────────────────────────────────────
+const NEW_AUTO_KEYS = new Set([
+  'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
+  'alt-altseason','alt-beta','alt-ath-drawdown',
+  'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+]);
+const SELECTION_KEYS = new Set([
+  'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
+  'alt-heatmap','alt-funding-heatmap',
+]);
+
+function buildRightPanel(tab, key) {
+  const rp          = document.getElementById('right-panel');
+  const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi' || key === 'btc-bull';
+  const isTradFi   = key === 'btc-tradfi';
+  const isBubble    = key === 'ana-bubble';
+  const isRRG       = key === 'sec-rrg';
+  const isNewAuto   = NEW_AUTO_KEYS.has(key);
+  const isSelChart  = SELECTION_KEYS.has(key);
+  const needsSearch = tab !== 'sector' && !isBtcView && key !== 'alt-scatter' && key !== 'btc-gold' && key !== 'btc-rolling' && !isNewAuto;
+  const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble' || key === 'alt-scatter' || key === 'btc-rolling';
+  const needsVersus = key === 'sec-vs';
+  const isAutoView  = isBubble || isRRG || isBtcView || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling' || isNewAuto;
+  const showList    = !isAutoView || isSelChart;
+
+  let html = '';
+
+  // Search
+  if (needsSearch) {
+    html += `<div class="rp-block">
+      <div class="rp-label">Search</div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+        <input type="text" id="rp-search" placeholder="Ticker or name…">
+      </div>
+    </div>`;
+  }
+
+  // Period / days control
+  if (isTradFi) {
+    // Asset selector
+    const TRADFI_ASSETS = [
+      { ticker:'QQQ',      label:'Nasdaq' },
+      { ticker:'SPY',      label:'S&P 500' },
+      { ticker:'IWM',      label:'Russell 2k' },
+      { ticker:'GLD',      label:'Gold' },
+      { ticker:'BNO',      label:'Brent Oil' },
+      { ticker:'DX-Y.NYB', label:'DXY' },
+      { ticker:'^VIX',     label:'VIX' },
+      { ticker:'TLT',      label:'US 20Y Bond' },
+    ];
+    html += `<div class="rp-block">
+      <div class="rp-label">Compare BTC vs</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${TRADFI_ASSETS.map((a,i) => `<button class="tradfi-btn ${i===0?'active':''}" data-asset="${a.ticker}"
+          onclick="setTradFiAsset('${a.ticker}',this)" style="font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid var(--border);background:${i===0?'var(--graphite)':'none'};color:${i===0?'var(--bg)':'var(--muted)'};cursor:pointer">${a.label}</button>`).join('')}
+      </div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Windows</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="window-row"><label style="min-width:110px;font-size:13px;color:var(--muted)">Rolling return</label><input type="number" id="rp-window" value="14" min="5" max="365"><label>d</label></div>
+        <div class="window-row"><label style="min-width:110px;font-size:13px;color:var(--muted)">Correlation</label><input type="number" id="rp-corr-win" value="14" min="5" max="365"><label>d</label></div>
+        <div class="window-row"><label style="min-width:110px;font-size:13px;color:var(--muted)">Smooth overlay</label><input type="number" id="rp-smooth-win" value="60" min="10" max="365"><label>d</label></div>
+      </div>
+    </div>`;
+    // Period
+    html += `<div class="rp-block">
+      <div class="rp-label">Period</div>
+      <div class="date-grid">
+        <div><label>From</label><input type="date" id="rp-from"></div>
+        <div><label>To</label><input type="date" id="rp-to"></div>
+      </div>
+      <div class="presets" id="rp-presets">
+        <button class="preset" data-days="90">3M</button>
+        <button class="preset" data-days="180">6M</button>
+        <button class="preset active" data-days="365">1Y</button>
+        <button class="preset" data-days="730">2Y</button>
+        <button class="preset" data-days="1095">3Y</button>
+        <button class="preset" data-days="0">All</button>
+      </div>
+    </div>`;
+  } else if (isRRG) {
+    html += `<div class="rp-block">
+      <div class="rp-label">As of</div>
+      <div class="date-grid"><div><label>Date</label><input type="date" id="rp-rrg-to"></div></div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Parameters</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="window-row">
+          <label style="min-width:120px;font-size:13px;color:var(--muted)">RS lookback</label>
+          <input type="number" id="rp-rrg-rs" value="10" min="3" max="52">
+          <label>periods</label>
+        </div>
+        <div class="window-row">
+          <label style="min-width:120px;font-size:13px;color:var(--muted)">Mom lookback</label>
+          <input type="number" id="rp-rrg-mom" value="6" min="2" max="26">
+          <label>periods</label>
+        </div>
+      </div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Timeframe</div>
+      <div class="versus-row">
+        <button class="versus-btn ${rrgGran==='daily'?'active':''}" onclick="setRRGGran('daily',this)">Daily</button>
+        <button class="versus-btn ${rrgGran==='weekly'?'active':''}" onclick="setRRGGran('weekly',this)">Weekly</button>
+      </div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Benchmark</div>
+      <div class="versus-row">
+        <button class="versus-btn ${rrgBenchmark==='market'?'active':''}" onclick="setRRGBenchmark('market',this)">Market</button>
+        <button class="versus-btn ${rrgBenchmark==='btc'?'active':''}" onclick="setRRGBenchmark('btc',this)">BTC</button>
+        <button class="versus-btn ${rrgBenchmark==='eth'?'active':''}" onclick="setRRGBenchmark('eth',this)">ETH</button>
+      </div>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Trail</div>
+      <div class="window-row">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer">
+          <input type="checkbox" id="rp-rrg-tail" style="accent-color:var(--graphite)"> Show trail
+        </label>
+        <input type="number" id="rp-rrg-tail-len" value="6" min="2" max="20" style="width:54px;margin-left:8px">
+        <label>pts</label>
+      </div>
+    </div>`;
+  } else if (isBtcView) {
+    html += `<div class="rp-block">
+      <div class="rp-label">Days to show</div>
+      <div class="window-row">
+        <input type="number" id="rp-window" value="${key === 'btc-epochs' ? 1400 : 1000}" min="100" max="2000">
+        <label>days after event</label>
+      </div>
+    </div>`;
+  } else if (isNewAuto && !isSelChart) {
+    // Auto-view with date range panel
+    html += `<div class="rp-block">
+      <div class="rp-label">Period</div>
+      <div class="date-grid">
+        <div><label>From</label><input type="date" id="rp-from"></div>
+        <div><label>To</label><input type="date" id="rp-to"></div>
+      </div>
+      <div class="presets" id="rp-presets">
+        <button class="preset" data-days="30">1M</button>
+        <button class="preset" data-days="90">3M</button>
+        <button class="preset active" data-days="365">1Y</button>
+        <button class="preset" data-days="730">2Y</button>
+        <button class="preset" data-days="1095">3Y</button>
+        <button class="preset" data-days="0">All</button>
+      </div>
+    </div>`;
+  } else {
+    html += `<div class="rp-block">
+      <div class="rp-label">Period</div>
+      <div class="date-grid">
+        <div><label>From</label><input type="date" id="rp-from"></div>
+        <div><label>To</label><input type="date" id="rp-to"></div>
+      </div>
+      <div class="presets" id="rp-presets">
+        <button class="preset" data-days="7">1W</button>
+        <button class="preset" data-days="30">1M</button>
+        <button class="preset" data-days="90">3M</button>
+        <button class="preset active" data-days="180">6M</button>
+        <button class="preset" data-days="365">1Y</button>
+        <button class="preset" data-days="1095">3Y</button>
+        <button class="preset" data-days="0">All</button>
+      </div>
+    </div>`;
+  }
+
+  // Rolling window
+  if (needsWindow) {
+    const winDefault = key === 'btc-rolling' ? 7 : 30;
+    const winMin     = key === 'btc-rolling' ? 1 : 7;
+    html += `<div class="rp-block">
+      <div class="rp-label">Rolling window</div>
+      <div class="window-row">
+        <input type="number" id="rp-window" value="${winDefault}" min="${winMin}" max="365">
+        <label>days</label>
+      </div>
+    </div>`;
+  }
+
+  // TopN selector for alt-scatter
+  if (key === 'alt-scatter') {
+    html += `<div class="rp-block">
+      <div class="rp-label">Universe</div>
+      <select id="rp-topn" style="width:100%;background:var(--input-bg);border:1px solid transparent;border-radius:var(--radius);padding:7px 9px;font-family:var(--mono);font-size:13px;color:var(--graphite);outline:none">
+        <option value="10">Top 10</option>
+        <option value="25">Top 25</option>
+        <option value="50" selected>Top 50</option>
+        <option value="100">Top 100</option>
+        <option value="250">Top 250</option>
+      </select>
+    </div>
+    <div class="rp-block">
+      <div class="rp-label">Y-axis</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="rp-logscale" style="accent-color:var(--graphite)"> Log scale
+      </label>
+    </div>`;
+  }
+
+  // Versus selector
+  if (needsVersus) {
+    html += `<div class="rp-block">
+      <div class="rp-label">Compare versus</div>
+      <div class="versus-row">
+        <button class="versus-btn active" data-v="BTC" onclick="setVersus('BTC')">BTC</button>
+        <button class="versus-btn" data-v="ETH" onclick="setVersus('ETH')">ETH</button>
+        <button class="versus-btn" data-v="ALTS" onclick="setVersus('ALTS')">Alts</button>
+      </div>
+    </div>`;
+  }
+
+  // Selected tags (always shown)
+  html += `<div class="rp-block" style="flex-shrink:0">
+    <div class="rp-label">Selected</div>
+    <div class="tags" id="rp-tags"><span style="color:var(--muted);font-size:13px">None</span></div>
+  </div>`;
+
+  // Asset/sector list
+  if (isSelChart) {
+    html += `<div class="rp-block" style="padding:8px 14px 6px">
+      <div class="rp-label">${tab === 'sector' ? 'Sectors' : 'Assets'}</div>
+    </div>
+    <div class="rp-list" id="rp-list"></div>`;
+  } else if (showList && !isNewAuto) {
+    html += `<div class="rp-block" style="padding:8px 14px 6px">
+      <div class="rp-label">${tab === 'sector' ? 'Sectors' : 'Assets'}</div>
+    </div>
+    <div class="rp-list" id="rp-list"></div>`;
+  } else if (isBubble || isRRG || isNewAuto) {
+    html += `<div style="padding:12px 14px;font-size:13px;color:var(--muted)">All sectors shown automatically</div>`;
+  }
+
+  rp.innerHTML = html;
+
+  if (!isBtcView && !isRRG) {
+    // Long-history charts default to All; others default to 6M
+    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-gold-ratio','btc-realvol','btc-drawdown',
+      'btc-funding','btc-funding-delta','alt-altseason','mac-stablecoin','sec-dominance']);
+    const defaultDays = ALL_HISTORY_KEYS.has(key) ? 0 : 180;
+    initDates('rp-from', 'rp-to', defaultDays);
+    initPresets();
+    // Highlight the correct active preset button
+    document.querySelectorAll('#rp-presets .preset').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.days) === defaultDays);
+    });
+  }
+  if (isRRG) {
+    const toEl = document.getElementById('rp-rrg-to');
+    if (toEl) toEl.value = new Date().toISOString().split('T')[0];
+    ['rp-rrg-to','rp-rrg-rs','rp-rrg-mom','rp-rrg-tail','rp-rrg-tail-len'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', fetchCurrent);
+    });
+  }
+  if (showList) renderRPList();
+
+  if (needsSearch) {
+    document.getElementById('rp-search')?.addEventListener('input', e => renderRPList(e.target.value.toLowerCase()));
+  }
+  const winEl  = document.getElementById('rp-window');
+  const topnEl = document.getElementById('rp-topn');
+  if (topnEl) topnEl.addEventListener('change', fetchCurrent);
+  const logEl = document.getElementById('rp-logscale');
+  if (logEl) logEl.addEventListener('change', fetchCurrent);
+  if (winEl) winEl.addEventListener('change', fetchCurrent);
+  ['rp-perf-win','rp-corr-win','rp-smooth-win'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', fetchCurrent);
+  });
+  document.getElementById('rp-corr-win')?.addEventListener('change', fetchCurrent);
+  document.getElementById('rp-smooth-win')?.addEventListener('change', fetchCurrent);
+}
+
+function showEquityPlaceholder() {
+  document.getElementById('view-tree').innerHTML = '';
+  document.getElementById('chart-title').textContent = 'Equity';
+  document.getElementById('chart-sub').textContent   = 'Coming soon';
+  document.getElementById('bc-view').textContent     = 'Equity';
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('perf-row').innerHTML = '';
+
+  document.getElementById('right-panel').innerHTML = '';
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-area') && (document.getElementById('chart-area').style.display = 'none');
+
+  // Show placeholder in main
+  const main = document.querySelector('.main');
+  let ph = document.getElementById('equity-ph');
+  if (!ph) {
+    ph = document.createElement('div');
+    ph.id = 'equity-ph';
+    ph.className = 'coming-soon';
+    ph.innerHTML = `
+      <svg viewBox="0 0 40 40"><polyline points="2,32 12,20 20,26 28,12 38,18"/><rect x="2" y="2" width="36" height="36" rx="3"/></svg>
+      <h3>Equity coming soon</h3>
+      <p>Add your equity watchlist and asset definitions, then come back to enable this tab.</p>`;
+    main.appendChild(ph);
+  }
+  ph.style.display = 'flex';
+}
+
+// ── Render list ───────────────────────────────────────────────────────────────
+function renderRPList(q = '') {
+  const el = document.getElementById('rp-list');
+  if (!el) return;
+
+  const items = q
+    ? allItems.filter(a => (a.symbol||a.name||'').toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q))
+    : allItems;
+
+  if (activeView?.tab === 'sector') {
+    el.innerHTML = items.map(s => `
+      <div class="list-item ${selected.includes(s.name) ? 'active' : ''}" onclick="toggleItem('${s.name}')">
+        <div class="item-dot" style="${!selected.includes(s.name) ? `background:${s.color}30;border:1px solid ${s.color}` : ''}"></div>
+        <span class="item-sym" style="min-width:90px">${s.name}</span>
+        <span class="item-count">${s.count}</span>
+      </div>`).join('');
+  } else {
+    el.innerHTML = items.map(a => `
+      <div class="list-item ${selected.includes(a.symbol) ? 'active' : ''}" onclick="toggleItem('${a.symbol}')">
+        <div class="item-dot"></div>
+        <span class="item-sym">${a.symbol}</span>
+        <span class="item-name">${a.name || ''}</span>
+      </div>`).join('');
+  }
+}
+
+function toggleItem(name) {
+  if (selected.includes(name)) {
+    selected = selected.filter(s => s !== name);
+  } else {
+    if (selected.length >= 8) selected.shift();
+    selected.push(name);
+  }
+  renderTags();
+  renderRPList(document.getElementById('rp-search')?.value?.toLowerCase() || '');
+  fetchCurrent();
+}
+
+function renderTags() {
+  const el = document.getElementById('rp-tags');
+  if (!el) return;
+  if (!selected.length) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:13px">None</span>';
+    return;
+  }
+  el.innerHTML = selected.map((s, i) => {
+    const col = activeView?.tab === 'sector' ? (SECTOR_COLORS[s] || PAL[i%PAL.length]) : PAL[i%PAL.length];
+    return `<span class="tag" style="background:${col}">${s}<span class="tag-x" onclick="toggleItem('${s}')">×</span></span>`;
+  }).join('');
+}
+
+// ── Date helpers ──────────────────────────────────────────────────────────────
+function initDates(fromId, toId, days) {
+  // Anchor to DB latest date if available, otherwise today
+  const to   = dbLatestDate ? new Date(dbLatestDate + 'T00:00:00') : new Date();
+  const from = new Date(to);
+  if (days > 0) from.setDate(from.getDate() - days);
+  else from.setFullYear(2013);
+  // Cap hourly at 90 days
+  if (granularity === 'hourly') {
+    const cap = new Date(to); cap.setDate(cap.getDate() - 90);
+    if (from < cap) from.setTime(cap.getTime());
+  }
+  document.getElementById(toId).value   = to.toISOString().split('T')[0];
+  document.getElementById(fromId).value = from.toISOString().split('T')[0];
+}
+
+function initPresets() {
+  document.querySelectorAll('#rp-presets .preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#rp-presets .preset').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      initDates('rp-from', 'rp-to', parseInt(btn.dataset.days));
+      fetchCurrent();
+    });
+  });
+  document.getElementById('rp-from')?.addEventListener('change', fetchCurrent);
+  document.getElementById('rp-to')?.addEventListener('change', fetchCurrent);
+}
+
+function setVersus(v) {
+  document.querySelectorAll('.versus-btn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  fetchCurrent();
+}
+
+function setRRGGran(val, btn) {
+  btn.closest('.versus-row').querySelectorAll('.versus-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  rrgGran = val;
+  fetchCurrent();
+}
+
+function setRRGBenchmark(val, btn) {
+  btn.closest('.versus-row').querySelectorAll('.versus-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  rrgBenchmark = val;
+  fetchCurrent();
+}
+
+// ── Y-axis formatter ──────────────────────────────────────────────────────────
+function yAxisFormatter(v, isCorr, isMom, isZscore, isMcap) {
+  if (isCorr)   return v.toFixed(2);
+  if (isZscore) return `${v.toFixed(1)}σ`;
+  if (isMom)    return `${v >= 0 ? '+' : ''}${v.toFixed(0)}%`;
+  if (isMcap)   { if (v >= 1e9) return `$${(v/1e9).toFixed(0)}B`; if (v >= 1e6) return `$${(v/1e6).toFixed(0)}M`; return `$${v.toFixed(0)}`; }
+  const delta = v - 100;
+  if (Math.abs(delta) < 200) return `${delta >= 0 ? '+' : ''}${delta.toFixed(0)}%`;
+  return `${(v/100).toFixed(1)}x`;
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────────
+function getOrMakeChart(isCorr = false, isMom = false, isZscore = false, isMcap = false) {
+  if (chart) return chart;
+  const tc = darkMode ? '#E8EAE8' : '#606663';
+  chart = new Chart(document.getElementById('main-chart'), {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 250 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+          borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+          borderWidth: 1,
+          titleColor: darkMode ? '#E8EAE8' : '#323935',
+          bodyColor:  darkMode ? '#888B88' : '#606663',
+          padding: 12,
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              if (v == null)    return ` ${ctx.dataset.label}  —`;
+              if (isCorr)       return ` ${ctx.dataset.label}  ${v.toFixed(3)}`;
+              if (isZscore)     return ` ${ctx.dataset.label}  ${v.toFixed(2)}σ`;
+              if (isMom)        return ` ${ctx.dataset.label}  ${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+              if (isMcap)       { const f = v >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : `$${v.toFixed(0)}`; return ` ${ctx.dataset.label}  ${f}`; }
+              const delta = v - 100;
+              const pct = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
+              return ` ${ctx.dataset.label}  ${pct}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'category', grid: { display: false },
+          border: { color: tc, width: 0.8 },
+          ticks: {
+            color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+            maxRotation: 0, maxTicksLimit: 8,
+            callback: function(val, idx, ticks) {
+              const l = this.getLabelForValue(val);
+              if (!l) return '';
+              return granularity === 'hourly' ? l.slice(0,10) : l.slice(0,7);
+            },
+            autoSkip: true,
+            autoSkipPadding: 20
+          }
+        },
+        y: {
+          grid: (isMom || isZscore || isCorr) ? { color: tc + '22', drawBorder: false, lineWidth: 0.5 } : { display: false },
+          border: { color: tc, width: 0.8 },
+          ticks: {
+            color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+            callback: v => yAxisFormatter(v, isCorr, isMom, isZscore, isMcap)
+          }
+        }
+      }
+    }
+  });
+  return chart;
+}
+
+function drawChart(data, keys, isCorr = false, isMom = false, isZscore = false, isMcap = false) {
+  const firstKey = keys.find(k => data[k]);
+  if (!firstKey) return;
+
+  if (chart) { chart.destroy(); chart = null; }
+  const c = getOrMakeChart(isCorr, isMom, isZscore, isMcap);
+  c.data.labels   = data[firstKey].dates;
+  c.data.datasets = keys.filter(k => data[k]).map((k, i) => {
+    const isBtcSymbol = k === 'BTC' && activeView?.tab === 'bitcoin';
+    const col = isBtcSymbol ? '#F7931A' : (data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length]);
+    return {
+      label:            k,
+      data:             data[k].rebased,
+      borderColor:      col,
+      backgroundColor:  col + '12',
+      borderWidth:      1.8,
+      pointRadius:      0,
+      pointHoverRadius: 4,
+      tension:          0.1,
+      fill:             false,
+      spanGaps:         true,
+    };
+  });
+  c.update();
+}
+
+function updatePerf(data, keys, isCorr = false, isMom = false, isZscore = false, isMcap = false) {
+  document.getElementById('perf-row').innerHTML = keys.filter(k => data[k]).map((k, i) => {
+    const r    = (data[k].rebased || []).filter(v => v != null);
+    const last = r.length ? r[r.length - 1] : null;
+    const col  = data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length];
+    let valHtml;
+    if (isCorr) {
+      const cls = last === null ? 'neu' : last >= 0.5 ? 'pos' : last <= -0.2 ? 'neg' : 'neu';
+      valHtml = `<span class="perf-val ${cls}">${last !== null ? last.toFixed(3) : '—'}</span>`;
+    } else if (isMom) {
+      const cls = last === null ? 'neu' : last >= 0 ? 'pos' : 'neg';
+      valHtml = `<span class="perf-val ${cls}">${last !== null ? (last >= 0 ? '+' : '') + last.toFixed(1) + '%' : '—'}</span>`;
+    } else if (isMcap) {
+      const fmt = last === null ? '—' : last >= 1e9 ? `$${(last/1e9).toFixed(1)}B` : last >= 1e6 ? `$${(last/1e6).toFixed(0)}M` : `$${last.toFixed(0)}`;
+      valHtml = `<span class="perf-val neu">${fmt}</span>`;
+    } else {
+      const ret = last !== null ? last - 100 : null;
+      const cls = ret === null ? '' : ret >= 0 ? 'pos' : 'neg';
+      const fmt = ret !== null ? (Math.abs(ret) >= 200 ? `${(ret/100+1).toFixed(1)}x` : `${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%`) : '—';
+      valHtml = `<span class="perf-val ${cls}">${fmt}</span>`;
+    }
+    return `<div class="perf-item">
+      <div class="perf-dot" style="background:${col}"></div>
+      <span class="perf-sym">${k}</span>${valHtml}
+    </div>`;
+  }).join('');
+}
+
+// ── Fetch ─────────────────────────────────────────────────────────────────────
+async function fetchCurrent() {
+  // Hide equity placeholder if visible
+  const ph = document.getElementById('equity-ph');
+  if (ph) ph.style.display = 'none';
+
+  // Views that don't need selection
+  if (activeView?.key === 'sec-rrg') {
+    await fetchRRG();
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
+  if (activeView?.key === 'ana-bubble') {
+    const from = document.getElementById('rp-from')?.value || '2024-01-01';
+    const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
+    const win  = document.getElementById('rp-window')?.value || '30';
+    await fetchBubble(from, to, win);
+    return;
+  }
+
+  if (activeView?.key === 'btc-gold') {
+    const from = document.getElementById('rp-from')?.value || '2020-01-01';
+    const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
+    await fetchBtcGold(from, to);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
+  if (activeView?.key === 'alt-scatter') {
+    const from = document.getElementById('rp-from')?.value || '2024-01-01';
+    const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
+    const win  = document.getElementById('rp-window')?.value || '7';
+    await fetchAltScatter(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
+  if (activeView?.key === 'btc-rolling') {
+    const from = document.getElementById('rp-from')?.value || '2020-01-01';
+    const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
+    const win  = document.getElementById('rp-window')?.value || '7';
+    await fetchBtcRolling(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
+  if (activeView?.key === 'btc-epochs' || activeView?.key === 'btc-cycles' || activeView?.key === 'btc-bull') {
+    const win = document.getElementById('rp-window')?.value || (activeView.key === 'btc-epochs' ? '1400' : '1000');
+    const to  = new Date().toISOString().split('T')[0];
+    if (activeView.key === 'btc-bull') {
+      await fetchBtcBull(win);
+    } else {
+      await fetchBtcChart(activeView.key === 'btc-epochs' ? 'epochs' : 'cycles', null, to, win);
+    }
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
+  // New auto-view charts
+  const newAutoKey = activeView?.key;
+  if (NEW_AUTO_KEYS.has(newAutoKey)) {
+    const from = document.getElementById('rp-from')?.value || '2022-01-01';
+    const to   = document.getElementById('rp-to')?.value   || new Date().toISOString().split('T')[0];
+    switch (newAutoKey) {
+      case 'sec-dominance':  await fetchSectorDominance(from, to); break;
+      case 'sec-xheatmap':   await fetchSectorXHeatmap(from, to); break;
+      case 'sec-cumulative': await fetchSectorCumulative(from, to); break;
+      case 'sec-sharpe':     await fetchSectorSharpe(to); break;
+      case 'btc-bull':       await fetchBtcBull(); break;
+      case 'btc-realvol':    await fetchBtcRealvol(from, to); break;
+      case 'btc-drawdown':   await fetchBtcDrawdownATH(from, to); break;
+      case 'btc-gold-ratio': await fetchBtcGoldRatio(from, to); break;
+      case 'btc-dominance':  await fetchBtcDominance(from, to); break;
+      case 'btc-funding':    await fetchBtcFunding(from, to); break;
+      case 'btc-oi':            await fetchBtcOI(from, to); break;
+      case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
+      case 'alt-altseason':  await fetchAltAltseason(from, to); break;
+      case 'alt-beta':       await fetchAltBeta(to); break;
+      case 'alt-ath-drawdown': await fetchAltATHDrawdown(); break;
+      case 'mac-matrix':     await fetchMacroMatrix(from, to); break;
+      case 'mac-dxy-btc':    await fetchMacroDxyBtc(from, to); break;
+      case 'mac-risk':       await fetchMacroRisk(from, to); break;
+      case 'mac-real-yields': await fetchMacroRealYields(from, to); break;
+      case 'mac-stablecoin': await fetchMacroStablecoin(from, to); break;
+    }
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  }
+
+  if (!activeView || !selected.length) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('perf-row').innerHTML = '';
+    if (chart) { chart.destroy(); chart = null; }
+    return;
+  }
+
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  const from    = document.getElementById('rp-from')?.value || '2024-01-01';
+  const to      = document.getElementById('rp-to')?.value   || '2099-01-01';
+  const win     = document.getElementById('rp-window')?.value || '30';
+  const versus  = document.querySelector('.versus-btn.active')?.dataset.v || 'BTC';
+  const key     = activeView.key;
+  const tab     = activeView.tab;
+  const g       = granularity;
+  const a       = alignMode;
+
+  let url, isCorr = false, isMom = false, isZscore = false, isMcap = false, chartKeys = selected;
+
+  if (tab === 'macro') {
+    url = `/api/macro-price?symbols=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
+  } else if (key === 'sec-equal') {
+    url = `/api/sector-price?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
+  } else if (key === 'sec-mcap') {
+    url = `/api/sector-mcap?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
+  } else if (key === 'sec-intra') {
+    if (selected.length < 2) {
+      document.getElementById('chart-spin').classList.remove('on');
+      document.getElementById('chart-empty').style.display = 'flex';
+      document.getElementById('empty-msg').textContent = 'Select at least 2 sectors';
+      return;
+    }
+    url = `/api/sector-intra-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}&granularity=${g}`;
+    isCorr = true;
+  } else if (key === 'sec-vs') {
+    url = `/api/sector-btc-corr?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}&versus=${versus}&granularity=${g}`;
+    isCorr = true;
+  } else if (key === 'ana-bubble') {
+    url = null; // handled separately
+    await fetchBubble(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'btc-epochs') {
+    url = null;
+    await fetchBtcEpochs(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'btc-cycles') {
+    url = null;
+    await fetchBtcCycles(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'btc-epochs') {
+    url = null;
+    await fetchBtcChart('epochs', from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'btc-cycles') {
+    url = null;
+    await fetchBtcChart('cycles', from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'mc-total') {
+    url = `/api/sector-mcap-view?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&type=total`;
+    isMcap = true;
+  } else if (key === 'mc-median') {
+    url = `/api/sector-mcap-view?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&type=median`;
+    isMcap = true;
+  } else if (key === 'sec-mom') {
+    url = `/api/sector-momentum?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}`;
+    isMom = true;
+  } else if (key === 'sec-zscore') {
+    url = `/api/sector-zscore?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}&window=${win}`;
+    isZscore = true;
+  } else if (key === 'btc-gold') {
+    url = null;
+    await fetchBtcGold(from, to);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'alt-scatter') {
+    url = null;
+    await fetchAltScatter(from, to, win);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'sec-vol') {
+    url = `/api/sector-vol?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMom = true;
+  } else if (key === 'sec-drawdown') {
+    url = `/api/sector-drawdown?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMom = true;
+  } else if (key === 'sec-breadth') {
+    url = `/api/sector-breadth?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMom = true;
+  } else if (key === 'sec-funding') {
+    url = `/api/sector-funding?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMom = true;
+  } else if (key === 'sec-oi') {
+    url = `/api/sector-oi?sectors=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`;
+    isMcap = true;
+  } else if (key === 'alt-heatmap') {
+    url = null;
+    await fetchAltHeatmap(selected, from, to);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else if (key === 'alt-funding-heatmap') {
+    url = null;
+    await fetchAltFundingHeatmap(selected, from, to);
+    document.getElementById('chart-spin').classList.remove('on');
+    return;
+  } else {
+    url = `/api/price?symbols=${selected.join(',')}&from=${from}&to=${to}&granularity=${g}&align=${a}`;
+  }
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    if (!text) throw new Error('empty response');
+    const data = JSON.parse(text);
+    if (data.error) throw new Error(data.error);
+    chartKeys = (isCorr || isMom) ? Object.keys(data) : selected;
+    drawChart(data, chartKeys, isCorr, isMom, isZscore, isMcap);
+    updatePerf(data, chartKeys, isCorr, isMom, isZscore, isMcap);
+    document.getElementById('chart-title').textContent = selected.join(' · ');
+  } catch(e) {
+    console.error(e);
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+// ── Save PNG ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-save').addEventListener('click', () => {
+  if (!chart) return;
+  const W = 1800, H = 750;
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const ctx = off.getContext('2d');
+  ctx.fillStyle = darkMode ? '#0F1110' : '#FAFAFA';
+  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(chart.canvas, 40, 20, W - 80, H - 80);
+  ctx.fillStyle = '#606663';
+  ctx.font = '500 16px DM Mono, monospace';
+  ctx.fillText(document.getElementById('chart-src').textContent, 40, H - 18);
+  const a = document.createElement('a');
+  a.download = `${activeView?.key}_${selected.join('_')}_${new Date().toISOString().split('T')[0]}.png`;
+  a.href = off.toDataURL('image/png');
+  a.click();
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+async function showDataView() {
+  selected = [];
+  activeView = null;
+  document.getElementById('view-tree').innerHTML = '';
+  document.getElementById('right-panel').innerHTML = '';
+  document.getElementById('bc-view').textContent = 'Data';
+  document.getElementById('perf-row').innerHTML = '';
+  if (chart) { chart.destroy(); chart = null; }
+
+  // Hide normal chart area, show data table
+  const main = document.querySelector('.main');
+
+  // Remove old data view if exists
+  let dv = document.getElementById('data-view');
+  if (dv) dv.remove();
+
+  // Hide chart elements
+  document.querySelector('.chart-hdr').style.display  = 'none';
+  document.querySelector('.chart-area').style.display = 'none';
+  document.querySelector('.chart-src').style.display  = 'none';
+
+  dv = document.createElement('div');
+  dv.id = 'data-view';
+  dv.style.cssText = 'flex:1;overflow-y:auto;padding:20px 24px;';
+  dv.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px" id="dv-summary">
+      <div style="background:var(--tag-bg);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Tables</div>
+        <div style="font-size:22px;font-weight:600" id="dv-tables">—</div>
+      </div>
+      <div style="background:var(--tag-bg);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Total rows</div>
+        <div style="font-size:22px;font-weight:600" id="dv-rows">—</div>
+      </div>
+      <div style="background:var(--tag-bg);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Assets tracked</div>
+        <div style="font-size:22px;font-weight:600">584</div>
+      </div>
+      <div style="background:var(--tag-bg);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Earliest data</div>
+        <div style="font-size:22px;font-weight:600" id="dv-earliest">—</div>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px" id="dv-table">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Dataset</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Granularity</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Source</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">From</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">To</th>
+          <th style="text-align:right;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Assets</th>
+          <th style="text-align:right;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Rows</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Last updated</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px">Status</th>
+        </tr>
+      </thead>
+      <tbody id="dv-body"><tr><td colspan="9" style="padding:20px 10px;color:var(--muted);font-size:13px">Loading…</td></tr></tbody>
+    </table>`;
+  main.appendChild(dv);
+
+  // Fetch data
+  try {
+    const res  = await fetch('/api/db-status');
+    const data = await res.json();
+
+    const totalRows = data.reduce((s, r) => s + r.rows, 0);
+    const earliest  = data.filter(r => r.date_from !== '—').map(r => r.date_from).sort()[0] || '—';
+    document.getElementById('dv-tables').textContent   = data.length;
+    document.getElementById('dv-rows').textContent     = totalRows >= 1e6 ? (totalRows/1e6).toFixed(1)+'M' : (totalRows/1e3).toFixed(0)+'k';
+    document.getElementById('dv-earliest').textContent = earliest.slice(0,4);
+
+    const statusBadge = (s) => {
+      if (s === 'live')    return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:#E6F9EE;color:#0A6E2A"><span style="width:6px;height:6px;border-radius:50%;background:#0A6E2A;display:inline-block"></span>Live</span>`;
+      if (s === 'stale')   return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:#FAEEDA;color:#633806"><span style="width:6px;height:6px;border-radius:50%;background:#633806;display:inline-block"></span>Stale</span>`;
+      if (s === 'manual')  return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:#F1EFE8;color:#5F5E5A"><span style="width:6px;height:6px;border-radius:50%;background:#5F5E5A;display:inline-block"></span>Manual</span>`;
+      return `<span style="font-size:11px;color:var(--muted)">${s}</span>`;
+    };
+
+    const fmtRows = (n) => n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(0)+'k' : n;
+
+    document.getElementById('dv-body').innerHTML = data.map(r => `
+      <tr style="border-bottom:0.5px solid var(--border)">
+        <td style="padding:9px 10px;font-weight:500">${r.label}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.granularity}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.source}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.date_from}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.date_to}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--mono);font-size:12px">${r.assets}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--mono);font-size:12px">${fmtRows(r.rows)}</td>
+        <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${r.last_updated}</td>
+        <td style="padding:9px 10px">${statusBadge(r.status)}</td>
+      </tr>`).join('');
+  } catch(e) {
+    document.getElementById('dv-body').innerHTML = `<tr><td colspan="9" style="padding:20px 10px;color:var(--muted)">Error loading data status</td></tr>`;
+  }
+}
+
+function hideDataView() {
+  const dv = document.getElementById('data-view');
+  if (dv) dv.remove();
+  document.querySelector('.chart-hdr').style.display  = '';
+  document.querySelector('.chart-area').style.display = '';
+  document.querySelector('.chart-src').style.display  = '';
+}
+
+function setTradFiAsset(ticker, el) {
+  document.querySelectorAll('.tradfi-btn').forEach(b => {
+    b.style.background = 'none';
+    b.style.color = 'var(--muted)';
+    b.style.borderColor = 'var(--border)';
+    b.classList.remove('active');
+  });
+  el.style.background   = 'var(--graphite)';
+  el.style.color        = 'var(--bg)';
+  el.style.borderColor  = 'var(--graphite)';
+  el.classList.add('active');
+  fetchCurrent();
+}
+
+async function fetchTradFi(asset, perfWin, corrWin, smoothWin, from, to) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  const ASSET_LABELS = {
+    'QQQ':'Nasdaq','SPY':'S&P 500','IWM':'Russell 2k',
+    'GLD':'Gold','BNO':'Brent Oil','DX-Y.NYB':'DXY',
+    '^VIX':'VIX','TLT':'US 20Y Bond'
+  };
+  const assetLabel = ASSET_LABELS[asset] || asset;
+  const tc = darkMode ? '#E8EAE8' : '#606663';
+
+  try {
+    const url = `/api/btc-tradfi?asset=${encodeURIComponent(asset)}&perf_win=${perfWin}&corr_win=${corrWin}&smooth_win=${smoothWin}&from=${from}&to=${to}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const dates      = data.dates;
+    const btcPerf    = data.btc_perf;
+    const assetPerf  = data.asset_perf;
+    const corr       = data.corr;
+    const corrSmooth = data.corr_smooth;
+
+    // Build two-panel chart using Chart.js with custom plugin
+    const canvas = document.getElementById('main-chart');
+    const ctx    = canvas.getContext('2d');
+    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+
+    // Use Chart.js with two y-axes on same chart as workaround
+    // Top 45% = performance, bottom 55% = correlation
+    chart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [
+          {
+            label: `BTC ${perfWin}d return`,
+            data: btcPerf,
+            borderColor: '#00D64A',
+            backgroundColor: 'transparent',
+            borderWidth: 1.4,
+            pointRadius: 0,
+            yAxisID: 'yPerf',
+            spanGaps: true,
+            order: 1,
+          },
+          {
+            label: `${assetLabel} ${perfWin}d return`,
+            data: assetPerf,
+            borderColor: '#2471CC',
+            backgroundColor: 'transparent',
+            borderWidth: 1.4,
+            pointRadius: 0,
+            yAxisID: 'yPerf',
+            spanGaps: true,
+            order: 2,
+          },
+          {
+            label: `${corrWin}d correlation`,
+            data: corr,
+            borderColor: '#323935',
+            backgroundColor: 'transparent',
+            borderWidth: 1.4,
+            pointRadius: 0,
+            yAxisID: 'yCorr',
+            spanGaps: true,
+            order: 3,
+          },
+          {
+            label: `${smoothWin}d avg`,
+            data: corrSmooth,
+            borderColor: '#606663',
+            backgroundColor: 'transparent',
+            borderWidth: 1,
+            borderDash: [4, 3],
+            pointRadius: 0,
+            yAxisID: 'yCorr',
+            spanGaps: true,
+            order: 4,
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            padding: 12,
+            filter: item => item.parsed.y !== null,
+            callbacks: {
+              label: ctx => {
+                const v = ctx.parsed.y;
+                if (v == null) return null;
+                if (ctx.dataset.yAxisID === 'yPerf') return ` ${ctx.dataset.label}  ${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+                return ` ${ctx.dataset.label}  ${v.toFixed(3)}`;
+              }
+            }
+          },
+          // Draw dividing line between panels
+          panelDivider: {
+            afterDraw(chart) {
+              const yPerf = chart.scales.yPerf;
+              const yCorr = chart.scales.yCorr;
+              if (!yPerf || !yCorr) return;
+              const ctx   = chart.ctx;
+              const mid   = (yPerf.bottom + yCorr.top) / 2;
+              ctx.save();
+              ctx.strokeStyle = tc;
+              ctx.lineWidth   = 0.5;
+              ctx.setLineDash([]);
+              ctx.beginPath();
+              ctx.moveTo(chart.chartArea.left,  mid);
+              ctx.lineTo(chart.chartArea.right, mid);
+              ctx.stroke();
+              // Zero lines
+              const zeroPerf = yPerf.getPixelForValue(0);
+              const zeroCorr = yCorr.getPixelForValue(0);
+              ctx.strokeStyle = tc + '66';
+              ctx.lineWidth   = 0.5;
+              ctx.setLineDash([4, 4]);
+              [zeroPerf, zeroCorr].forEach(y => {
+                ctx.beginPath();
+                ctx.moveTo(chart.chartArea.left,  y);
+                ctx.lineTo(chart.chartArea.right, y);
+                ctx.stroke();
+              });
+              // Panel labels
+              ctx.setLineDash([]);
+              ctx.fillStyle = tc;
+              ctx.font      = '400 11px DM Mono, monospace';
+              ctx.fillText(`BTC vs ${assetLabel} · ${perfWin}d return`, chart.chartArea.left + 8, yPerf.top + 16);
+              ctx.fillText(`${corrWin}d rolling correlation`, chart.chartArea.left + 8, yCorr.top + 16);
+              ctx.restore();
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'category',
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              maxRotation: 0, maxTicksLimit: 8,
+              callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; }
+            }
+          },
+          yPerf: {
+            type: 'linear',
+            position: 'left',
+            weight: 1,
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => `${v >= 0 ? '+' : ''}${v.toFixed(0)}%`
+            }
+          },
+          yCorr: {
+            type: 'linear',
+            position: 'left',
+            weight: 2,
+            min: -1.05, max: 1.05,
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => v.toFixed(2),
+              stepSize: 0.25,
+            }
+          }
+        }
+      },
+      plugins: [{ id: 'panelDivider', afterDraw(chart) {
+        const yPerf = chart.scales.yPerf;
+        const yCorr = chart.scales.yCorr;
+        if (!yPerf || !yCorr) return;
+        const ctx  = chart.ctx;
+        const mid  = (yPerf.bottom + yCorr.top) / 2;
+        ctx.save();
+        ctx.strokeStyle = tc; ctx.lineWidth = 0.5; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(chart.chartArea.left, mid); ctx.lineTo(chart.chartArea.right, mid); ctx.stroke();
+        const zeroPerf = yPerf.getPixelForValue(0);
+        const zeroCorr = yCorr.getPixelForValue(0);
+        ctx.strokeStyle = tc + '66'; ctx.lineWidth = 0.5; ctx.setLineDash([4,4]);
+        [zeroPerf, zeroCorr].forEach(y => { ctx.beginPath(); ctx.moveTo(chart.chartArea.left, y); ctx.lineTo(chart.chartArea.right, y); ctx.stroke(); });
+        ctx.setLineDash([]);
+        ctx.fillStyle = tc; ctx.font = '400 11px DM Mono, monospace';
+        ctx.fillText('Rolling return', chart.chartArea.left + 8, yPerf.top + 14);
+        ctx.fillText('Rolling correlation', chart.chartArea.left + 8, yCorr.top + 14);
+        ctx.restore();
+      }}]
+    });
+
+    // Perf row
+    const lastCorr = corr.filter(v => v !== null).pop();
+    const cls = lastCorr === null ? 'neu' : lastCorr >= 0.5 ? 'pos' : lastCorr <= -0.2 ? 'neg' : 'neu';
+    document.getElementById('perf-row').innerHTML = `
+      <div class="perf-item"><div class="perf-dot" style="background:#00D64A"></div><span class="perf-sym">BTC</span></div>
+      <div class="perf-item"><div class="perf-dot" style="background:#2471CC"></div><span class="perf-sym">${assetLabel}</span></div>
+      <div class="perf-item" style="margin-left:12px"><span style="font-size:12px;color:var(--muted)">Corr (latest):</span></div>
+      <div class="perf-item"><span class="perf-val ${cls}">${lastCorr !== null ? lastCorr.toFixed(3) : '—'}</span></div>`;
+
+    document.getElementById('chart-title').textContent = `BTC vs ${assetLabel}`;
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBtcChart(type, from, to, windowDays) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  const COLORS = { "Epoch 3 (2016)": "#00D64A", "Epoch 4 (2020)": "#2471CC", "Epoch 5 (2024)": "#746BE6",
+                   "2017/18 Bear": "#00D64A", "2021/22 Bear": "#2471CC", "2025 Bear (ongoing)": "#746BE6" };
+
+  try {
+    const days = windowDays || (type === 'epochs' ? 1400 : 1000);
+    const url  = type === 'epochs'
+      ? `/api/btc-epochs?days=${days}`
+      : `/api/btc-cycles?days=${days}`;
+
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const labels = Object.keys(data);
+    if (!labels.length) throw new Error('no data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    const datasets = labels.map(label => ({
+      label,
+      data:             data[label].values,
+      borderColor:      COLORS[label] || '#888',
+      backgroundColor:  'transparent',
+      borderWidth:      label.includes('ongoing') || label.includes('2024') ? 1.8 : 1.2,
+      pointRadius:      0,
+      pointHoverRadius: 4,
+      tension:          0.1,
+      fill:             false,
+      spanGaps:         true,
+    }));
+
+    // All epochs/cycles share the same day-based x axis
+    const maxDays  = Math.max(...labels.filter(l => data[l]?.days?.length).map(l => data[l].days[data[l].days.length - 1]));
+    const allDays  = Array.from({length: maxDays + 1}, (_, i) => i);
+
+    // Add 1x reference line for epochs chart only (after allDays is defined)
+    if (type === 'epochs') {
+      datasets.push({
+        label:           '1x (halving price)',
+        data:            allDays.map(() => 1),
+        borderColor:     darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+        backgroundColor: 'transparent',
+        borderWidth:     1,
+        borderDash:      [4, 4],
+        pointRadius:     0,
+        pointHoverRadius:0,
+        tension:         0,
+        fill:            false,
+        spanGaps:        true,
+      });
+    }
+
+    // Align values to full day array
+    const validLabels = labels.filter(l => data[l]?.days?.length && data[l]?.values?.length);
+    if (!validLabels.length) throw new Error('no data returned from API');
+    const alignedDatasets = datasets.filter((ds, i) => data[labels[i]]?.days?.length).map((ds, i) => {
+      const li = labels.indexOf(ds.label);
+      const label  = ds.label;
+      const daysArr = data[label]?.days || [];
+      const valsArr = data[label]?.values || [];
+      const map    = {};
+      daysArr.forEach((d, j) => map[d] = valsArr[j]);
+      return { ...ds, data: allDays.map(d => map[d] !== undefined ? map[d] : null) };
+    });
+
+    const isLog = type === 'epochs';
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'line',
+      data: { labels: allDays, datasets: alignedDatasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            padding: 12,
+            callbacks: {
+              title: ctx => `Day ${ctx[0].label}`,
+              filter: item => item.dataset.label !== '1x (halving price)',
+              label: ctx => {
+                const v = ctx.parsed.y;
+                if (v == null) return ` ${ctx.dataset.label}  —`;
+                return type === 'epochs'
+                  ? ` ${ctx.dataset.label}  ${v.toFixed(2)}x`
+                  : ` ${ctx.dataset.label}  ${v.toFixed(1)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'category',
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              maxRotation: 0, maxTicksLimit: 10,
+              callback: (val, idx) => allDays[idx] % 200 === 0 ? `d${allDays[idx]}` : ''
+            }
+          },
+          y: {
+            type: isLog ? 'logarithmic' : 'linear',
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => isLog ? `${v}x` : `${v.toFixed(0)}`
+            }
+          }
+        }
+      }
+    });
+
+    // Perf row
+    document.getElementById('perf-row').innerHTML = labels.map(label => {
+      const vals = data[label].values.filter(v => v != null);
+      const last = vals[vals.length - 1];
+      const col  = COLORS[label] || '#888';
+      const fmt  = type === 'epochs'
+        ? `${last ? last.toFixed(2) + 'x' : '—'}`
+        : `${last ? last.toFixed(1) : '—'}`;
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${col}"></div>
+        <span class="perf-sym">${label}</span>
+        <span class="perf-val neu">${fmt}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent =
+      type === 'epochs' ? 'BTC halving epochs' : 'BTC bear market cycles';
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+function selectTradFi(ticker) {
+  document.querySelectorAll('.tradfi-btn').forEach(b => b.classList.toggle('active', b.dataset.asset === ticker));
+  fetchCurrent();
+}
+
+async function fetchTradFi(from, to, perfWin, corrWin, smoothWin, asset) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  const ASSET_LABELS = {
+    'QQQ':'Nasdaq','SPY':'S&P 500','IWM':'Russell 2k',
+    'GLD':'Gold','BNO':'Brent Oil','DX-Y.NYB':'DXY',
+    '^VIX':'VIX','TLT':'Bonds 20Y'
+  };
+  const assetLabel = ASSET_LABELS[asset] || asset;
+  const tc = darkMode ? '#E8EAE8' : '#606663';
+  const C1 = '#00D64A', C2 = '#2471CC';
+
+  try {
+    const url = `/api/btc-tradfi?asset=${encodeURIComponent(asset)}&from=${from}&to=${to}&perf=${perfWin}&corr=${corrWin}&smooth=${smoothWin}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const dates     = data.dates;
+    const btcPerf   = data.btc_perf;
+    const assetPerf = data.asset_perf;
+    const corr      = data.corr;
+    const corrSmooth = data.corr_smooth;
+
+    // Build two-panel chart using Chart.js with two y-axes split via custom plugin
+    // We use a single chart with two datasets on y1 (perf) and hidden y2 (corr)
+    // Then draw corr panel manually in a plugin
+
+    const canvas = document.getElementById('main-chart');
+    const ctx    = canvas.getContext('2d');
+
+    chart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [
+          {
+            label: `BTC ${perfWin}d return`,
+            data: btcPerf,
+            borderColor: C1,
+            backgroundColor: 'transparent',
+            borderWidth: 1.4,
+            pointRadius: 0,
+            yAxisID: 'yPerf',
+            spanGaps: true,
+            order: 1,
+          },
+          {
+            label: `${assetLabel} ${perfWin}d return`,
+            data: assetPerf,
+            borderColor: C2,
+            backgroundColor: 'transparent',
+            borderWidth: 1.4,
+            pointRadius: 0,
+            yAxisID: 'yPerf',
+            spanGaps: true,
+            order: 2,
+          },
+          {
+            label: `${corrWin}d correlation`,
+            data: corr,
+            borderColor: darkMode ? '#888B88' : '#323935',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            yAxisID: 'yCorr',
+            spanGaps: true,
+            order: 3,
+          },
+          {
+            label: `${smoothWin}d avg`,
+            data: corrSmooth,
+            borderColor: tc,
+            backgroundColor: 'transparent',
+            borderWidth: 1.0,
+            borderDash: [4, 3],
+            pointRadius: 0,
+            yAxisID: 'yCorr',
+            spanGaps: true,
+            order: 4,
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        layout: { padding: { top: 8 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            padding: 12,
+            callbacks: {
+              title: ctx => ctx[0]?.label?.slice(0,10) || '',
+              label: ctx => {
+                const v = ctx.parsed.y;
+                if (v == null) return null;
+                if (ctx.datasetIndex <= 1) return ` ${ctx.dataset.label}  ${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+                return ` ${ctx.dataset.label}  ${v.toFixed(3)}`;
+              }
+            }
+          },
+          // Custom plugin: draw fill + zero line for corr panel, divider line
+          twoPanelPlugin: {
+            perfRange: null,
+          }
+        },
+        scales: {
+          x: {
+            type: 'category',
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 10 },
+              maxRotation: 0, maxTicksLimit: 8,
+              callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; }
+            }
+          },
+          yPerf: {
+            type: 'linear',
+            position: 'left',
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: { color: C1, font: { family: 'DM Mono, monospace', size: 10 }, callback: v => `${v >= 0 ? '+' : ''}${v.toFixed(0)}%` },
+            weight: 2,
+          },
+          yCorr: {
+            type: 'linear',
+            position: 'left',
+            min: -1.05, max: 1.05,
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 10 }, callback: v => v.toFixed(1), stepSize: 0.5 },
+            weight: 1,
+          }
+        }
+      },
+      plugins: [{
+        id: 'twoPanelDivider',
+        afterDraw(chart) {
+          const ctx   = chart.ctx;
+          const area  = chart.chartArea;
+          const yPerf = chart.scales['yPerf'];
+          const yCorr = chart.scales['yCorr'];
+          if (!yPerf || !yCorr) return;
+
+          // Draw divider between the two y-axes areas
+          const divY = (yPerf.bottom + yCorr.top) / 2;
+          ctx.save();
+          ctx.strokeStyle = darkMode ? '#2A2D2B' : '#E4E4E2';
+          ctx.lineWidth = 0.8;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(area.left, divY);
+          ctx.lineTo(area.right, divY);
+          ctx.stroke();
+
+          // Zero line for perf panel
+          const perfZeroY = yPerf.getPixelForValue(0);
+          ctx.strokeStyle = tc;
+          ctx.lineWidth = 0.5;
+          ctx.setLineDash([4, 4]);
+          ctx.globalAlpha = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(area.left, perfZeroY);
+          ctx.lineTo(area.right, perfZeroY);
+          ctx.stroke();
+
+          // Zero line for corr panel
+          const corrZeroY = yCorr.getPixelForValue(0);
+          ctx.beginPath();
+          ctx.moveTo(area.left, corrZeroY);
+          ctx.lineTo(area.right, corrZeroY);
+          ctx.stroke();
+
+          // +0.5 / -0.5 reference lines for corr
+          ctx.strokeStyle = C1;
+          ctx.globalAlpha = 0.4;
+          ctx.setLineDash([3, 3]);
+          const p5Y = yCorr.getPixelForValue(0.5);
+          ctx.beginPath(); ctx.moveTo(area.left, p5Y); ctx.lineTo(area.right, p5Y); ctx.stroke();
+          ctx.strokeStyle = '#EC5B5B';
+          const n5Y = yCorr.getPixelForValue(-0.5);
+          ctx.beginPath(); ctx.moveTo(area.left, n5Y); ctx.lineTo(area.right, n5Y); ctx.stroke();
+
+          ctx.setLineDash([]);
+          ctx.globalAlpha = 1;
+          ctx.restore();
+
+          // Panel labels
+          ctx.save();
+          ctx.font = '500 11px DM Mono, monospace';
+          ctx.fillStyle = darkMode ? '#666968' : '#888B88';
+          ctx.textAlign = 'right';
+          ctx.fillText(`BTC vs ${assetLabel} · ${perfWin}d return`, area.right, yPerf.top + 14);
+          ctx.fillText(`${corrWin}d rolling correlation`, area.right, yCorr.top + 14);
+          ctx.restore();
+        }
+      }]
+    });
+
+    // Perf row
+    const lastPerf  = btcPerf.filter(v=>v!=null).at(-1);
+    const lastAPerf = assetPerf.filter(v=>v!=null).at(-1);
+    const lastCorr  = corr.filter(v=>v!=null).at(-1);
+    const corrCls   = lastCorr === null ? 'neu' : lastCorr >= 0.3 ? 'pos' : lastCorr <= -0.3 ? 'neg' : 'neu';
+
+    document.getElementById('perf-row').innerHTML = `
+      <div class="perf-item"><div class="perf-dot" style="background:${C1}"></div><span class="perf-sym">BTC</span><span class="perf-val ${lastPerf>=0?'pos':'neg'}">${lastPerf!=null?(lastPerf>=0?'+':'')+lastPerf.toFixed(1)+'%':'—'}</span></div>
+      <div class="perf-item"><div class="perf-dot" style="background:${C2}"></div><span class="perf-sym">${assetLabel}</span><span class="perf-val ${lastAPerf>=0?'pos':'neg'}">${lastAPerf!=null?(lastAPerf>=0?'+':'')+lastAPerf.toFixed(1)+'%':'—'}</span></div>
+      <div class="perf-item"><div class="perf-dot" style="background:${darkMode?'#888B88':'#323935'}"></div><span class="perf-sym">Corr</span><span class="perf-val ${corrCls}">${lastCorr!=null?lastCorr.toFixed(3):'—'}</span></div>`;
+
+    document.getElementById('chart-title').textContent = `BTC vs ${assetLabel}`;
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBubble(from, to, window) {
+  // Bubble chart uses Chart.js scatter with bubble type
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  try {
+    const res  = await fetch(`/api/sector-bubble?to=${to}&window=${window}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const sectors = Object.keys(data).filter(k => data[k].x !== null && data[k].y !== null);
+    if (!sectors.length) throw new Error('no data');
+
+    // Max mcap for bubble sizing
+    const maxMcap = Math.max(...sectors.map(k => data[k].mcap || 0));
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'bubble',
+      data: {
+        datasets: sectors.map(sector => ({
+          label: sector,
+          data: [{
+            x: data[sector].x,
+            y: data[sector].y,
+            r: maxMcap > 0 ? Math.max(6, Math.sqrt(data[sector].mcap / maxMcap) * 40) : 12,
+          }],
+          backgroundColor: (data[sector].color || '#888') + 'AA',
+          borderColor:     data[sector].color || '#888',
+          borderWidth: 1.5,
+        }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 400 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            padding: 12,
+            callbacks: {
+              title: ctx => ctx[0].dataset.label,
+              label: ctx => {
+                const s = ctx.dataset.label;
+                const d = data[s];
+                const mcap = d.mcap >= 1e9 ? `$${(d.mcap/1e9).toFixed(1)}B` : `$${(d.mcap/1e6).toFixed(0)}M`;
+                return [
+                  ` Momentum: ${d.y >= 0 ? '+' : ''}${d.y.toFixed(1)}%`,
+                  ` Autocorr: ${d.x.toFixed(3)}`,
+                  ` Mkt cap: ${mcap}`,
+                  ` Assets: ${d.count}`,
+                ];
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'Autocorrelation (lag-1)', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(2) }
+          },
+          y: {
+            title: { display: true, text: `${window}d momentum (%)`, color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => `${v >= 0 ? '+' : ''}${v.toFixed(0)}%` }
+          }
+        }
+      }
+    });
+
+    // Draw sector labels on bubbles
+    // Draw sector labels directly on canvas (not via plugin registration)
+    chart.update();
+    setTimeout(() => {
+      const ctx2 = chart.canvas.getContext('2d');
+      chart.data.datasets.forEach((ds, i) => {
+        const meta = chart.getDatasetMeta(i);
+        if (!meta.visible) return;
+        meta.data.forEach(point => {
+          ctx2.save();
+          ctx2.fillStyle = darkMode ? '#E8EAE8' : '#323935';
+          ctx2.font = '500 11px DM Sans, sans-serif';
+          ctx2.textAlign = 'center';
+          ctx2.textBaseline = 'middle';
+          ctx2.fillText(ds.label, point.x, point.y);
+          ctx2.restore();
+        });
+      });
+    }, 50);
+
+    // Perf row
+    document.getElementById('perf-row').innerHTML = sectors.map(s => {
+      const d = data[s];
+      const cls = d.y === null ? 'neu' : d.y >= 0 ? 'pos' : 'neg';
+      const fmt = d.y !== null ? `${d.y >= 0 ? '+' : ''}${d.y.toFixed(1)}%` : '—';
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${d.color}"></div>
+        <span class="perf-sym">${s}</span>
+        <span class="perf-val ${cls}">${fmt}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent = 'Momentum vs autocorrelation';
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchRRG() {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  try {
+    const to      = document.getElementById('rp-rrg-to')?.value  || new Date().toISOString().split('T')[0];
+    const rsWin   = document.getElementById('rp-rrg-rs')?.value  || '10';
+    const momWin  = document.getElementById('rp-rrg-mom')?.value || '6';
+    const tailOn  = document.getElementById('rp-rrg-tail')?.checked;
+    const tailLen = document.getElementById('rp-rrg-tail-len')?.value || '6';
+
+    const url = `/api/sector-rrg?to=${to}&window=${rsWin}&momentum=${momWin}&tail=${tailOn ? tailLen : 0}&granularity=${rrgGran}&benchmark=${rrgBenchmark}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const sectors = Object.keys(data).filter(k => data[k].x != null && data[k].y != null);
+    if (!sectors.length) throw new Error('no data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    // Axis range centered on 100
+    const allX = sectors.map(s => data[s].x);
+    const allY = sectors.map(s => data[s].y);
+    const xPad = Math.max(3, ...allX.map(v => Math.abs(v - 100))) * 1.4;
+    const yPad = Math.max(3, ...allY.map(v => Math.abs(v - 100))) * 1.4;
+
+    // Datasets: tails first (behind), then invisible anchor points for tooltip hit areas
+    const datasets = [];
+
+    if (tailOn) {
+      sectors.forEach(sector => {
+        const d = data[sector];
+        if (!d.tail?.length) return;
+        const pts   = [...d.tail, {x: d.x, y: d.y}];
+        const color = d.color || '#888';
+        const r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
+        datasets.push({
+          label: `${sector}__tail`,
+          data:  pts,
+          showLine: true,
+          tension: 0.3,
+          borderColor: `rgba(${r},${g},${b},0.3)`,
+          borderWidth: 1.5,
+          backgroundColor: 'transparent',
+          pointRadius: pts.map((_, i) => i === pts.length - 1 ? 0 : 2),
+          pointBackgroundColor: pts.map((_, i) => `rgba(${r},${g},${b},${0.12 + (i / pts.length) * 0.45})`),
+          pointBorderWidth: 0,
+          order: 2,
+        });
+      });
+    }
+
+    // Invisible anchor points — used only for tooltip hit detection
+    sectors.forEach(sector => {
+      const d = data[sector];
+      datasets.push({
+        label: sector,
+        data:  [{x: d.x, y: d.y}],
+        backgroundColor: 'transparent',
+        borderColor:     'transparent',
+        pointRadius: 18,          // large invisible hit area
+        pointHoverRadius: 18,
+        order: 1,
+      });
+    });
+
+    // Crosshair + quadrant label plugin (no fills)
+    const quadrantPlugin = {
+      id: 'rrg-quadrant',
+      beforeDraw(ch) {
+        const {ctx, chartArea: {left, right, top, bottom}, scales} = ch;
+        const cx = scales.x.getPixelForValue(100);
+        const cy = scales.y.getPixelForValue(100);
+        ctx.save();
+        ctx.strokeStyle = darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+        ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(cx,top);  ctx.lineTo(cx,bottom); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(left,cy); ctx.lineTo(right,cy);  ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = '10px DM Mono, monospace';
+        ctx.fillStyle = darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)';
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'right'; ctx.fillText('IMPROVING', cx-8, top+8);
+        ctx.textAlign = 'left';  ctx.fillText('LEADING',   cx+8, top+8);
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'left';  ctx.fillText('WEAKENING', cx+8, bottom-8);
+        ctx.textAlign = 'right'; ctx.fillText('LAGGING',   cx-8, bottom-8);
+        ctx.restore();
+      },
+      // Draw sector names directly on canvas (no dots)
+      afterDraw(ch) {
+        const {ctx} = ch;
+        ctx.save();
+        ch.data.datasets.forEach((ds, i) => {
+          if (ds.label?.endsWith('__tail')) return;
+          const meta = ch.getDatasetMeta(i);
+          if (!meta.visible) return;
+          const sector = ds.label;
+          const d = data[sector];
+          if (!d) return;
+          const color = d.color || '#888';
+          meta.data.forEach(pt => {
+            ctx.font = '600 12px DM Sans, sans-serif';
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(sector, pt.x, pt.y);
+          });
+        });
+        ctx.restore();
+      }
+    };
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'scatter',
+      data: { datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 400 },
+        interaction: { mode: 'nearest', intersect: false, axis: 'xy' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            filter: ctx => !ctx.dataset.label?.endsWith('__tail'),
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, padding: 12,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            callbacks: {
+              title: ctx => ctx[0]?.dataset.label,
+              label: ctx => {
+                const d = data[ctx.dataset.label];
+                if (!d) return [];
+                return [
+                  ` RS-Ratio:  ${d.x.toFixed(2)}`,
+                  ` RS-Mom:    ${d.y.toFixed(2)}`,
+                  ` Quadrant:  ${d.quadrant}`,
+                ];
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            min: 100 - xPad, max: 100 + xPad,
+            title: { display: true, text: `← Weak    RS vs ${rrgBenchmark === 'market' ? 'market' : rrgBenchmark.toUpperCase()}    Strong →`, color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) }
+          },
+          y: {
+            min: 100 - yPad, max: 100 + yPad,
+            title: { display: true, text: '↑ Accelerating    RS Momentum    Decelerating ↓', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) }
+          }
+        }
+      },
+      plugins: [quadrantPlugin]
+    });
+
+    const qColors = { Leading: '#00D64A', Improving: '#F7931A', Lagging: '#DC3545', Weakening: '#2471CC' };
+    document.getElementById('perf-row').innerHTML = sectors.map(s => {
+      const d = data[s];
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${d.color}"></div>
+        <span class="perf-sym">${s}</span>
+        <span class="perf-val" style="color:${qColors[d.quadrant]||'#888'}">${d.quadrant}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent = 'Relative Rotation Graph';
+
+    // Methodology info block
+    const bmLabel = rrgBenchmark === 'market' ? 'equal-weighted market average' : rrgBenchmark.toUpperCase();
+    const infoEl  = document.getElementById('chart-info');
+    infoEl.style.display = 'block';
+    infoEl.innerHTML = `
+      <b>How it's calculated</b><br>
+      1. <b>RS ratio</b> — each sector's equal-weighted price index is divided by the ${bmLabel} index to get its relative strength (RS).<br>
+      2. <b>RS-Ratio (x-axis)</b> — measures whether the sector is currently outperforming: <code>100 + ((RS_now / RS_${rsWin}${rrgGran === 'weekly' ? ' weeks' : ' days'}_ago) − 1) × 100</code>. Above 100 = outperforming.<br>
+      3. <b>RS-Momentum (y-axis)</b> — measures whether that outperformance is accelerating: <code>100 + ((RS-Ratio_now / RS-Ratio_${momWin}${rrgGran === 'weekly' ? ' weeks' : ' days'}_ago) − 1) × 100</code>. Above 100 = accelerating.<br>
+      4. <b>Quadrants</b> — Leading (strong & accelerating) → Weakening (strong but slowing) → Lagging (weak & decelerating) → Improving (weak but accelerating). Sectors rotate clockwise over time.<br>
+      ${tailOn ? `5. <b>Trail</b> — the fading line behind each sector shows its last ${tailLen} ${rrgGran === 'weekly' ? 'weekly' : 'daily'} positions, giving a sense of direction and speed of rotation.<br>` : ''}
+      <span style="opacity:0.6">Lookback: RS = ${rsWin} ${rrgGran} periods · Momentum = ${momWin} ${rrgGran} periods · Benchmark = ${bmLabel} · As of ${to}</span>`;
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBtcEpochs(from, to, window) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+  try {
+    const res  = await fetch(`/api/btc-epochs?window=${window}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const PAL_BTC = ['#00D64A','#2471CC','#746BE6'];
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+    const keys = Object.keys(data);
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'line',
+      data: {
+        datasets: keys.map((k, i) => ({
+          label: k,
+          data:  data[k].x.map((x, j) => ({ x, y: data[k].y[j] })),
+          borderColor: PAL_BTC[i % PAL_BTC.length],
+          backgroundColor: 'transparent',
+          borderWidth: i === keys.length - 1 ? 1.8 : 1.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.1,
+          spanGaps: true,
+        }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor: darkMode ? '#888B88' : '#606663', padding: 12,
+            callbacks: {
+              title: ctx => `Day ${ctx[0].parsed.x}`,
+              label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y.toFixed(2)}x`
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'Days since halving', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 } }
+          },
+          y: {
+            type: 'logarithmic',
+            title: { display: true, text: 'X-fold from halving price (log)', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => `${v}x`
+            }
+          }
+        }
+      }
+    });
+
+    document.getElementById('perf-row').innerHTML = keys.map((k, i) => {
+      const last = data[k].y[data[k].y.length - 1];
+      const col  = PAL_BTC[i % PAL_BTC.length];
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${col}"></div>
+        <span class="perf-sym">${k}</span>
+        <span class="perf-val neu">${last ? last.toFixed(2) + 'x' : '—'}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent = 'BTC halving epochs';
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBtcCycles(from, to, window) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+  try {
+    const res  = await fetch(`/api/btc-cycles`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const PAL_BTC = ['#00D64A','#2471CC','#746BE6'];
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+    const keys = Object.keys(data);
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'line',
+      data: {
+        datasets: keys.map((k, i) => ({
+          label: k,
+          data:  data[k].x.map((x, j) => ({ x, y: data[k].y[j] })),
+          borderColor: PAL_BTC[i % PAL_BTC.length],
+          backgroundColor: 'transparent',
+          borderWidth: i === keys.length - 1 ? 1.8 : 1.3,
+          pointRadius: 0, pointHoverRadius: 4,
+          tension: 0.1, spanGaps: true,
+        }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor: darkMode ? '#888B88' : '#606663', padding: 12,
+            callbacks: {
+              title: ctx => `Day ${ctx[0].parsed.x}`,
+              label: ctx => ` ${ctx.dataset.label}  ${ctx.parsed.y.toFixed(1)}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'Days since peak', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 } }
+          },
+          y: {
+            title: { display: true, text: 'Indexed to peak (peak = 100)', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(0) }
+          }
+        }
+      }
+    });
+
+    document.getElementById('perf-row').innerHTML = keys.map((k, i) => {
+      const last = data[k].y[data[k].y.length - 1];
+      const col  = PAL_BTC[i % PAL_BTC.length];
+      const cls  = last !== null ? (last >= 100 ? 'pos' : 'neg') : 'neu';
+      return `<div class="perf-item">
+        <div class="perf-dot" style="background:${col}"></div>
+        <span class="perf-sym">${k}</span>
+        <span class="perf-val ${cls}">${last ? last.toFixed(1) : '—'}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('chart-title').textContent = 'BTC bear market cycles';
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBtcGold(from, to) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  try {
+    const resp = await fetch(`/api/btc-gold?from=${from}&to=${to}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.dates?.length) throw new Error('no data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'line',
+      data: {
+        labels: data.dates,
+        datasets: [
+          {
+            label: 'BTC',
+            data: data.btc_prices,
+            borderColor: '#F7931A',
+            backgroundColor: 'transparent',
+            borderWidth: 1.8,
+            pointRadius: 0, pointHoverRadius: 4,
+            tension: 0.1, yAxisID: 'yBTC', spanGaps: true,
+          },
+          {
+            label: 'Gold (GLD)',
+            data: data.gold_prices,
+            borderColor: '#FFB800',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            pointRadius: 0, pointHoverRadius: 4,
+            tension: 0.1, yAxisID: 'yGold', spanGaps: true,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, padding: 12,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            callbacks: {
+              label: ctx => {
+                const v = ctx.parsed.y;
+                if (v == null) return ` ${ctx.dataset.label}  —`;
+                return ctx.dataset.label === 'BTC'
+                  ? ` BTC  $${v.toLocaleString(undefined, {maximumFractionDigits:0})}`
+                  : ` Gold (GLD)  $${v.toFixed(2)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'category', grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              maxRotation: 0, maxTicksLimit: 8,
+              callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; }
+            }
+          },
+          yBTC: {
+            type: 'linear', position: 'left',
+            grid: { display: false }, border: { color: '#F7931A', width: 0.8 },
+            ticks: {
+              color: '#F7931A', font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => `$${v >= 1000 ? (v/1000).toFixed(0)+'k' : v.toFixed(0)}`
+            }
+          },
+          yGold: {
+            type: 'linear', position: 'right',
+            grid: { display: false }, border: { color: '#FFB800', width: 0.8 },
+            ticks: {
+              color: '#FFB800', font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => `$${v.toFixed(0)}`
+            }
+          }
+        }
+      }
+    });
+
+    const btcLast  = data.btc_prices.filter(v=>v!=null).slice(-1)[0];
+    const goldLast = data.gold_prices.filter(v=>v!=null).slice(-1)[0];
+    document.getElementById('perf-row').innerHTML = `
+      <div class="perf-item"><div class="perf-dot" style="background:#F7931A"></div><span class="perf-sym">BTC</span><span class="perf-val neu">$${btcLast?.toLocaleString(undefined,{maximumFractionDigits:0}) || '—'}</span></div>
+      <div class="perf-item"><div class="perf-dot" style="background:#FFB800"></div><span class="perf-sym">Gold (GLD)</span><span class="perf-val neu">$${goldLast?.toFixed(2) || '—'}</span></div>`;
+    document.getElementById('chart-title').textContent = 'Bitcoin vs Gold';
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchBtcRolling(from, to, window) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+  try {
+    const res  = await fetch(`/api/btc-rolling?from=${from}&to=${to}&window=${window}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.dates?.length) throw new Error('no data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+    // Filter out leading nulls
+    const points = data.dates
+      .map((d, i) => ({ date: d, value: data.values[i] }))
+      .filter(p => p.value !== null);
+    if (!points.length) throw new Error('insufficient data for window');
+
+    const labels       = points.map(p => p.date);
+    const values       = points.map(p => p.value);
+    const bgColors     = values.map(v => v >= 0 ? 'rgba(0,214,74,0.65)' : 'rgba(220,53,69,0.65)');
+    const borderColors = values.map(v => v >= 0 ? '#00D64A' : '#DC3545');
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: `${window}d rolling return`,
+          data: values,
+          backgroundColor: bgColors,
+          borderColor: borderColors,
+          borderWidth: 0,
+          borderRadius: 1,
+          barPercentage: 0.9,
+          categoryPercentage: 1.0,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, padding: 12,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            callbacks: {
+              label: ctx => {
+                const v = ctx.parsed.y;
+                const sign = v >= 0 ? '+' : '';
+                return ` ${window}d return  ${sign}${v.toFixed(2)}%`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'category', grid: { display: false },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              maxRotation: 0, maxTicksLimit: 8,
+              callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; }
+            }
+          },
+          y: {
+            grid: { color: darkMode ? '#2A2D2B' : '#E8EAE6' },
+            border: { color: tc, width: 0.8 },
+            ticks: {
+              color: tc, font: { family: 'DM Mono, monospace', size: 11 },
+              callback: v => `${v >= 0 ? '+' : ''}${v.toFixed(0)}%`
+            }
+          }
+        }
+      }
+    });
+
+    const last = values[values.length - 1];
+    const cls  = last >= 0 ? 'pos' : 'neg';
+    const sign = last >= 0 ? '+' : '';
+    document.getElementById('perf-row').innerHTML = `
+      <div class="perf-item">
+        <div class="perf-dot" style="background:${last >= 0 ? '#00D64A' : '#DC3545'}"></div>
+        <span class="perf-sym">BTC ${window}d return</span>
+        <span class="perf-val ${cls}">${sign}${last.toFixed(2)}%</span>
+      </div>`;
+    document.getElementById('chart-title').textContent = `BTC ${window}d rolling return`;
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+async function fetchAltScatter(from, to, days) {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('chart-empty').style.display = 'none';
+  document.getElementById('chart-spin').classList.add('on');
+
+  const topN = parseInt(document.getElementById('rp-topn')?.value || '50');
+
+  try {
+    const res  = await fetch(`/api/alt-scatter?from=${from}&to=${to}&days=${days}&topn=${topN}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.points?.length) throw new Error('no data');
+
+    const tc = darkMode ? '#E8EAE8' : '#606663';
+
+    chart = new Chart(document.getElementById('main-chart'), {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Altcoins',
+          data: data.points.map(p => ({ x: p.vol, y: p.perf, label: p.symbol })),
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: darkMode ? '#1A1D1B' : '#fff',
+            borderColor: darkMode ? '#2A2D2B' : '#E4E4E2',
+            borderWidth: 1, padding: 10,
+            titleColor: darkMode ? '#E8EAE8' : '#323935',
+            bodyColor:  darkMode ? '#888B88' : '#606663',
+            callbacks: {
+              title: ctx => ctx[0].raw.label,
+              label: ctx => [` Perf vs BTC: ${ctx.raw.y >= 0 ? '+' : ''}${ctx.raw.y.toFixed(1)}%`, ` Vol vs BTC: ${ctx.raw.x.toFixed(1)}%`]
+            }
+          }
+        },
+        scales: {
+          x: {
+            reverse: true,
+            title: { display: true, text: '← high vol    volatility vs BTC (%)    low vol →', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => `${v.toFixed(0)}%` }
+          },
+          y: {
+            type: document.getElementById('rp-logscale')?.checked ? 'logarithmic' : 'linear',
+            title: { display: true, text: '% performance vs BTC', color: tc, font: { family: 'DM Mono, monospace', size: 11 } },
+            grid: { display: false }, border: { color: tc, width: 0.8 },
+            ticks: { color: tc, font: { family: 'DM Mono, monospace', size: 11 }, callback: v => `${v >= 0 ? '+' : ''}${v.toFixed(0)}%` }
+          }
+        }
+      },
+      plugins: [{
+        id: 'scatterOverlay',
+        afterDatasetsDraw(ch) {
+          const ctx2  = ch.ctx;
+          const ds    = ch.data.datasets[0];
+          const meta  = ch.getDatasetMeta(0);
+          const xAxis = ch.scales.x;
+          const yAxis = ch.scales.y;
+          const pts   = (ds?.data || []).filter(p => p && p.x != null && p.y != null);
+          if (!pts.length) return;
+
+          const sortX = pts.map(p => p.x).sort((a,b) => a-b);
+          const sortY = pts.map(p => p.y).sort((a,b) => a-b);
+          const medX  = sortX[Math.floor(sortX.length / 2)];
+          const medY  = sortY[Math.floor(sortY.length / 2)];
+          const mxPx  = xAxis.getPixelForValue(medX);
+          const myPx  = yAxis.getPixelForValue(medY);
+
+          ctx2.save();
+          ctx2.strokeStyle = darkMode ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)';
+          ctx2.lineWidth = 1;
+          ctx2.setLineDash([5, 5]);
+          ctx2.beginPath(); ctx2.moveTo(mxPx, yAxis.top);    ctx2.lineTo(mxPx, yAxis.bottom); ctx2.stroke();
+          ctx2.beginPath(); ctx2.moveTo(xAxis.left, myPx);   ctx2.lineTo(xAxis.right, myPx);  ctx2.stroke();
+          ctx2.setLineDash([]);
+
+          const qc = darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)';
+          ctx2.font = '400 10px DM Mono, monospace';
+          ctx2.fillStyle = qc;
+          ctx2.textAlign = 'right'; ctx2.textBaseline = 'top';
+          ctx2.fillText('outperform · low vol',    xAxis.left + 4,    yAxis.top + 6);
+          ctx2.textAlign = 'left';
+          ctx2.fillText('outperform · high vol',   xAxis.right - 4,   yAxis.top + 6);
+          ctx2.textAlign = 'right'; ctx2.textBaseline = 'bottom';
+          ctx2.fillText('underperform · low vol',  xAxis.left + 4,    yAxis.bottom - 6);
+          ctx2.textAlign = 'left';
+          ctx2.fillText('underperform · high vol', xAxis.right - 4,   yAxis.bottom - 6);
+
+          ctx2.font = '500 11px DM Sans, sans-serif';
+          ctx2.textAlign = 'center';
+          ctx2.textBaseline = 'bottom';
+          meta.data.forEach((pt, i) => {
+            const p = ds.data[i];
+            if (!p) return;
+            ctx2.fillStyle = p.y >= 0 ? '#00D64A' : '#EC5B5B';
+            ctx2.fillText(p.label, pt.x, pt.y - 4);
+          });
+          ctx2.restore();
+        }
+      }]
+    });
+
+    // Zero lines
+    chart.options.plugins.annotation = {};
+
+    document.getElementById('chart-title').textContent = `Top ${topN} altcoins — performance vs BTC`;
+    document.getElementById('perf-row').innerHTML = `
+      <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">${data.points.length} assets · ${days}d window</span>`;
+
+  } catch(e) {
+    document.getElementById('chart-empty').style.display = 'flex';
+    document.getElementById('empty-msg').textContent = `Error: ${e.message}`;
+  } finally {
+    document.getElementById('chart-spin').classList.remove('on');
+  }
+}
+
+// ── Heatmap helpers ───────────────────────────────────────────────────────────
+function heatCorr(v) {
+  if (v === null || v === undefined) return 'rgba(60,60,60,0.6)';
+  const t = (v + 1) / 2;
+  if (t < 0.5) {
+    const f = t * 2;
+    return `rgb(${Math.round(220)},${Math.round(60 + 195*f)},${Math.round(60 + 195*f)})`;
+  } else {
+    const f = (t - 0.5) * 2;
+    return `rgb(${Math.round(255 - 195*f)},${Math.round(220)},${Math.round(255 - 195*f)})`;
+  }
+}
+function heatFunding(v, maxAbs) {
+  if (v === null || v === undefined) return 'rgba(60,60,60,0.6)';
+  const t = Math.max(-1, Math.min(1, v / (maxAbs || 0.001)));
+  return t > 0
+    ? `rgba(236,91,91,${0.15 + 0.85 * t})`
+    : `rgba(0,214,74,${0.15 + 0.85 * Math.abs(t)})`;
+}
+function drawHeatmapCanvas(rowLabels, colLabels, matrix, colorFn) {
+  if (chart) { chart.destroy(); chart = null; }
+  const box = document.getElementById('chart-box');
+  const canvas = document.getElementById('main-chart');
+  const W = box.clientWidth  || 600;
+  const H = box.clientHeight || 400;
+  canvas.width  = W;
+  canvas.height = H;
+  const cx = canvas.getContext('2d');
+  cx.clearRect(0, 0, W, H);
+  const nR = rowLabels.length, nC = colLabels.length;
+  if (!nR || !nC) return;
+  const padL = 120, padT = 60, padB = 10, padR = 10;
+  const cellW = (W - padL - padR) / nC;
+  const cellH = (H - padT - padB) / nR;
+  cx.font = '11px monospace';
+  for (let i = 0; i < nR; i++) {
+    for (let j = 0; j < nC; j++) {
+      const v = Array.isArray(matrix[i]) ? matrix[i][j] : null;
+      const x = padL + j * cellW, y = padT + i * cellH;
+      cx.fillStyle = colorFn(v, 0.05);
+      cx.fillRect(x, y, cellW - 1, cellH - 1);
+      if (v !== null && v !== undefined) {
+        cx.fillStyle = Math.abs(v) > 0.5 ? '#111' : '#eee';
+        cx.textAlign = 'center';
+        cx.textBaseline = 'middle';
+        cx.fillText(v.toFixed(2), x + cellW / 2, y + cellH / 2);
+      }
+    }
+    cx.fillStyle = '#aaa';
+    cx.textAlign = 'right';
+    cx.textBaseline = 'middle';
+    cx.fillText(rowLabels[i], padL - 4, padT + i * cellH + cellH / 2);
+  }
+  for (let j = 0; j < nC; j++) {
+    cx.save();
+    cx.fillStyle = '#aaa';
+    cx.font = '11px monospace';
+    cx.textAlign = 'right';
+    cx.textBaseline = 'middle';
+    cx.translate(padL + j * cellW + cellW / 2, padT - 8);
+    cx.rotate(-Math.PI / 4);
+    cx.fillText(colLabels[j], 0, 0);
+    cx.restore();
+  }
+}
+
+// ── Chart defaults ─────────────────────────────────────────────────────────────
+const CDEFAULT = {
+  animation: false, responsive: true, maintainAspectRatio: false,
+  interaction: { mode: 'index', intersect: false },
+};
+const XTICK = { color: '#888', font: { family: 'monospace', size: 11 } };
+const YTICK = { color: '#888', font: { family: 'monospace', size: 11 } };
+const XGRID = { color: 'rgba(255,255,255,0.04)' };
+const YGRID = { color: 'rgba(255,255,255,0.04)' };
+function spinOn()  { document.getElementById('chart-spin').classList.add('on'); document.getElementById('chart-empty').style.display = 'none'; }
+function showErr(e){ document.getElementById('chart-empty').style.display = 'flex'; document.getElementById('empty-msg').textContent = `Error: ${e.message}`; }
+function mkChart(type, data, options, plugins) {
+  if (chart) { chart.destroy(); chart = null; }
+  const ctx2 = document.getElementById('main-chart').getContext('2d');
+  chart = new Chart(ctx2, { type, data, options: Object.assign({}, CDEFAULT, options), plugins: plugins || [] });
+  return chart;
+}
+function setTitle(t, s) {
+  document.getElementById('chart-title').textContent = t;
+  if (s) document.getElementById('chart-src').textContent = s;
+}
+function fmtBig(v) {
+  if (v == null) return '—';
+  if (Math.abs(v) >= 1e9) return (v/1e9).toFixed(1)+'B';
+  if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(0)+'M';
+  if (Math.abs(v) >= 1e3) return (v/1e3).toFixed(0)+'K';
+  return v.toFixed(0);
+}
+
+// ── Sector: Dominance ─────────────────────────────────────────────────────────
+async function fetchSectorDominance(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/sector-dominance?from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    const sectors = Object.keys(data);
+    if (!sectors.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data[sectors[0]].dates,
+      datasets: sectors.map(s => ({
+        label: s, data: data[s].values,
+        borderColor: data[s].color, backgroundColor: data[s].color + '88',
+        fill: true, pointRadius: 0, borderWidth: 1, tension: 0.1,
+      }))
+    }, {
+      scales: {
+        x: { ticks: XTICK, grid: XGRID },
+        y: { stacked: true, min: 0, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('Sector Market Cap Dominance (%)', 'Source: CoinGecko · mcap weighted');
+  } catch(e) { showErr(e); }
+}
+
+// ── Sector: Cross-Heatmap ─────────────────────────────────────────────────────
+async function fetchSectorXHeatmap(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/sector-xheatmap?from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    drawHeatmapCanvas(data.sectors, data.sectors, data.matrix, heatCorr);
+    setTitle('Cross-Sector Correlation Heatmap', 'Source: CoinGecko · 30d rolling Pearson');
+  } catch(e) { showErr(e); }
+}
+
+// ── Sector: Cumulative Return ─────────────────────────────────────────────────
+async function fetchSectorCumulative(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/sector-cumulative?from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    const entries = Object.entries(data).sort((a, b) => b[1].value - a[1].value);
+    mkChart('bar', {
+      labels: entries.map(e => e[0]),
+      datasets: [{ label: 'Cumulative Return', data: entries.map(e => e[1].value),
+        backgroundColor: entries.map(e => e[1].value >= 0 ? (e[1].color+'cc') : 'rgba(236,91,91,0.8)'),
+        borderWidth: 0 }]
+    }, {
+      scales: {
+        x: { ticks: XTICK, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v.toFixed(1)+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('Sector Cumulative Returns', 'Source: CoinGecko · equal-weighted');
+  } catch(e) { showErr(e); }
+}
+
+// ── Sector: Sharpe / Risk-Return ──────────────────────────────────────────────
+async function fetchSectorSharpe(to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/sector-sharpe?to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    const pts = Object.entries(data).map(([s, v]) => ({ label: s, x: v.x, y: v.y, color: v.color }));
+    mkChart('scatter', {
+      datasets: [{ data: pts.map(p => ({ x: p.x, y: p.y, label: p.label })),
+        backgroundColor: pts.map(p => p.color + 'cc'), pointRadius: 8, pointHoverRadius: 10 }]
+    }, {
+      scales: {
+        x: { title: { display: true, text: '30d Vol (%)', color: '#888' }, ticks: XTICK, grid: XGRID },
+        y: { title: { display: true, text: '30d Return (%)', color: '#888' }, ticks: YTICK, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    }, [{
+      id: 'sectorLabels',
+      afterDraw(ch) {
+        const c = ch.ctx; c.save(); c.font = '11px monospace'; c.textAlign = 'left';
+        ch.data.datasets[0].data.forEach((pt, i) => {
+          const el = ch.getDatasetMeta(0).data[i]; if (!el) return;
+          c.fillStyle = pts[i].color;
+          c.fillText(pt.label, el.x + 6, el.y - 4);
+        });
+        c.restore();
+      }
+    }]);
+    setTitle('Sector Risk vs Return (30d)', 'Source: CoinGecko · equal-weighted');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Bull Cycles ──────────────────────────────────────────────────────────
+async function fetchBtcBull() {
+  spinOn();
+  try {
+    const data = await fetch('/api/btc-bull?days=1000').then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    const labels = Object.keys(data);
+    if (!labels.length) throw new Error('no data');
+    const COLS = ['#F7931A', '#00D64A', '#4FC3F7'];
+    mkChart('line', {
+      datasets: labels.map((lbl, i) => ({
+        label: lbl,
+        data: data[lbl].days.map((d, j) => ({ x: d, y: data[lbl].values[j] })),
+        borderColor: COLS[i % COLS.length], backgroundColor: 'transparent',
+        pointRadius: 0, borderWidth: 2, tension: 0,
+      }))
+    }, {
+      scales: {
+        x: { type: 'linear', title: { display: true, text: 'Days from trough', color: '#888' }, ticks: XTICK, grid: XGRID },
+        y: { type: 'logarithmic', title: { display: true, text: 'Index (trough=100)', color: '#888' }, ticks: YTICK, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('BTC Bull Cycles — Indexed to Trough', 'Source: CoinGecko · log scale');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Realized Volatility ──────────────────────────────────────────────────
+async function fetchBtcRealvol(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-realvol?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: '30d Vol',  data: data.vol_30d,  borderColor: '#F7931A', backgroundColor: 'transparent', pointRadius: 0, borderWidth: 2, tension: 0 },
+        { label: '90d Vol',  data: data.vol_90d,  borderColor: '#4FC3F7', backgroundColor: 'transparent', pointRadius: 0, borderWidth: 2, tension: 0 },
+        { label: '180d Vol', data: data.vol_180d, borderColor: '#00D64A', backgroundColor: 'transparent', pointRadius: 0, borderWidth: 2, tension: 0 },
+      ]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { title: { display: true, text: 'Annualized Vol (%)', color: '#888' }, ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('BTC Realized Volatility (Annualized)', 'Source: CoinGecko · log-return std dev');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Drawdown from ATH ────────────────────────────────────────────────────
+async function fetchBtcDrawdownATH(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-drawdown?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{ label: 'Drawdown from ATH', data: data.values,
+        borderColor: '#EC5B5B', backgroundColor: 'rgba(236,91,91,0.15)',
+        fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0 }]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { max: 0, ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('BTC Drawdown from All-Time High', 'Source: CoinGecko · running ATH');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Gold Ratio ───────────────────────────────────────────────────────────
+async function fetchBtcGoldRatio(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-gold-ratio?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{ label: 'BTC/Gold', data: data.values,
+        borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.1)',
+        fill: true, pointRadius: 0, borderWidth: 2, tension: 0 }]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { type: 'logarithmic', ticks: YTICK, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('BTC / Gold Ratio', 'Source: CoinGecko + GLD ETF');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Dominance ────────────────────────────────────────────────────────────
+async function fetchBtcDominance(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-dominance?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{ label: 'BTC Dominance', data: data.values,
+        borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.1)',
+        fill: true, pointRadius: 0, borderWidth: 2, tension: 0 }]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v.toFixed(1)+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('BTC Market Cap Dominance', 'Source: CoinGecko · mcap ratio');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Funding Rate ─────────────────────────────────────────────────────────
+async function fetchBtcFunding(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-funding?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('bar', {
+      labels: data.dates,
+      datasets: [
+        { type: 'bar',  label: 'Funding Rate', data: data.values,
+          backgroundColor: data.values.map(v => (v||0) >= 0 ? 'rgba(247,147,26,0.55)' : 'rgba(0,214,74,0.55)'),
+          borderWidth: 0, order: 2 },
+        { type: 'line', label: '7d MA', data: data.ma7,
+          borderColor: '#fff', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, order: 1 },
+      ]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => (v*100).toFixed(3)+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('BTC Perpetual Funding Rate', 'Source: Binance · 8h avg per day');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Open Interest ────────────────────────────────────────────────────────
+async function fetchBtcOI(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-oi?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'Open Interest', data: data.oi_values,
+          borderColor: '#4FC3F7', backgroundColor: 'rgba(79,195,247,0.1)',
+          fill: true, pointRadius: 0, borderWidth: 2, tension: 0, yAxisID: 'y' },
+        { label: 'BTC Price', data: data.btc_prices,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { position: 'left',  ticks: { ...YTICK, color: '#4FC3F7', callback: v => fmtBig(v) }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, color: '#F7931A', callback: v => '$'+fmtBig(v) }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('BTC Open Interest', 'Source: Binance · USD notional');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Funding Rate Delta ───────────────────────────────────────────────────
+async function fetchBtcFundingDelta(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-funding-delta?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data — check derivatives feed');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: `${data.window||30}d Funding Δ (bps)`, data: data.funding_delta,
+          borderColor: '#4FC3F7', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 2, tension: 0, yAxisID: 'y' },
+        { label: `${data.window||30}d Price Δ (%)`, data: data.price_delta,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 2, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { position: 'left',
+              title: { display: true, text: 'Funding Δ (bps)', color: '#4FC3F7' },
+              ticks: { ...YTICK, color: '#4FC3F7', callback: v => v.toFixed(1)+'bp' },
+              grid: YGRID },
+        y2: { position: 'right',
+              title: { display: true, text: 'Price Δ (%)', color: '#F7931A' },
+              ticks: { ...YTICK, color: '#F7931A', callback: v => v.toFixed(1)+'%' },
+              grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle(`BTC Funding Rate Delta vs Price Return (${data.window||30}d rolling)`,
+             'Source: Binance · 8h funding avg · CoinGecko price');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: Altseason Index ──────────────────────────────────────────────────────
+async function fetchAltAltseason(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-altseason?from=${from}&to=${to}&window=30`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error(`no data [${data.reason||'empty_result'} from=${from} to=${to}]`);
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'Alts outperforming BTC (%)', data: data.values,
+          borderColor: '#4FC3F7', backgroundColor: 'rgba(79,195,247,0.15)',
+          fill: true, pointRadius: 0, borderWidth: 2, tension: 0.1 },
+        { label: 'BTC Dominance (%)', data: data.btc_dominance,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { min: 0, max: 100, ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID },
+        y2: { position: 'right', min: 0, max: 100, ticks: { ...YTICK, color: '#F7931A', callback: v => v.toFixed(0)+'%' }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('Altseason Index — Alts vs BTC (90d window)', 'Source: CoinGecko · top 50 ex-BTC');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: Beta vs BTC ──────────────────────────────────────────────────────────
+async function fetchAltBeta(to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-beta?to=${to}`).then(r=>r.json());
+    if (!data.points?.length) throw new Error('no data');
+    const pts = data.points;
+    mkChart('scatter', {
+      datasets: [{ data: pts.map(p => ({ x: p.beta, y: p.alpha, label: p.symbol })),
+        backgroundColor: pts.map(p => p.color_sector + 'cc'),
+        pointRadius: 5, pointHoverRadius: 7 }]
+    }, {
+      scales: {
+        x: { title: { display: true, text: 'Beta vs BTC', color: '#888' }, ticks: XTICK, grid: XGRID },
+        y: { title: { display: true, text: 'Alpha (annualized %)', color: '#888' }, ticks: { ...YTICK, callback: v => v.toFixed(0)+'%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.raw.label}  β=${ctx.raw.x.toFixed(2)}  α=${ctx.raw.y.toFixed(1)}%` } } }
+    });
+    setTitle('Alt Beta & Alpha vs BTC (60d)', 'Source: CoinGecko · OLS regression');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: ATH Drawdown ─────────────────────────────────────────────────────────
+async function fetchAltATHDrawdown() {
+  spinOn();
+  try {
+    const data = await fetch('/api/alt-ath-drawdown').then(r=>r.json());
+    if (!data.points?.length) throw new Error('no data');
+    const pts = data.points.slice(0, 30);
+    mkChart('bar', {
+      labels: pts.map(p => p.symbol),
+      datasets: [{ label: 'Drawdown from ATH', data: pts.map(p => p.drawdown_pct),
+        backgroundColor: 'rgba(236,91,91,0.7)', borderWidth: 0 }]
+    }, {
+      indexAxis: 'y',
+      scales: {
+        x: { max: 0, ticks: { ...XTICK, callback: v => v+'%' }, grid: XGRID },
+        y: { ticks: YTICK, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('Altcoin Drawdown from ATH (Top 30)', 'Source: CoinGecko · all-time high');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: Correlation Heatmap ──────────────────────────────────────────────────
+async function fetchAltHeatmap(symbols, from, to) {
+  spinOn();
+  try {
+    const syms = symbols.join(',');
+    const data = await fetch(`/api/alt-heatmap?symbols=${encodeURIComponent(syms)}&from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    drawHeatmapCanvas(data.symbols, data.symbols, data.matrix, heatCorr);
+    setTitle('Altcoin Correlation Heatmap (30d)', 'Source: CoinGecko · Pearson');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt: Funding Heatmap ──────────────────────────────────────────────────────
+async function fetchAltFundingHeatmap(symbols, from, to) {
+  spinOn();
+  try {
+    const syms = symbols.join(',');
+    const data = await fetch(`/api/alt-funding-heatmap?symbols=${encodeURIComponent(syms)}&from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    if (!data.symbols?.length) throw new Error('no data');
+    const maxAbs = Math.max(...data.symbols.flatMap(s => (data.matrix[s]||[]).filter(v=>v!=null).map(Math.abs)), 0.001);
+    const matrix = data.symbols.map(s => data.matrix[s] || []);
+    drawHeatmapCanvas(data.symbols, data.dates, matrix, (v) => heatFunding(v, maxAbs));
+    setTitle('Altcoin Funding Rate Heatmap', 'Source: Binance/Bybit · 8h avg');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: Correlation Matrix ─────────────────────────────────────────────────
+async function fetchMacroMatrix(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-matrix?from=${from}&to=${to}`).then(r=>r.json());
+    if (data.error) throw new Error(data.error);
+    drawHeatmapCanvas(data.macro_tickers, data.crypto_sectors, data.matrix, heatCorr);
+    setTitle('Macro vs Crypto Sector Correlation', 'Source: CoinGecko + Yahoo Finance · 30d');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: DXY vs BTC ─────────────────────────────────────────────────────────
+async function fetchMacroDxyBtc(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-dxy-btc?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'DXY', data: data.dxy,
+          borderColor: '#4FC3F7', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y' },
+        { label: 'BTC', data: data.btc,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+        { label: '30d Corr', data: data.correlation,
+          borderColor: '#EC5B5B', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 2, tension: 0.1, yAxisID: 'y3',
+          borderDash: [4, 3] },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { position: 'left',  ticks: { ...YTICK, color: '#4FC3F7' }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, color: '#F7931A', callback: v => '$'+fmtBig(v) }, grid: { display: false } },
+        y3: { display: false, min: -1, max: 1 },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('DXY vs BTC + 30d Rolling Correlation', 'Source: Yahoo Finance + CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: Risk-On/Off Score ──────────────────────────────────────────────────
+async function fetchMacroRisk(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-risk?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'Risk Score (0-100)', data: data.score,
+          borderColor: '#00D64A', backgroundColor: 'rgba(0,214,74,0.12)',
+          fill: true, pointRadius: 0, borderWidth: 2, tension: 0.1, yAxisID: 'y' },
+        { label: 'BTC Price', data: data.btc,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { min: 0, max: 100, position: 'left',  ticks: { ...YTICK, color: '#00D64A' }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, color: '#F7931A', callback: v => '$'+fmtBig(v) }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('Macro Risk-On/Off Score', 'Source: Yahoo Finance · VIX + DXY + HYG/LQD');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: Real Yields ────────────────────────────────────────────────────────
+async function fetchMacroRealYields(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-real-yields?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: '10Y Yield', data: data.yield_10y,
+          borderColor: '#4FC3F7', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y' },
+        { label: 'BTC Price', data: data.btc,
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          pointRadius: 0, borderWidth: 1.5, tension: 0, yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x:  { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y:  { position: 'left',  ticks: { ...YTICK, color: '#4FC3F7', callback: v => v.toFixed(2)+'%' }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, color: '#F7931A', callback: v => '$'+fmtBig(v) }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
+    });
+    setTitle('US 10Y Yield vs BTC Price', 'Source: Yahoo Finance (^TNX) + CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+// ── Macro: Stablecoin Supply ──────────────────────────────────────────────────
+async function fetchMacroStablecoin(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-stablecoin?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{ label: 'Stablecoin Market Cap', data: data.values,
+        borderColor: '#00D64A', backgroundColor: 'rgba(0,214,74,0.12)',
+        fill: true, pointRadius: 0, borderWidth: 2, tension: 0 }]
+    }, {
+      scales: {
+        x: { ticks: { ...XTICK, maxTicksLimit: 8 }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => '$'+fmtBig(v) }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } }
+    });
+    setTitle('Stablecoin Total Market Cap', 'Source: CoinGecko · USDT+USDC+DAI+…');
+  } catch(e) { showErr(e); }
+}
+
+async function boot() {
+  // Fetch DB latest date first so all date pickers anchor to real data
+  try {
+    const lr = await fetch('/api/latest-date');
+    const ld = await lr.json();
+    if (ld.latest) dbLatestDate = ld.latest;
+  } catch(e) { /* fall back to today */ }
+
+  const sr    = await fetch('/api/sectors');
+  allSectors  = await sr.json();
+  const ar    = await fetch('/api/assets?tab=individual');
+  const all   = await ar.json();
+  document.getElementById('db-count').textContent = `${all.length} assets`;
+  selectView('sector', 'sec-equal');
+}
+
+boot();
+</script>
+</body>
+</html>
