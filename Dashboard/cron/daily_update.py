@@ -584,18 +584,26 @@ def discover_exchange_symbols(reg_df: pd.DataFrame) -> tuple[dict, dict]:
     """Discover which registry assets have perp contracts on Binance/Bybit."""
     sym_to_cg = {row["symbol"].upper(): row["coingecko_id"] for _, row in reg_df.iterrows()}
 
-    # Binance
-    data = exch_get(f"{BINANCE_BASE}/fapi/v1/exchangeInfo")
-    binance_bases = {s["baseAsset"].upper() for s in data["symbols"] if s["quoteAsset"] == "USDT"}
-    binance_map = {sym_to_cg[b]: f"{b}USDT" for b in binance_bases if b in sym_to_cg}
-    print(f"  [Binance] {len(binance_map)} assets with USDT perps")
+    # Binance — may fail if IP is blocked (US cloud servers)
+    binance_map = {}
+    try:
+        data = exch_get(f"{BINANCE_BASE}/fapi/v1/exchangeInfo")
+        binance_bases = {s["baseAsset"].upper() for s in data["symbols"] if s["quoteAsset"] == "USDT"}
+        binance_map = {sym_to_cg[b]: f"{b}USDT" for b in binance_bases if b in sym_to_cg}
+        print(f"  [Binance] {len(binance_map)} assets with USDT perps")
+    except Exception as e:
+        print(f"  [Binance] SKIPPED — API blocked or unavailable: {e}")
 
     # Bybit
-    data = exch_get(f"{BYBIT_BASE}/v5/market/instruments-info", {"category": "linear", "limit": 1000})
-    bybit_bases = {s["baseCoin"].upper() for s in data["result"]["list"]
-                   if s["quoteCoin"] == "USDT" and s["status"] == "Trading"}
-    bybit_map = {sym_to_cg[b]: f"{b}USDT" for b in bybit_bases if b in sym_to_cg}
-    print(f"  [Bybit]   {len(bybit_map)} assets with USDT perps")
+    bybit_map = {}
+    try:
+        data = exch_get(f"{BYBIT_BASE}/v5/market/instruments-info", {"category": "linear", "limit": 1000})
+        bybit_bases = {s["baseCoin"].upper() for s in data["result"]["list"]
+                       if s["quoteCoin"] == "USDT" and s["status"] == "Trading"}
+        bybit_map = {sym_to_cg[b]: f"{b}USDT" for b in bybit_bases if b in sym_to_cg}
+        print(f"  [Bybit]   {len(bybit_map)} assets with USDT perps")
+    except Exception as e:
+        print(f"  [Bybit]   SKIPPED — API unavailable: {e}")
 
     return binance_map, bybit_map
 
