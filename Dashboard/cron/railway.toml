@@ -1,0 +1,5 @@
+[build]
+dockerfilePath = "Dockerfile.cron"
+
+[deploy]
+cronSchedule = "0 6 * * *"
