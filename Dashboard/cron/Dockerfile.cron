@@ -1,0 +1,10 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements-cron.txt .
+RUN pip install --no-cache-dir -r requirements-cron.txt
+
+COPY daily_update.py .
+
+CMD ["python", "daily_update.py"]
