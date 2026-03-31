@@ -1,0 +1,61 @@
+Formatting spec — apply to all matplotlib exhibits:
+Canvas & background
+
+Figure size: (12, 5), saved at 150 dpi
+Background: #FAFAFA across the entire figure and all panels — no white, no grey
+
+Axes & spines
+
+Show only left spine (Y axis) and bottom spine (X axis), both in #606663 (Charcoal), linewidth 0.8
+Hide bottom spine on panels stacked above another panel
+Hide right and top spines on all panels
+No gridlines on any axis — neither X nor Y
+Tick color: #606663 (Charcoal), length 3
+
+Typography
+
+Title: Saans, medium, 16px, #000000
+Subtitle / legend / axis labels: Saans, regular, 14px, #323935 (Graphite)
+Source line: Blender, 14px, 15% letter spacing, #606663 (Ash)
+X-axis tick labels: Blender font
+All other tick labels and labels: Saans font
+Font fallback if not installed: family="sans" (never "sans-serif")
+
+Legend
+
+Always positioned loc="upper right" on every panel
+No frame (framealpha=0, get_frame().set_visible(False))
+Label color: #323935 (Graphite), Saans font, 8px
+Use a _style_legend(leg) helper to apply these consistently
+
+Colors
+
+Single line: #00D64A (TradFi green) only
+Two or more lines: use palette in order — #00D64A, #2471CC, #746BE6, #DB33CB, #EC5B5B
+When using green/red semantics (positive/negative), use closest palette color: #00D64A for green, #EC5B5B for red — never introduce off-palette colors
+
+Source line
+
+Always include at bottom left: "Source: [data source]"
+Positioned at fig.text(0.01, -0.03, ...) so it sits below the chart
+
+Saving
+
+Save path: /home/jasperdemaere/Master_JDM/Exhibit_Library/[folder]/Exhibits/
+Filename: auto-derived from script name using Path(__file__).stem — never hardcoded
+Always plt.show() after saving
+
+Config block
+
+All user-adjustable parameters (tickers, labels, windows, lookback, etc.) in a clearly marked # ── CHANGE THESE ── block at the very top of the script
+Lookback as a plain float (e.g. 1.5, 2.5) — never a string like "3y"
+Nothing hardcoded inside functions — all tuneable values live in the config block
+
+Code structure
+
+Font loading via _find_font(name) scanning system fonts, fallback fm.FontProperties(family="sans")
+_apply_font(obj, font_prop, size, weight) helper used for all text objects
+_style_legend(leg) helper applying frame, font, and color to all legends
+style_ax(ax, bottom_spine=True) helper applying all spine/grid/tick formatting in one call
+trim_to_lookback(series) using pd.Timedelta(days=int(LOOKBACK * 365)) — never yfinance period strings for display trimming
+Fetch period = lookback days + buffer (max(window_1, window_2) + 30) so rolling windows are fully populated at the start of the visible range
