@@ -410,7 +410,6 @@ input[type=number] { width: 70px; }
   <button class="tab" data-tab="sector">Themes</button>
   <button class="tab" data-tab="bitcoin">Bitcoin</button>
   <button class="tab" data-tab="ethereum">Ethereum</button>
-  <button class="tab" data-tab="alt_market">Alt Market</button>
   <button class="tab" data-tab="altcoins">Altcoins</button>
   <button class="tab" data-tab="macro">Macro</button>
   <button class="tab" data-tab="crypto_market">Crypto Market</button>
@@ -579,54 +578,47 @@ const TABS = {
     label: "Ethereum",
     groups: [
       { label: "Moving Averages", children: [
-        { key:"eth-ma",       label:"Moving averages",       sub:"ETH price with 50d, 200d, 200-week MA overlaid. Log scale.", src:"CoinGecko Pro" },
-        { key:"eth-ma-gap",   label:"MA gap (50d vs 200d)",  sub:"The % difference between 50d and 200d MA. Golden/death cross proximity.", src:"CoinGecko Pro" },
-        { key:"eth-200d-dev", label:"200d MA deviation",     sub:"% deviation from 200d MA. Mean-reversion signal.", src:"CoinGecko Pro" },
+        { key:"eth-ma",       label:"50-day and 200-day moving average", sub:"ETH price with 50d, 200d, 200-week MA overlaid. Log scale.", src:"CoinGecko Pro" },
+        { key:"eth-ma-gap",   label:"50d and 200d gap",  sub:"The % difference between ETH 50d and 200d MA. Golden/death cross proximity.", src:"CoinGecko Pro" },
+        { key:"eth-200d-dev", label:"200-week deviation", sub:"% deviation from the 200-week MA. How extended is ETH from its long-term floor?", src:"CoinGecko Pro" },
       ]},
-      { label: "Risk", children: [
-        { key:"eth-drawdown", label:"Drawdown from ATH",     sub:"Continuous drawdown from ETH rolling all-time high.", src:"CoinGecko Pro" },
-        { key:"eth-mcap",     label:"ETH market cap",        sub:"ETH market cap over time with milestone levels ($50B, $100B, $200B, $500B).", src:"CoinGecko Pro" },
+      { label: "Market Cap", children: [
+        { key:"eth-mcap",     label:"Total market cap",   sub:"ETH market cap over time with milestone levels ($50B, $100B, $200B, $500B).", src:"CoinGecko Pro" },
+      ]},
+      { label: "Price performance", children: [
+        { key:"eth-drawdown", label:"Drawdown from ATH",  sub:"Continuous drawdown from ETH rolling all-time high.", src:"CoinGecko Pro" },
       ]},
       { label: "Relative", children: [
-        { key:"eth-btc-ratio", label:"ETH/BTC ratio",        sub:"The single best gauge of altcoin risk appetite. Falling = BTC dominance, rising = alt season.", src:"CoinGecko Pro" },
+        { key:"eth-btc-ratio", label:"ETH/BTC ratio",     sub:"The single best gauge of altcoin risk appetite. Falling = BTC dominance, rising = alt season.", src:"CoinGecko Pro" },
       ]},
     ]
   },
-  alt_market: {
-    label: "Alt Market",
-    groups: [
-      { label: "Market Cap", children: [
-        { key:"am-mcap",      label:"Altcoin mcap",          sub:"Total altcoin mcap (ex-BTC, ex-ETH) with 50d and 200d MA.", src:"CoinGecko Pro" },
-        { key:"am-mcap-gap",  label:"MA gap (50d vs 200d)",  sub:"Altcoin mcap 50d/200d MA gap — golden/death cross on the alt market.", src:"CoinGecko Pro" },
-        { key:"am-mcap-dev",  label:"200d MA deviation",     sub:"% deviation of alt mcap from its 200d MA.", src:"CoinGecko Pro" },
-      ]},
-      { label: "Dominance", children: [
-        { key:"am-dominance", label:"Dominance shares",      sub:"BTC, ETH, and altcoin share of total crypto mcap — 3 lines.", src:"CoinGecko Pro" },
-        { key:"am-rel-share", label:"Altcoin relative share", sub:"Altcoin mcap as % of total, vs BTC mcap, and vs ETH mcap — 3 lines.", src:"CoinGecko Pro" },
-        { key:"am-btc-ratio", label:"BTC/Altcoin mcap ratio", sub:"BTC mcap divided by altcoin mcap. Rising = BTC dominance, falling = alt rotation.", src:"CoinGecko Pro" },
-      ]},
-      { label: "Correlation", children: [
-        { key:"am-intracorr", label:"Altcoin intracorrelation", sub:"Rolling 30d avg pairwise correlation within top 10/25/50/100/250 alts. High = everything moves together.", src:"CoinGecko Pro" },
-      ]},
-    ]
-  },
+  
   altcoins: {
     label: "Altcoins",
     groups: [
-      { label: "Price Action", children: [
-        { key:"alt-price",            label:"Price comparison",        sub:"Altcoin price · Rebased to 100",                                                      src:"CoinGecko Pro — Wintermute OTC" },
+      { label: "Moving Averages", children: [
+        { key:"am-mcap",      label:"Altcoin mcap with MAs",  sub:"Total altcoin mcap (ex-BTC, ex-ETH) with 50d and 200d MA.", src:"CoinGecko Pro" },
+        { key:"am-mcap-gap",  label:"50d and 200d gap",       sub:"Altcoin mcap 50d/200d MA gap. Golden/death cross on the alt market.", src:"CoinGecko Pro" },
+        { key:"am-mcap-dev",  label:"200d MA deviation",      sub:"% deviation of alt mcap from its 200d MA.", src:"CoinGecko Pro" },
+      ]},
+      { label: "Dominance", children: [
+        { key:"am-dominance", label:"Dominance shares",       sub:"BTC, ETH, and altcoin share of total crypto mcap — 3 lines.", src:"CoinGecko Pro" },
+        { key:"am-rel-share", label:"Altcoin relative share", sub:"Altcoin mcap as % of total, vs BTC mcap, and vs ETH mcap — 3 lines.", src:"CoinGecko Pro" },
+        { key:"am-btc-ratio", label:"BTC/Altcoin mcap ratio", sub:"BTC mcap divided by altcoin mcap. Rising = BTC dominance, falling = alt rotation.", src:"CoinGecko Pro" },
       ]},
       { label: "Relative Performance", children: [
-        { key:"alt-scatter",          label:"Performance vs BTC",      sub:"Scatter · Y = % vs BTC · X = volatility vs BTC · period-adjusted",                   src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"alt-altseason",        label:"Altseason indicator",     sub:"Is it altseason? % of top-50 alts (ex-BTC) outperforming BTC over a rolling 90d window.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"alt-beta",             label:"Beta to BTC",             sub:"Which alts amplify BTC moves? Scatter: x=60d beta to BTC, y=60d alpha (annualized).", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-scatter",          label:"Performance vs BTC",      sub:"Scatter: Y = % vs BTC, X = volatility vs BTC, period-adjusted.", src:"CoinGecko Pro" },
+        { key:"alt-altseason",        label:"Altseason indicator",     sub:"Is it altseason? % of top-50 alts (ex-BTC) outperforming BTC over a rolling 90d window.", src:"CoinGecko Pro" },
+        { key:"alt-beta",             label:"Beta to BTC",             sub:"Which alts amplify BTC moves? Scatter: x=60d beta to BTC, y=60d alpha (annualized).", src:"CoinGecko Pro" },
       ]},
       { label: "Correlation", children: [
-        { key:"alt-heatmap",          label:"Correlation heatmap",     sub:"Which altcoins move together and which provide genuine diversification? Rolling 30d pairwise Pearson correlations.", src:"CoinGecko Pro — Rolling Pearson" },
+        { key:"alt-heatmap",          label:"Correlation heatmap",     sub:"Which altcoins move together? Rolling 30d pairwise Pearson correlations.", src:"CoinGecko Pro" },
+        { key:"am-intracorr", label:"Altcoin intracorrelation", sub:"Rolling 30d avg pairwise correlation within top 10/25/50/100/250 alts. High = everything moves together.", src:"CoinGecko Pro" },
       ]},
       { label: "Drawdown", children: [
-        { key:"alt-ath-drawdown",     label:"Distance from ATH",       sub:"How beaten-down is each alt? Current drawdown from all-time high, sorted worst-first.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"alt-drawdown-ts",     label:"Drawdown over time",      sub:"How has each alt drawdown from its running ATH evolved over time? Multi-line chart for top alts.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"alt-ath-drawdown",     label:"Distance from ATH",       sub:"How beaten-down is each alt? Current drawdown from all-time high, sorted worst-first.", src:"CoinGecko Pro" },
+        { key:"alt-drawdown-ts",      label:"Drawdown over time",      sub:"How has each alt drawdown from its running ATH evolved over time?", src:"CoinGecko Pro" },
       ]},
       { label: "Derivatives", children: [
         { key:"alt-funding-heatmap",  label:"Funding rate heatmap",    sub:"Where is the derivatives market most crowded across alts? Heatmap of funding rates by asset over time.", src:"CoinGecko Pro + Derivatives" },
@@ -819,8 +811,8 @@ function buildTree(tab) {
 // ── Select view ───────────────────────────────────────────────────────────────
 
 // Keys that should default to 'all' period when selected
-const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle']);
-const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01'};
+const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','eth-ma','eth-ma-gap','eth-200d-dev']);
+const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01'};
 
 async function selectView(tab, key) {
   let viewDef = null;
@@ -874,7 +866,7 @@ async function selectView(tab, key) {
   if (tab === 'sector') {
     allItems = allSectors;
   } else {
-    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab === 'crypto_market' ? 'majors' : tab === 'control_center' ? 'majors' : tab === 'ethereum' ? 'majors' : tab === 'alt_market' ? 'majors' : tab}`);
+    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab === 'crypto_market' ? 'majors' : tab === 'control_center' ? 'majors' : tab === 'ethereum' ? 'majors' : tab}`);
     allItems  = await res.json();
   }
 
@@ -3960,7 +3952,7 @@ async function fetchEthMA(from, to) {
     ]}, { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$'+(v>=1000?(v/1000).toFixed(0)+'k':v.toFixed(0)) }, grid: YGRID } },
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
-    setTitle('ETH Price — Moving Averages', 'Source: CoinGecko · log scale');
+    setTitle('ETH — 50-day and 200-day Moving Average', 'Source: CoinGecko · log scale');
   } catch(e) { showErr(e); }
 }
 
@@ -3972,7 +3964,7 @@ async function fetchEthMAGap(from, to) {
     mkChart('line', { labels: data.dates, datasets: [{ label: '50d/200d Gap (%)', data: data.gap, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.08)',below:'rgba(236,91,91,0.08)'} }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
-    setTitle('ETH 50d / 200d MA Gap', 'Source: CoinGecko');
+    setTitle('ETH — 50d and 200d Gap', 'Source: CoinGecko');
   } catch(e) { showErr(e); }
 }
 
@@ -3984,7 +3976,7 @@ async function fetchEth200dDev(from, to) {
     mkChart('line', { labels: data.dates, datasets: [{ label: '% Deviation', data: data.deviation, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.06)',below:'rgba(236,91,91,0.06)'} }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
-    setTitle('ETH Deviation from 200d MA', 'Source: CoinGecko');
+    setTitle('ETH — 200-Week MA Deviation', 'Source: CoinGecko');
   } catch(e) { showErr(e); }
 }
 

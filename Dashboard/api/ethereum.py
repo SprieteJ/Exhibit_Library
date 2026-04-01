@@ -100,11 +100,11 @@ def handle_eth_ma_gap(params):
 
 
 def handle_eth_200d_dev(params):
-    """ETH % deviation from 200d MA."""
+    """ETH % deviation from 200-week (1400d) MA."""
     date_from = params.get("from", ["2017-01-01"])[0]
     date_to   = params.get("to",   ["2099-01-01"])[0]
     try:
-        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=210)).strftime("%Y-%m-%d")
+        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=1410)).strftime("%Y-%m-%d")
     except:
         ext = "2015-01-01"
 
@@ -115,8 +115,8 @@ def handle_eth_200d_dev(params):
     if not prices:
         return {"dates": [], "deviation": []}
 
-    ma200 = _sma(prices, 200)
-    dev = [round((prices[i] / ma200[i] - 1) * 100, 2) if ma200[i] and ma200[i] > 0 else None
+    ma200w = _sma(prices, 1400)
+    dev = [round((prices[i] / ma200w[i] - 1) * 100, 2) if ma200w[i] and ma200w[i] > 0 else None
            for i in range(len(prices))]
 
     trimmed = [(d, v) for d, v in zip(dates, dev) if d >= date_from]
