@@ -1674,24 +1674,71 @@ async function fetchCurrent() {
 }
 
 // ── Save PNG ──────────────────────────────────────────────────────────────────
+// Preload logo for PNG export
+const _exportLogo = new Image();
+_exportLogo.crossOrigin = 'anonymous';
+_exportLogo.src = '/static/logo.png';
+
 document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
-  const W = 1800, H = 750;
+  const W = 2400, H = 1200;
+  const PAD = 60;
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const ctx = off.getContext('2d');
+
+  // Background
   ctx.fillStyle = darkMode ? '#0F1110' : '#FAFAFA';
   ctx.fillRect(0, 0, W, H);
-  ctx.drawImage(chart.canvas, 40, 20, W - 80, H - 80);
-  ctx.fillStyle = '#606663';
-  ctx.font = '500 16px DM Mono, monospace';
-  ctx.fillText(document.getElementById('chart-src').textContent, 40, H - 18);
+
+  // Logo (top-left)
+  const logoH = 28;
+  const logoW = _exportLogo.naturalWidth ? (logoH / _exportLogo.naturalHeight) * _exportLogo.naturalWidth : 160;
+  try { ctx.drawImage(_exportLogo, PAD, PAD - 4, logoW, logoH); } catch(e) {}
+
+  // Title (next to logo)
+  const title = document.getElementById('chart-title')?.textContent || '';
+  ctx.fillStyle = darkMode ? '#E8EAE8' : '#323935';
+  ctx.font = '600 24px DM Sans, Helvetica Neue, sans-serif';
+  ctx.fillText(title, PAD + logoW + 16, PAD + 18);
+
+  // Date range (top-right)
+  const fromEl = document.getElementById('rp-from');
+  const toEl = document.getElementById('rp-to');
+  const dateStr = (fromEl?.value && toEl?.value) ? fromEl.value + ' \u2014 ' + toEl.value : new Date().toISOString().split('T')[0];
+  ctx.fillStyle = darkMode ? '#888B88' : '#606663';
+  ctx.font = '400 18px DM Mono, Courier New, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(dateStr, W - PAD, PAD + 18);
+  ctx.textAlign = 'left';
+
+  // Chart area
+  const chartTop = PAD + 44;
+  const chartH = H - chartTop - 60;
+  ctx.drawImage(chart.canvas, PAD, chartTop, W - PAD * 2, chartH);
+
+  // Source (bottom-left)
+  ctx.fillStyle = darkMode ? '#606663' : '#888B88';
+  ctx.font = '400 16px DM Mono, Courier New, monospace';
+  const srcText = document.getElementById('chart-src')?.textContent || 'Wintermute OTC';
+  ctx.fillText(srcText, PAD, H - 22);
+
+  // Watermark (bottom-right)
+  ctx.textAlign = 'right';
+  ctx.fillStyle = darkMode ? '#2A2D2B' : '#E4E4E2';
+  ctx.font = '500 14px DM Sans, sans-serif';
+  ctx.fillText('wintermute.com', W - PAD, H - 22);
+  ctx.textAlign = 'left';
+
+  // Download
   const a = document.createElement('a');
-  a.download = `${activeView?.key}_${selected.join('_')}_${new Date().toISOString().split('T')[0]}.png`;
+  const vk = activeView?.key || 'chart';
+  const sel = selected?.join('_') || '';
+  const dt = new Date().toISOString().split('T')[0];
+  a.download = vk + '_' + sel + '_' + dt + '.png';
   a.href = off.toDataURL('image/png');
   a.click();
 });
-
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function showDataView() {
   selected = [];
