@@ -1683,6 +1683,24 @@ document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
   const W = 2400, H = 1200;
   const PAD = 60;
+
+  // Save original chart size
+  const origW = chart.canvas.style.width;
+  const origH = chart.canvas.style.height;
+  const origCW = chart.canvas.width;
+  const origCH = chart.canvas.height;
+
+  // Temporarily resize chart to export resolution (crisp rendering)
+  const chartAreaW = W - PAD * 2;
+  const chartAreaH = H - PAD - 44 - 60;
+  chart.canvas.width = chartAreaW;
+  chart.canvas.height = chartAreaH;
+  chart.canvas.style.width = chartAreaW + 'px';
+  chart.canvas.style.height = chartAreaH + 'px';
+  chart.resize();
+  chart.update('none');
+
+  // Create offscreen canvas
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const ctx = off.getContext('2d');
@@ -1699,35 +1717,34 @@ document.getElementById('btn-save').addEventListener('click', () => {
   // Title (next to logo)
   const title = document.getElementById('chart-title')?.textContent || '';
   ctx.fillStyle = darkMode ? '#E8EAE8' : '#323935';
-  ctx.font = '600 24px DM Sans, Helvetica Neue, sans-serif';
-  ctx.fillText(title, PAD + logoW + 16, PAD + 18);
+  ctx.font = '600 26px DM Sans, Helvetica Neue, sans-serif';
+  ctx.fillText(title, PAD + logoW + 16, PAD + 20);
 
   // Date range (top-right)
   const fromEl = document.getElementById('rp-from');
   const toEl = document.getElementById('rp-to');
   const dateStr = (fromEl?.value && toEl?.value) ? fromEl.value + ' \u2014 ' + toEl.value : new Date().toISOString().split('T')[0];
   ctx.fillStyle = darkMode ? '#888B88' : '#606663';
-  ctx.font = '400 18px DM Mono, Courier New, monospace';
+  ctx.font = '400 20px DM Mono, Courier New, monospace';
   ctx.textAlign = 'right';
-  ctx.fillText(dateStr, W - PAD, PAD + 18);
+  ctx.fillText(dateStr, W - PAD, PAD + 20);
   ctx.textAlign = 'left';
 
-  // Chart area
+  // Draw the hi-res chart (1:1 pixel copy, no stretching)
   const chartTop = PAD + 44;
-  const chartH = H - chartTop - 60;
-  ctx.drawImage(chart.canvas, PAD, chartTop, W - PAD * 2, chartH);
+  ctx.drawImage(chart.canvas, PAD, chartTop, chartAreaW, chartAreaH);
 
   // Source (bottom-left)
   ctx.fillStyle = darkMode ? '#606663' : '#888B88';
-  ctx.font = '400 16px DM Mono, Courier New, monospace';
+  ctx.font = '400 18px DM Mono, Courier New, monospace';
   const srcText = document.getElementById('chart-src')?.textContent || 'Wintermute OTC';
-  ctx.fillText(srcText, PAD, H - 22);
+  ctx.fillText(srcText, PAD, H - 20);
 
   // Watermark (bottom-right)
   ctx.textAlign = 'right';
   ctx.fillStyle = darkMode ? '#2A2D2B' : '#E4E4E2';
-  ctx.font = '500 14px DM Sans, sans-serif';
-  ctx.fillText('wintermute.com', W - PAD, H - 22);
+  ctx.font = '500 16px DM Sans, sans-serif';
+  ctx.fillText('wintermute.com', W - PAD, H - 20);
   ctx.textAlign = 'left';
 
   // Download
@@ -1738,6 +1755,14 @@ document.getElementById('btn-save').addEventListener('click', () => {
   a.download = vk + '_' + sel + '_' + dt + '.png';
   a.href = off.toDataURL('image/png');
   a.click();
+
+  // Restore original chart size
+  chart.canvas.width = origCW;
+  chart.canvas.height = origCH;
+  chart.canvas.style.width = origW;
+  chart.canvas.style.height = origH;
+  chart.resize();
+  chart.update('none');
 });
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function showDataView() {
