@@ -113,7 +113,7 @@ def _signal_ma_cross(dates, prices):
 
     return {"id": "ma-cross", "name": "50d / 200d MA Cross",
             "chart_name": "MA Gap", "chart_tab": "bitcoin", "chart_key": "btc-ma-gap",
-            "group": "Moving Averages", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Moving Averages", "status": status, "trend": trend,
             "detail": f"50d MA {abs(gap):.1f}% {pos} 200d MA" + (" · crossed recently" if recent_cross else ""),
             "context": "Golden cross = bullish trend confirmation. Death cross = sustained weakness. The gap velocity matters more than the level."}
 
@@ -144,7 +144,7 @@ def _signal_price_vs_200d(dates, prices):
 
     return {"id": "price-200d", "name": "Price vs 200d MA",
             "chart_name": "Moving Averages", "chart_tab": "bitcoin", "chart_key": "btc-ma",
-            "group": "Moving Averages", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Moving Averages", "status": status, "trend": trend,
             "detail": f"BTC {abs(dev):.1f}% {pos} 200d MA",
             "context": "Price crossing the 200d MA is the most widely followed trend signal. Sustained breaks above/below shift the macro regime."}
 
@@ -166,7 +166,7 @@ def _signal_200d_deviation(dates, prices):
 
     return {"id": "200d-deviation", "name": "200d MA Deviation",
             "chart_name": "200d MA Deviation", "chart_tab": "bitcoin", "chart_key": "btc-200d-dev",
-            "group": "Moving Averages", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Moving Averages", "status": status, "trend": trend,
             "detail": f"{dev:+.1f}% from 200d MA",
             "context": ">50% historically marks blow-off tops. <-30% marks capitulation lows. Mean-reversion is the dominant regime."}
 
@@ -188,7 +188,7 @@ def _signal_200w_floor(dates, prices):
 
     return {"id": "200w-floor", "name": "200-Week MA Floor",
             "chart_name": "200-Week MA Floor", "chart_tab": "bitcoin", "chart_key": "btc-200w-floor",
-            "group": "Moving Averages", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Moving Averages", "status": status, "trend": trend,
             "detail": f"BTC at {mult:.2f}x the 200-week MA",
             "context": "BTC has never sustained a close below the 200-week MA. Touching it = generational buy signal. >5x = overheated."}
 
@@ -219,7 +219,7 @@ def _signal_pi_cycle(dates, prices):
 
     return {"id": "pi-cycle", "name": "Pi Cycle Top",
             "chart_name": "Pi Cycle Top", "chart_tab": "bitcoin", "chart_key": "btc-pi-cycle",
-            "group": "Cycle Indicators", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Cycle Indicators", "status": status, "trend": trend,
             "detail": f"111d MA {abs(gap):.1f}% {'above' if gap > 0 else 'below'} 2×350d MA",
             "context": "When the 111d MA crosses above 2×350d MA, it has called every BTC cycle top within 3 days. Data back to 2013."}
 
@@ -239,7 +239,7 @@ def _signal_drawdown(dates, prices):
 
     return {"id": "drawdown-ath", "name": "Drawdown from ATH",
             "chart_name": "Drawdown from ATH", "chart_tab": "bitcoin", "chart_key": "btc-drawdown",
-            "group": "Risk", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Risk", "status": status, "trend": trend,
             "detail": f"{dd:.1f}% from all-time high",
             "context": "Near ATH = nothing to watch. >20% historically marks bear territory. >50% = deep capitulation zone."}
 
@@ -270,7 +270,7 @@ def _signal_realvol(dates, prices):
 
     return {"id": "realvol-30d", "name": "30d Realized Volatility",
             "chart_name": "Realized Volatility", "chart_tab": "bitcoin", "chart_key": "btc-realvol",
-            "group": "Volatility", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Volatility", "status": status, "trend": trend,
             "detail": f"{vol_30:.1f}% annualized",
             "context": "Unusually low vol (<30%) often precedes explosive moves. >80% = crisis-level volatility, expect mean reversion."}
 
@@ -299,7 +299,7 @@ def _signal_dvol(cur):
 
     return {"id": "dvol", "name": "DVOL (Implied Vol)",
             "chart_name": "—", "chart_tab": None, "chart_key": None,
-            "group": "Volatility", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Volatility", "status": status, "trend": trend,
             "detail": f"DVOL: {current:.1f}",
             "context": "30-day forward implied vol from options. >80 = market pricing a major move. Crossing 60 up/down marks regime shifts."}
 
@@ -330,7 +330,7 @@ def _signal_rv_iv(cur):
 
     return {"id": "rv-iv", "name": "IV-RV Spread",
             "chart_name": "RV vs IV", "chart_tab": "bitcoin", "chart_key": "btc-rv-iv",
-            "group": "Volatility", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Volatility", "status": status, "trend": trend,
             "detail": f"DVOL {dvol_now:.1f} vs RV30 {rv30:.1f} (spread: {spread:+.1f})",
             "context": "Positive spread = market expects more vol than realized. Negative = complacency or vol already being realized."}
 
@@ -362,7 +362,7 @@ def _signal_funding(cur):
 
     return {"id": "funding", "name": "Funding Rate",
             "chart_name": "Funding Rate", "chart_tab": "bitcoin", "chart_key": "btc-funding",
-            "group": "Derivatives", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Derivatives", "status": status, "trend": trend,
             "detail": f"Avg daily: {current*100:.4f}% ({ann:.1f}% ann.)",
             "context": "Sign flip = positioning reversal. Extreme positive = crowded longs about to get flushed. Negative = shorts paying longs."}
 
@@ -395,7 +395,7 @@ def _signal_dominance(cur):
 
     return {"id": "btc-dominance", "name": "BTC Dominance",
             "chart_name": "BTC Market Dominance", "chart_tab": "bitcoin", "chart_key": "btc-dominance",
-            "group": "Market Structure", "status": status, "trend": trend,
+            "category": "Bitcoin", "group": "Market Structure", "status": status, "trend": trend,
             "detail": f"{current:.1f}% (30d Δ {delta_30d:+.1f}pp)",
             "context": "Rising dominance = risk-off rotation into BTC. Falling = capital flowing to alts (altseason conditions)."}
 
@@ -424,7 +424,7 @@ def _signal_btc_mcap(cur):
 
     return {"id": "btc-mcap", "name": "BTC Market Cap",
             "chart_name": "BTC Market Cap", "chart_tab": "bitcoin", "chart_key": "btc-mcap",
-            "group": "Market Structure", "status": status, "trend": "flat",
+            "category": "Bitcoin", "group": "Market Structure", "status": status, "trend": "flat",
             "detail": fmt + (f" · {abs(nearest[1]):.1f}% {'above' if nearest[1] > 0 else 'below'} {nearest[0]}" if nearest else ""),
             "context": "Round-number milestones ($1T, $2T) act as psychological levels. Breaks above attract institutional attention and flows."}
 
@@ -577,7 +577,7 @@ def _signal_eth_ma_cross(dates, prices):
 
     return {"id": "eth-ma-cross", "name": "ETH 50d/200d Cross",
             "chart_name": "ETH MA Gap", "chart_tab": "ethereum", "chart_key": "eth-ma-gap",
-            "group": "Ethereum", "status": status, "trend": trend,
+            "category": "Ethereum", "category": "Bitcoin", "group": "Moving Averages", "status": status, "trend": trend,
             "detail": f"50d MA {abs(gap):.1f}% {'above' if gap > 0 else 'below'} 200d MA",
             "context": "Same logic as BTC cross but ETH often leads or lags BTC by days/weeks. Divergence between the two is informative."}
 
@@ -599,7 +599,7 @@ def _signal_eth_200d_dev(dates, prices):
 
     return {"id": "eth-200d-dev", "name": "ETH Deviation 200d MA",
             "chart_name": "ETH 200d Deviation", "chart_tab": "ethereum", "chart_key": "eth-200d-dev",
-            "group": "Ethereum", "status": status, "trend": trend,
+            "category": "Ethereum", "category": "Bitcoin", "group": "Moving Averages", "status": status, "trend": trend,
             "detail": f"{dev:+.1f}% from 200d MA",
             "context": "ETH often overshoots BTC in both directions. Extreme deviation + divergence from BTC = potential mean reversion trade."}
 
@@ -619,7 +619,7 @@ def _signal_eth_drawdown(dates, prices):
 
     return {"id": "eth-drawdown", "name": "ETH Drawdown from ATH",
             "chart_name": "ETH Drawdown", "chart_tab": "ethereum", "chart_key": "eth-drawdown",
-            "group": "Ethereum", "status": status, "trend": trend,
+            "category": "Ethereum", "group": "Price Performance", "status": status, "trend": trend,
             "detail": f"{dd:.1f}% from ATH",
             "context": "ETH drawdowns are typically deeper than BTC. >30% while BTC <15% signals relative ETH weakness."}
 
@@ -648,7 +648,7 @@ def _signal_eth_btc_ratio(cur):
 
     return {"id": "eth-btc-ratio", "name": "ETH/BTC Ratio",
             "chart_name": "ETH/BTC Ratio", "chart_tab": "ethereum", "chart_key": "eth-btc-ratio",
-            "group": "Ethereum", "status": status, "trend": trend,
+            "category": "Ethereum", "group": "Relative", "status": status, "trend": trend,
             "detail": f"{current:.5f} (30d Δ {delta_30d:+.1f}%)",
             "context": "The ETH/BTC ratio is the single best gauge of altcoin risk appetite. Falling ratio = BTC dominance rising, risk-off."}
 
@@ -698,8 +698,8 @@ def _signal_alt_mcap_cross(cur):
         trend = "down" if d > 0.3 else ("up" if d < -0.3 else "flat")
 
     return {"id": "alt-mcap-cross", "name": "Altcoin Mcap 50d/200d Cross",
-            "chart_name": "Altcoin Mcap", "chart_tab": "alt_market", "chart_key": "am-mcap",
-            "group": "Altcoins", "status": status, "trend": trend,
+            "chart_name": "Altcoin Mcap", "chart_tab": "altcoins", "chart_key": "am-mcap",
+            "category": "Altcoins", "category": "Bitcoin", "group": "Moving Averages", "status": status, "trend": trend,
             "detail": f"50d MA {abs(gap):.1f}% {'above' if gap > 0 else 'below'} 200d MA",
             "context": "Alt mcap golden cross = capital flowing into alts. Death cross = sustained outflow back to BTC or fiat."}
 
@@ -735,8 +735,8 @@ def _signal_alt_mcap_dev(cur):
     trend = "up" if dev_prev and dev > dev_prev + 1 else ("down" if dev_prev and dev < dev_prev - 1 else "flat")
 
     return {"id": "alt-mcap-dev", "name": "Altcoin Deviation 200d MA",
-            "chart_name": "Altcoin Deviation", "chart_tab": "alt_market", "chart_key": "am-mcap-dev",
-            "group": "Altcoins", "status": status, "trend": trend,
+            "chart_name": "Altcoin Deviation", "chart_tab": "altcoins", "chart_key": "am-mcap-dev",
+            "category": "Altcoins", "category": "Bitcoin", "group": "Moving Averages", "status": status, "trend": trend,
             "detail": f"{dev:+.1f}% from 200d MA",
             "context": "Alt mcap deviation >50% = altseason euphoria. <-30% = max pain, capitulation territory. Mean reversion dominates."}
 
@@ -771,8 +771,8 @@ def _signal_alt_share(cur):
     trend = "up" if current > prev_7d + 0.3 else ("down" if current < prev_7d - 0.3 else "flat")
 
     return {"id": "alt-share", "name": "Altcoin Share of Total",
-            "chart_name": "Dominance Chart", "chart_tab": "alt_market", "chart_key": "am-dominance",
-            "group": "Altcoins", "status": status, "trend": trend,
+            "chart_name": "Dominance Chart", "chart_tab": "altcoins", "chart_key": "am-dominance",
+            "category": "Altcoins", "category": "Bitcoin", "group": "Market Structure", "status": status, "trend": trend,
             "detail": f"{current:.1f}% (30d Δ {delta_30d:+.1f}pp)",
             "context": "Rising alt share = capital rotating into risk. Combined with ETH/BTC ratio rising = full altseason. Falling = flight to BTC quality."}
 
