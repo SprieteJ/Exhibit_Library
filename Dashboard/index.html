@@ -540,36 +540,38 @@ const TABS = {
   bitcoin: {
     label: "Bitcoin",
     groups: [
-      { label: "Cycle analysis", children: [
-        { key:"btc-epochs",   label:"Halving epochs",       sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5",            src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-cycles",   label:"Bear market cycles",   sub:"BTC indexed to peak (peak = 100) · Days since peak",                    src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-bull",     label:"Bull market cycles",   sub:"How does the current rally compare to prior bull runs? BTC indexed to cycle trough (=100), days since trough.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Rolling performance", children: [
-        { key:"btc-rolling",  label:"Rolling return",       sub:"BTC N-day rolling return (%) · Green = positive · Red = negative",      src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-realvol",  label:"Realized volatility",  sub:"Is BTC volatility expanding or contracting? 30d, 90d, and 180d rolling annualized vol plotted together.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-drawdown", label:"Drawdown from ATH",    sub:"How far is BTC from its all-time high? Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
       { label: "Moving Averages", children: [
         { key:"btc-ma",       label:"50-day and 200-day moving average",    sub:"BTC price with 50d and 200d moving averages overlaid. Log scale.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-ma-gap",   label:"50d and 200d gap",    sub:"The % difference between 50d and 200d MA over time. Positive = golden cross territory. Velocity matters most.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-200w-floor", label:"200-week moving average", sub:"BTC price vs 200-week (1400d) MA. Historically the ultimate macro floor — BTC has never closed below it.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-200d-dev", label:"200-week deviation",  sub:"% deviation from the 200-week MA. How extended is BTC from its long-term floor?", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-pi-cycle", label:"Pi Cycle Top",       sub:"111d MA vs 2×350d MA. Has called every BTC cycle top within 3 days historically.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-mcap",     label:"BTC market cap",     sub:"BTC market cap over time with key milestones ($100B, $500B, $1T, $2T) marked.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-pi-cycle", label:"Pi cycle top",       sub:"111d MA vs 2×350d MA. Has called every BTC cycle top within 3 days historically.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Market Cap", children: [
+        { key:"btc-mcap",     label:"Total market cap",     sub:"BTC market cap over time with key milestones ($100B, $500B, $1T, $2T) marked.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-dominance", label:"Market dominance (%)", sub:"Is capital flowing into or out of BTC relative to all crypto? BTC mcap as % of total crypto mcap.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
+      { label: "Volatility", children: [
+        { key:"btc-realvol",  label:"Realised volatility",  sub:"Is BTC volatility expanding or contracting? 30d, 90d, and 180d rolling annualized vol plotted together.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-rv-iv",    label:"RV vs IV (DVOL)",    sub:"30d realized vol vs Deribit DVOL. When DVOL > RV = market pricing risk. RV > DVOL = complacency.", src:"CoinGecko Pro + Deribit" },
       ]},
-      { label: "Bitcoin vs Gold", children: [
-        { key:"btc-gold",       label:"Bitcoin vs Gold",    sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)",            src:"CoinGecko Pro + yfinance" },
-        { key:"btc-gold-ratio", label:"BTC/Gold ratio",     sub:"Is BTC gaining or losing ground against gold? BTC price divided by gold price.", src:"CoinGecko Pro + yfinance" },
+      { label: "Price performance", children: [
+        { key:"btc-rolling",  label:"Rolling return",       sub:"BTC N-day rolling return (%) · Green = positive · Red = negative", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-drawdown", label:"Drawdown from ATH",    sub:"How far is BTC from its all-time high? Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
-      { label: "Dominance", children: [
-        { key:"btc-dominance", label:"BTC market dominance", sub:"Is capital flowing into or out of BTC relative to all crypto? BTC mcap as % of total crypto mcap.", src:"CoinGecko Pro — Wintermute OTC" },
+      { label: "Bitcoin vs Gold", children: [
+        { key:"btc-gold",       label:"Bitcoin vs Gold",    sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)", src:"CoinGecko Pro + yfinance" },
+        { key:"btc-gold-ratio", label:"BTC/Gold ratio",     sub:"Is BTC gaining or losing ground against gold? BTC price divided by gold price.", src:"CoinGecko Pro + yfinance" },
       ]},
       { label: "Derivatives", children: [
         { key:"btc-funding",       label:"Funding rate",       sub:"Is the futures market crowded long or short? BTC perpetual 8h funding rate, bar chart.", src:"CoinGecko Pro + Derivatives" },
         { key:"btc-oi",            label:"Open interest",      sub:"How much leverage is in the BTC market? Total BTC OI in USD with price overlay.", src:"CoinGecko Pro + Derivatives" },
         { key:"btc-funding-delta", label:"Funding rate delta", sub:"30d rolling change in BTC funding rate (bps) vs 30d rolling BTC price return (%). Spots regime shifts in sentiment.", src:"CoinGecko Pro + Derivatives" },
+      ]},
+      { label: "Cycle analysis", children: [
+        { key:"btc-epochs",   label:"Halving epochs",       sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-cycles",   label:"Bear market cycles",   sub:"BTC indexed to peak (peak = 100) · Days since peak", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-bull",     label:"Bull market cycles",   sub:"How does the current rally compare to prior bull runs? BTC indexed to cycle trough (=100), days since trough.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
     ]
   },
@@ -817,7 +819,8 @@ function buildTree(tab) {
 // ── Select view ───────────────────────────────────────────────────────────────
 
 // Keys that should default to 'all' period when selected
-const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev']);
+const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle']);
+const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01'};
 
 async function selectView(tab, key) {
   let viewDef = null;
@@ -889,7 +892,7 @@ async function selectView(tab, key) {
     document.getElementById('empty-msg').textContent = 'Loading…';
     if (ALL_PERIOD_KEYS.has(key)) {
       const fromEl = document.getElementById('rp-from');
-      if (fromEl) fromEl.value = '2013-01-01';
+      if (fromEl) fromEl.value = CUSTOM_START_DATE[key] || '2013-01-01';
     }
     setTimeout(fetchCurrent, 100);
   }
@@ -4221,7 +4224,7 @@ async function fetchBtcPiCycle(from, to) {
       },
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
     });
-    setTitle('Pi Cycle Top Indicator', 'Source: CoinGecko · 111d MA crossing 2×350d MA = cycle top');
+    setTitle('BTC — Pi Cycle Top', 'Source: CoinGecko · 111d MA crossing 2×350d MA = cycle top');
   } catch(e) { showErr(e); }
 }
 
