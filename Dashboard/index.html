@@ -1521,7 +1521,16 @@ async function fetchCurrent() {
       case 'btc-200w-floor':  await fetchBtc200wFloor(from, to); break;
       case 'btc-200d-dev':    await fetchBtc200dDev(from, to); break;
       case 'btc-pi-cycle':    await fetchBtcPiCycle(from, to); break;
-      case 'btc-mcap':        await fetchBtcMcap(from, to); break;
+      case 'btc-50d-infl':   '🟢 50d MA just changed direction (crossed zero slope in last 7d)\n🟡 Slope near zero — flattening\n⬚ Clear trend, no inflection',
+      'btc-200d-infl':  '🟢 200d MA just changed direction\n🟡 Slope near zero\n⬚ Clear trend',
+      'btc-gap-infl':   '🟢 MA gap direction just reversed\n🟡 Gap slope near zero\n⬚ Gap trending clearly',
+      'eth-50d-infl':   '🟢 ETH 50d MA just turned\n🟡 Flattening\n⬚ Clear trend',
+      'eth-200d-infl':  '🟢 ETH 200d MA just turned\n🟡 Flattening\n⬚ Clear trend',
+      'eth-gap-infl':   '🟢 ETH gap direction reversed\n🟡 Near zero\n⬚ Trending',
+      'alt-50d-infl':   '🟢 Alt mcap 50d MA just turned\n🟡 Flattening\n⬚ Clear trend',
+      'alt-200d-infl':  '🟢 Alt mcap 200d MA just turned\n🟡 Flattening\n⬚ Clear trend',
+      'alt-gap-infl':   '🟢 Alt gap direction reversed\n🟡 Near zero\n⬚ Trending',
+      'btc-mcap':        await fetchBtcMcap(from, to); break;
       case 'btc-rv-iv':       await fetchBtcRvIv(from, to); break;
       case 'cm-total-mcap':   await fetchTotalMcap(from, to); break;
       case 'alt-altseason':  await fetchAltAltseason(from, to); break;
@@ -3722,6 +3731,15 @@ async function fetchControlCenter(mode) {
       'alt-mcap-cross': '🟢 Within 3% of crossing or crossed recently\n🟡 Gap < 10%\n⬚ Gap > 10%',
       'alt-mcap-dev':   '🟢 Within ±5%\n🟡 15-30% below or 30-50% above\n🔴 >60% above or >30% below',
       'alt-share':      '🟢 30d change > ±5pp\n🟡 30d change > ±2pp\n⬚ Stable',
+      'btc-50d-infl':   '🟢 50d MA just changed direction (crossed zero slope in last 7d)\n🟡 Slope near zero — flattening\n⬚ Clear trend, no inflection',
+      'btc-200d-infl':  '🟢 200d MA just changed direction\n🟡 Slope near zero\n⬚ Clear trend',
+      'btc-gap-infl':   '🟢 MA gap direction just reversed\n🟡 Gap slope near zero\n⬚ Gap trending clearly',
+      'eth-50d-infl':   '🟢 ETH 50d MA just turned\n🟡 Flattening\n⬚ Clear trend',
+      'eth-200d-infl':  '🟢 ETH 200d MA just turned\n🟡 Flattening\n⬚ Clear trend',
+      'eth-gap-infl':   '🟢 ETH gap direction reversed\n🟡 Near zero\n⬚ Trending',
+      'alt-50d-infl':   '🟢 Alt mcap 50d MA just turned\n🟡 Flattening\n⬚ Clear trend',
+      'alt-200d-infl':  '🟢 Alt mcap 200d MA just turned\n🟡 Flattening\n⬚ Clear trend',
+      'alt-gap-infl':   '🟢 Alt gap direction reversed\n🟡 Near zero\n⬚ Trending',
       'btc-mcap':       '🟢 Within 3% of a milestone ($1T, $2T)\n🟡 Within 10%\n⬚ No milestone nearby',
     };
 

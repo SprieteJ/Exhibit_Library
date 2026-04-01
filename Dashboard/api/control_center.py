@@ -13,6 +13,69 @@ def _sma(prices, window):
             for i in range(len(prices))]
 
 
+def _slope(series, window=5):
+    result = [None] * len(series)
+    for i in range(window, len(series)):
+        if series[i] is not None and series[i - window] is not None and series[i - window] != 0:
+            result[i] = round((series[i] / series[i - window] - 1) * 100, 4)
+    return result
+
+
+def _recent_inflection(slope_series, lookback=7):
+    """Check if slope crossed zero in the last N points. Returns (crossed, direction)."""
+    for i in range(-1, max(-lookback - 1, -len(slope_series)), -1):
+        idx = len(slope_series) + i
+        if idx < 1: continue
+        s_now = slope_series[idx]
+        s_prev = slope_series[idx - 1]
+        if s_now is not None and s_prev is not None:
+            if s_prev < 0 and s_now >= 0:
+                return True, "up"
+            if s_prev > 0 and s_now <= 0:
+                return True, "down"
+    return False, None
+
+
+def _ma_inflection_signal(name, ma_series, chart_name, chart_tab, chart_key, group, id_prefix, context, ma_label="MA"):
+    """Generic inflection signal builder for any MA series."""
+    if not ma_series or len(ma_series) < 10:
+        return None
+    sl = _slope(ma_series)
+    current_slope = next((s for s in reversed(sl) if s is not None), None)
+    if current_slope is None:
+        return None
+
+    crossed, direction = _recent_inflection(sl)
+
+    if crossed:
+        status = "green"
+    elif current_slope is not None and abs(current_slope) < 0.3:
+        status = "yellow"  # flattening
+    else:
+        status = "grey"
+
+    # Trend = which way is the MA moving
+    trend = "up" if current_slope and current_slope > 0.1 else ("down" if current_slope and current_slope < -0.1 else "flat")
+
+    direction_word = ""
+    if crossed:
+        direction_word = f" · just turned {'up' if direction == 'up' else 'down'}"
+    slope_word = "rising" if current_slope and current_slope > 0 else ("falling" if current_slope and current_slope < 0 else "flat")
+
+    return {
+        "id": id_prefix,
+        "name": name,
+        "chart_name": chart_name,
+        "chart_tab": chart_tab,
+        "chart_key": chart_key,
+        "group": group,
+        "status": status,
+        "trend": trend,
+        "detail": f"{ma_label} {slope_word} ({current_slope:+.2f}%/5d){direction_word}",
+        "context": context,
+    }
+
+
 def _fetch_btc_prices(cur, days_back=1500):
     dt_from = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
     cur.execute("""
@@ -381,6 +444,21 @@ def handle_control_center(params):
             if s: signals.append(s)
         except: pass
 
+    # BTC MA inflection signals
+    if len(prices) >= 200:
+        btc_ma50  = _sma(prices, 50)
+        btc_ma200 = _sma(prices, 200)
+        btc_gap   = [(btc_ma50[i] / btc_ma200[i] - 1) * 100 if btc_ma50[i] and btc_ma200[i] and btc_ma200[i] > 0 else None for i in range(len(prices))]
+        for s in [
+            _ma_inflection_signal("BTC 50d MA Inflection", btc_ma50, "MA Gap", "bitcoin", "btc-ma-gap", "Moving Averages", "btc-50d-infl",
+                "Short-term momentum shift. 50d turning up from down = first sign of trend change. Turning down = momentum fading.", "50d MA"),
+            _ma_inflection_signal("BTC 200d MA Inflection", btc_ma200, "MA Gap", "bitcoin", "btc-ma-gap", "Moving Averages", "btc-200d-infl",
+                "Long-term trend reversal. The 200d is the slowest signal — when it turns, it matters. Institutions watch this.", "200d MA"),
+            _ma_inflection_signal("BTC MA Gap Inflection", btc_gap, "MA Gap", "bitcoin", "btc-ma-gap", "Moving Averages", "btc-gap-infl",
+                "Gap widening after narrowing = trend re-accelerating. Narrowing after widening = momentum fading, cross risk rising.", "Gap"),
+        ]:
+            if s: signals.append(s)
+
     # BTC DB-based signals
     for fn in [_signal_dvol, _signal_rv_iv, _signal_funding, _signal_dominance, _signal_btc_mcap]:
         try:
@@ -400,6 +478,21 @@ def handle_control_center(params):
             s = _signal_eth_btc_ratio(cur)
             if s: signals.append(s)
         except: pass
+
+        # ETH MA inflection signals
+        if len(eth_prices) >= 200:
+            eth_ma50  = _sma(eth_prices, 50)
+            eth_ma200 = _sma(eth_prices, 200)
+            eth_gap   = [(eth_ma50[i] / eth_ma200[i] - 1) * 100 if eth_ma50[i] and eth_ma200[i] and eth_ma200[i] > 0 else None for i in range(len(eth_prices))]
+            for s in [
+                _ma_inflection_signal("ETH 50d MA Inflection", eth_ma50, "ETH MA Gap", "ethereum", "eth-ma-gap", "Ethereum", "eth-50d-infl",
+                    "ETH 50d turning often leads or lags BTC by days. Divergence between BTC and ETH inflection timing is informative.", "50d MA"),
+                _ma_inflection_signal("ETH 200d MA Inflection", eth_ma200, "ETH MA Gap", "ethereum", "eth-ma-gap", "Ethereum", "eth-200d-infl",
+                    "ETH 200d turning up = long-term alt market trend shift. Turning down while BTC holds = relative ETH weakness.", "200d MA"),
+                _ma_inflection_signal("ETH MA Gap Inflection", eth_gap, "ETH MA Gap", "ethereum", "eth-ma-gap", "Ethereum", "eth-gap-infl",
+                    "ETH gap re-widening = ETH trend strengthening. Narrowing = convergence toward cross, risk of breakdown.", "Gap"),
+            ]:
+                if s: signals.append(s)
     except: pass
 
     # ALT signals
@@ -409,6 +502,37 @@ def handle_control_center(params):
                 s = fn(cur)
                 if s: signals.append(s)
             except: pass
+
+        # ALT mcap inflection signals
+        try:
+            cur.execute("""
+                SELECT t.timestamp::date as date,
+                       t.total_mcap_usd - b.market_cap_usd - e.market_cap_usd as alt_mcap
+                FROM total_marketcap_daily t
+                JOIN marketcap_daily b ON b.timestamp::date = t.timestamp::date
+                JOIN marketcap_daily e ON e.timestamp::date = t.timestamp::date
+                WHERE b.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+                  AND e.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'ETH' LIMIT 1)
+                  AND b.market_cap_usd > 0 AND e.market_cap_usd > 0 AND t.total_mcap_usd > 0
+                ORDER BY t.timestamp::date DESC LIMIT 250
+            """)
+            alt_rows = cur.fetchall()
+            if len(alt_rows) >= 200:
+                alt_rows.reverse()
+                alt_mcaps = [float(r['alt_mcap']) for r in alt_rows]
+                alt_ma50  = _sma(alt_mcaps, 50)
+                alt_ma200 = _sma(alt_mcaps, 200)
+                alt_gap   = [(alt_ma50[i] / alt_ma200[i] - 1) * 100 if alt_ma50[i] and alt_ma200[i] and alt_ma200[i] > 0 else None for i in range(len(alt_mcaps))]
+                for s in [
+                    _ma_inflection_signal("Alt Mcap 50d MA Inflection", alt_ma50, "Altcoin Mcap", "altcoins", "am-mcap", "Altcoins", "alt-50d-infl",
+                        "Alt 50d turning up = short-term capital flowing into alts. Turning down = risk-off rotation back to BTC.", "50d MA"),
+                    _ma_inflection_signal("Alt Mcap 200d MA Inflection", alt_ma200, "Altcoin Mcap", "altcoins", "am-mcap", "Altcoins", "alt-200d-infl",
+                        "Alt 200d turning = macro alt market regime change. This is the altseason structural signal.", "200d MA"),
+                    _ma_inflection_signal("Alt Mcap Gap Inflection", alt_gap, "Altcoin Mcap Gap", "altcoins", "am-mcap-gap", "Altcoins", "alt-gap-infl",
+                        "Alt gap re-widening = altseason accelerating. Narrowing = capital leaving alts, BTC dominance likely rising.", "Gap"),
+                ]:
+                    if s: signals.append(s)
+        except: pass
     except: pass
 
     conn.close()
