@@ -550,6 +550,12 @@ const TABS = {
       ]},
       { label: "Pricing", children: [
         { key:"btc-ma",       label:"Moving averages",    sub:"BTC price with 50d and 200d moving averages. Add a custom MA window for additional analysis.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-ma-gap",   label:"MA gap (50d vs 200d)", sub:"The % difference between 50d and 200d MA over time. Positive = golden cross territory. Velocity matters most.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-200w-floor", label:"200-week MA floor", sub:"BTC price vs 200-week (1400d) MA. Historically the ultimate macro floor — BTC has never closed below it.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-200d-dev", label:"200d MA deviation",  sub:"% deviation from 200d MA over time. >50% = blow-off top territory. <-30% = capitulation.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-pi-cycle", label:"Pi Cycle Top",       sub:"111d MA vs 2×350d MA. Has called every BTC cycle top within 3 days historically.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-mcap",     label:"BTC market cap",     sub:"BTC market cap over time with key milestones ($100B, $500B, $1T, $2T) marked.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-rv-iv",    label:"RV vs IV (DVOL)",    sub:"30d realized vol vs Deribit DVOL. When DVOL > RV = market pricing risk. RV > DVOL = complacency.", src:"CoinGecko Pro + Deribit" },
       ]},
       { label: "Bitcoin vs Gold", children: [
         { key:"btc-gold",       label:"Bitcoin vs Gold",    sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)",            src:"CoinGecko Pro + yfinance" },
@@ -834,7 +840,7 @@ async function selectView(tab, key) {
     'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
     'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
-    'btc-ma','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
+    'btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
@@ -848,7 +854,7 @@ async function selectView(tab, key) {
 const NEW_AUTO_KEYS = new Set([
   'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
-  'btc-ma','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
+  'btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
@@ -1461,6 +1467,12 @@ async function fetchCurrent() {
       case 'cc-altcoins':    await fetchControlCenter('altcoins'); break;
       case 'cc-macro':       await fetchControlCenter('macro'); break;
       case 'btc-ma':          await fetchBtcMA(from, to); break;
+      case 'btc-ma-gap':      await fetchBtcMAGap(from, to); break;
+      case 'btc-200w-floor':  await fetchBtc200wFloor(from, to); break;
+      case 'btc-200d-dev':    await fetchBtc200dDev(from, to); break;
+      case 'btc-pi-cycle':    await fetchBtcPiCycle(from, to); break;
+      case 'btc-mcap':        await fetchBtcMcap(from, to); break;
+      case 'btc-rv-iv':       await fetchBtcRvIv(from, to); break;
       case 'cm-total-mcap':   await fetchTotalMcap(from, to); break;
       case 'alt-altseason':  await fetchAltAltseason(from, to); break;
       case 'alt-beta':       await fetchAltBeta(to); break;
@@ -3719,7 +3731,8 @@ async function fetchControlCenter(mode) {
             <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:20%">Chart</th>
             <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:8%">Status</th>
             <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:8%">Trend</th>
-            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:40%">Detail</th>
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Detail</th>
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Context</th>
           </tr>
         </thead>
         <tbody>`;
@@ -3727,7 +3740,7 @@ async function fetchControlCenter(mode) {
     for (const [group, sigs] of Object.entries(groups)) {
       tableHTML += `
         <tr>
-          <td colspan="5" style="padding:14px 10px 6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)">${group}</td>
+          <td colspan="6" style="padding:14px 10px 6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)">${group}</td>
         </tr>`;
 
       for (const s of sigs) {
@@ -3744,6 +3757,7 @@ async function fetchControlCenter(mode) {
             <td style="padding:9px 10px;text-align:center">${statusIcon(s.status)}</td>
             <td style="padding:9px 10px;text-align:center">${trendIcon(s.trend)}</td>
             <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:${isActive ? 'var(--graphite)' : 'var(--muted)'}">${s.detail}</td>
+            <td style="padding:9px 10px;font-size:11px;color:var(--muted);font-style:italic">${s.context || ''}</td>
           </tr>`;
       }
     }
@@ -3762,6 +3776,156 @@ const _origSelectView = selectView;
 // Patch handled inline — matrix container removed on next chart render via mkChart
 
 // ── Alt: ATH Drawdown ─────────────────────────────────────────────────────────
+
+
+// ── BTC: MA Gap (50d vs 200d) ─────────────────────────────────────────────────
+async function fetchBtcMAGap(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-ma-gap?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{
+        label: '50d/200d MA Gap (%)',
+        data: data.gap,
+        borderColor: '#2471CC', backgroundColor: 'transparent',
+        borderWidth: 1.6, pointRadius: 0, tension: 0.1, fill: {target: 'origin', above: 'rgba(0,214,74,0.08)', below: 'rgba(236,91,91,0.08)'},
+      }]
+    }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { const l = this.getLabelForValue(v); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false }, annotation: {} },
+    });
+    setTitle('50d / 200d MA Gap', 'Source: CoinGecko · positive = golden cross territory');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: 200-Week MA Floor ────────────────────────────────────────────────────
+async function fetchBtc200wFloor(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-200w-floor?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'BTC Price', data: data.price, borderColor: '#F7931A', backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.1 },
+        { label: '200-Week MA', data: data.ma200w, borderColor: '#EC5B5B', backgroundColor: 'rgba(236,91,91,0.05)', borderWidth: 1.8, pointRadius: 0, tension: 0.1, borderDash: [6, 4], fill: true },
+      ]
+    }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { const l = this.getLabelForValue(v); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v.toFixed(0)) }, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
+    });
+    setTitle('BTC Price vs 200-Week MA', 'Source: CoinGecko · log scale · the macro floor');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: 200d MA Deviation ────────────────────────────────────────────────────
+async function fetchBtc200dDev(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-200d-dev?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{
+        label: '% Deviation from 200d MA',
+        data: data.deviation,
+        borderColor: '#746BE6', backgroundColor: 'transparent',
+        borderWidth: 1.4, pointRadius: 0, tension: 0.1,
+        fill: {target: 'origin', above: 'rgba(0,214,74,0.06)', below: 'rgba(236,91,91,0.06)'},
+      }]
+    }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { const l = this.getLabelForValue(v); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } },
+    });
+    setTitle('BTC Deviation from 200d MA', 'Source: CoinGecko · >50% = blow-off · <-30% = capitulation');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Pi Cycle Top ─────────────────────────────────────────────────────────
+async function fetchBtcPiCycle(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-pi-cycle?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'BTC Price', data: data.price, borderColor: '#F7931A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, tension: 0.1 },
+        { label: '111d MA', data: data.ma111, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [4, 3] },
+        { label: '2× 350d MA', data: data.ma350x2, borderColor: '#EC5B5B', backgroundColor: 'transparent', borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [6, 4] },
+      ]
+    }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { const l = this.getLabelForValue(v); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v.toFixed(0)) }, grid: YGRID },
+      },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
+    });
+    setTitle('Pi Cycle Top Indicator', 'Source: CoinGecko · 111d MA crossing 2×350d MA = cycle top');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Market Cap with Milestones ───────────────────────────────────────────
+async function fetchBtcMcap(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-mcap?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    const fmtT = v => { if (v >= 1e12) return '$' + (v/1e12).toFixed(1) + 'T'; if (v >= 1e9) return '$' + (v/1e9).toFixed(0) + 'B'; return '$' + (v/1e6).toFixed(0) + 'M'; };
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [{
+        label: 'BTC Market Cap', data: data.mcap,
+        borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.06)',
+        borderWidth: 1.6, pointRadius: 0, tension: 0.1, fill: true,
+      }]
+    }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { const l = this.getLabelForValue(v); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => fmtT(v) }, grid: YGRID },
+      },
+      plugins: { legend: { display: false } },
+    });
+    setTitle('BTC Market Cap', 'Source: CoinGecko · $100B / $500B / $1T / $2T milestones');
+  } catch(e) { showErr(e); }
+}
+
+// ── BTC: Realized Vol vs Implied Vol (DVOL) ───────────────────────────────────
+async function fetchBtcRvIv(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-rv-iv?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: '30d Realized Vol', data: data.rv30, borderColor: '#2471CC', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, tension: 0.1 },
+        { label: 'DVOL (Implied Vol)', data: data.dvol, borderColor: '#F7931A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, tension: 0.1 },
+        { label: 'Spread (IV-RV)', data: data.spread, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.0, pointRadius: 0, tension: 0.1, borderDash: [4, 3], yAxisID: 'y2' },
+      ]
+    }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { const l = this.getLabelForValue(v); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID },
+        y2: { position: 'right', ticks: { ...YTICK, callback: v => v + 'pp' }, grid: { display: false } },
+      },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
+    });
+    setTitle('Realized Vol vs Implied Vol (DVOL)', 'Source: CoinGecko + Deribit · positive spread = market pricing risk');
+  } catch(e) { showErr(e); }
+}
+
 
 // ── BTC: Moving Averages ──────────────────────────────────────────────────────
 async function fetchBtcMA(from, to) {

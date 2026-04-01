@@ -19,7 +19,8 @@ from api.bitcoin  import (handle_btc_epochs, handle_btc_cycles, handle_btc_gold,
                            handle_btc_bull, handle_btc_realvol, handle_btc_drawdown_ath,
                            handle_btc_gold_ratio, handle_btc_dominance, handle_btc_funding, handle_btc_oi,
                            handle_btc_funding_delta, handle_btc_ma,
-                           handle_btc_200w_floor, handle_btc_200d_deviation)
+                           handle_btc_200w_floor, handle_btc_200d_deviation,
+                           handle_btc_ma_gap, handle_btc_pi_cycle, handle_btc_mcap, handle_btc_rv_iv)
 from api.altcoins import (handle_price, handle_alt_scatter,
                            handle_alt_altseason, handle_alt_beta, handle_alt_heatmap,
                            handle_alt_ath_drawdown, handle_alt_funding_heatmap,
@@ -111,6 +112,10 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/btc-ma":            self.send_json(handle_btc_ma(params))
             elif p == "/api/btc-200w-floor":    self.send_json(handle_btc_200w_floor(params))
             elif p == "/api/btc-200d-dev":      self.send_json(handle_btc_200d_deviation(params))
+            elif p == "/api/btc-ma-gap":        self.send_json(handle_btc_ma_gap(params))
+            elif p == "/api/btc-pi-cycle":      self.send_json(handle_btc_pi_cycle(params))
+            elif p == "/api/btc-mcap":          self.send_json(handle_btc_mcap(params))
+            elif p == "/api/btc-rv-iv":         self.send_json(handle_btc_rv_iv(params))
 
             elif p == "/api/alt-scatter":       self.send_json(handle_alt_scatter(params))
             elif p == "/api/alt-altseason":     self.send_json(handle_alt_altseason(params))

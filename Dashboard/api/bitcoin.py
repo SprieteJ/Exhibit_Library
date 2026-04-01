@@ -791,3 +791,195 @@ def handle_btc_200d_deviation(params):
         "price":     list(tp),
         "ma200":     list(tm),
     }
+
+
+def handle_btc_ma_gap(params):
+    """50d/200d MA gap over time — the % difference between the two MAs.
+    Positive = golden cross territory, negative = death cross territory.
+    The velocity of this line is what matters most."""
+    date_from = params.get("from", ["2015-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=210)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = "2012-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC' AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY timestamp
+    """, (dt_from_ext, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        return {"dates": [], "gap": [], "ma50": [], "ma200": []}
+
+    all_dates = [str(r["date"]) for r in rows]
+    prices    = [float(r["price_usd"]) for r in rows]
+
+    def sma(w):
+        return [None if i < w - 1 else sum(prices[i-w+1:i+1]) / w for i in range(len(prices))]
+
+    ma50  = sma(50)
+    ma200 = sma(200)
+    gap   = [round((ma50[i] / ma200[i] - 1) * 100, 4) if ma50[i] and ma200[i] and ma200[i] > 0 else None
+             for i in range(len(prices))]
+
+    trimmed = [(d, g, m5, m2) for d, g, m5, m2 in zip(all_dates, gap, ma50, ma200) if d >= date_from]
+    if not trimmed:
+        return {"dates": [], "gap": [], "ma50": [], "ma200": []}
+
+    td, tg, t5, t2 = zip(*trimmed)
+    return {"dates": list(td), "gap": list(tg), "ma50": list(t5), "ma200": list(t2)}
+
+
+def handle_btc_pi_cycle(params):
+    """Pi Cycle Top indicator — 111d MA and 2x 350d MA.
+    When the 111d MA crosses above the 2x 350d MA, it has historically
+    called BTC cycle tops within 3 days. Uses only price data."""
+    date_from = params.get("from", ["2015-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=360)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = "2012-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC' AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY timestamp
+    """, (dt_from_ext, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        return {"dates": [], "price": [], "ma111": [], "ma350x2": []}
+
+    all_dates = [str(r["date"]) for r in rows]
+    prices    = [float(r["price_usd"]) for r in rows]
+
+    def sma(w):
+        return [None if i < w - 1 else sum(prices[i-w+1:i+1]) / w for i in range(len(prices))]
+
+    ma111   = sma(111)
+    ma350   = sma(350)
+    ma350x2 = [round(v * 2, 2) if v is not None else None for v in ma350]
+
+    trimmed = [(d, p, m1, m2) for d, p, m1, m2 in zip(all_dates, prices, ma111, ma350x2) if d >= date_from]
+    if not trimmed:
+        return {"dates": [], "price": [], "ma111": [], "ma350x2": []}
+
+    td, tp, t1, t2 = zip(*trimmed)
+    return {"dates": list(td), "price": list(tp), "ma111": list(t1), "ma350x2": list(t2)}
+
+
+def handle_btc_mcap(params):
+    """BTC market cap over time with milestone levels marked."""
+    date_from = params.get("from", ["2015-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT timestamp::date as date, market_cap_usd
+        FROM marketcap_daily
+        WHERE coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+          AND timestamp >= %s AND timestamp <= %s
+          AND market_cap_usd > 0
+        ORDER BY timestamp
+    """, (date_from, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        return {"dates": [], "mcap": [], "milestones": []}
+
+    dates = [str(r["date"]) for r in rows]
+    mcaps = [float(r["market_cap_usd"]) for r in rows]
+
+    milestones = [
+        {"label": "$100B", "value": 1e11},
+        {"label": "$500B", "value": 5e11},
+        {"label": "$1T",   "value": 1e12},
+        {"label": "$2T",   "value": 2e12},
+    ]
+
+    return {"dates": dates, "mcap": mcaps, "milestones": milestones}
+
+
+def handle_btc_rv_iv(params):
+    """Realized vol (30d) vs Implied vol (DVOL) — the IV-RV spread.
+    When DVOL > RV: market pricing in future risk.
+    When RV > DVOL: market is complacent or vol is being realized."""
+    date_from = params.get("from", ["2021-03-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=40)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = date_from
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # BTC prices for realized vol
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC' AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY timestamp
+    """, (dt_from_ext, date_to))
+    price_rows = cur.fetchall()
+
+    # DVOL
+    cur.execute("""
+        SELECT timestamp::date as date, close as dvol
+        FROM dvol_daily
+        WHERE currency = 'BTC' AND timestamp >= %s AND timestamp <= %s
+        ORDER BY timestamp
+    """, (date_from, date_to))
+    dvol_rows = cur.fetchall()
+    conn.close()
+
+    if not price_rows or not dvol_rows:
+        return {"dates": [], "rv30": [], "dvol": [], "spread": []}
+
+    # Compute 30d realized vol
+    all_dates = [str(r["date"]) for r in price_rows]
+    prices    = [float(r["price_usd"]) for r in price_rows]
+    log_rets  = [None] + [math.log(prices[i] / prices[i-1]) if prices[i-1] > 0 else None
+                          for i in range(1, len(prices))]
+
+    rv_map = {}
+    for i in range(29, len(log_rets)):
+        wr = [r for r in log_rets[i-29:i+1] if r is not None]
+        if len(wr) >= 15:
+            mean = sum(wr) / len(wr)
+            std  = math.sqrt(sum((r - mean)**2 for r in wr) / len(wr))
+            rv_map[all_dates[i]] = round(std * math.sqrt(365) * 100, 2)
+
+    dvol_map = {str(r["date"]): float(r["dvol"]) for r in dvol_rows}
+
+    # Align on DVOL dates (since DVOL starts 2021)
+    dates, rv_vals, dvol_vals, spread_vals = [], [], [], []
+    for d in sorted(dvol_map.keys()):
+        if d < date_from:
+            continue
+        rv = rv_map.get(d)
+        dv = dvol_map.get(d)
+        if rv is not None and dv is not None:
+            dates.append(d)
+            rv_vals.append(rv)
+            dvol_vals.append(dv)
+            spread_vals.append(round(dv - rv, 2))
+
+    return {"dates": dates, "rv30": rv_vals, "dvol": dvol_vals, "spread": spread_vals}
