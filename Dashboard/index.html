@@ -406,7 +406,8 @@ input[type=number] { width: 70px; }
 
 <!-- Tab bar -->
 <div class="tabbar">
-  <button class="tab active" data-tab="sector">Themes</button>
+  <button class="tab active" data-tab="control_center">Control Center</button>
+  <button class="tab" data-tab="sector">Themes</button>
   <button class="tab" data-tab="bitcoin">Bitcoin</button>
   <button class="tab" data-tab="altcoins">Altcoins</button>
   <button class="tab" data-tab="macro">Macro</button>
@@ -478,6 +479,14 @@ const PAL = ['#00D64A','#2471CC','#746BE6','#DB33CB','#EC5B5B','#F7931A','#26A17
 
 // ── View definitions ──────────────────────────────────────────────────────────
 const TABS = {
+  control_center: {
+    label: "Control Center",
+    groups: [
+      { label: "Signal Matrix", children: [
+        { key:"cc-matrix", label:"Signal Matrix", sub:"BTC indicator dashboard — surfaces the 3-5 charts worth looking at today.", src:"Wintermute OTC — Multi-source" },
+      ]},
+    ]
+  },
   sector: {
     label: "Themes",
     groups: [
@@ -619,7 +628,7 @@ let chart      = null;
 let allItems   = [];
 let allSectors = [];
 let selected   = [];
-let activeTab  = 'sector';
+let activeTab  = 'control_center';
 let activeView = null;
 let granularity   = 'daily';
 let alignMode     = 'own';
@@ -809,15 +818,15 @@ async function selectView(tab, key) {
   if (tab === 'sector') {
     allItems = allSectors;
   } else {
-    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab === 'crypto_market' ? 'majors' : tab}`);
+    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab === 'crypto_market' ? 'majors' : tab === 'control_center' ? 'majors' : tab}`);
     allItems  = await res.json();
   }
 
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   const AUTO_VIEWS = new Set([
-    'ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
-    'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'cc-matrix','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
+    'cc-matrix','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -831,7 +840,7 @@ async function selectView(tab, key) {
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
-  'sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'cc-matrix','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1440,6 +1449,7 @@ async function fetchCurrent() {
       case 'btc-funding':    await fetchBtcFunding(from, to); break;
       case 'btc-oi':            await fetchBtcOI(from, to); break;
       case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
+      case 'cc-matrix':       await fetchControlCenter(); break;
       case 'btc-ma':          await fetchBtcMA(from, to); break;
       case 'cm-total-mcap':   await fetchTotalMcap(from, to); break;
       case 'alt-altseason':  await fetchAltAltseason(from, to); break;
@@ -3229,6 +3239,11 @@ const YGRID = { color: 'rgba(255,255,255,0.04)' };
 function spinOn()  { document.getElementById('chart-spin').classList.add('on'); document.getElementById('chart-empty').style.display = 'none'; }
 function showErr(e){ document.getElementById('chart-empty').style.display = 'flex'; document.getElementById('empty-msg').textContent = `Error: ${e.message}`; }
 function mkChart(type, data, options, plugins) {
+  // Clean up control center matrix if present
+  const ccEl = document.getElementById('cc-matrix-container');
+  if (ccEl) ccEl.remove();
+  const mainCanvas = document.getElementById('main-chart');
+  if (mainCanvas) mainCanvas.style.display = '';
   if (chart) { chart.destroy(); chart = null; }
   const ctx2 = document.getElementById('main-chart').getContext('2d');
   chart = new Chart(ctx2, { type, data, options: Object.assign({}, CDEFAULT, options), plugins: plugins || [] });
@@ -3596,6 +3611,100 @@ async function fetchAltBeta(to) {
   } catch(e) { showErr(e); }
 }
 
+
+// ── Control Center: Signal Matrix ─────────────────────────────────────────────
+async function fetchControlCenter() {
+  spinOn();
+  try {
+    const data = await fetch('/api/control-center').then(r=>r.json());
+    if (!data.signals?.length) throw new Error('no signals');
+
+    // Destroy existing chart if any
+    if (chart) { chart.destroy(); chart = null; }
+    const canvas = document.getElementById('main-chart');
+    canvas.style.display = 'none';
+
+    // Build the matrix table
+    let existing = document.getElementById('cc-matrix-container');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'cc-matrix-container';
+    container.style.cssText = 'position:absolute;inset:0;overflow-y:auto;padding:16px 20px;';
+
+    const statusIcon = (s) => {
+      if (s === 'green')  return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00D64A"></span>';
+      if (s === 'yellow') return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FFB800"></span>';
+      if (s === 'red')    return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EC5B5B"></span>';
+      return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--border)"></span>';
+    };
+
+    const trendIcon = (t) => {
+      if (t === 'up')   return '<span style="color:#00D64A;font-size:14px;font-weight:600">↑</span>';
+      if (t === 'down') return '<span style="color:#EC5B5B;font-size:14px;font-weight:600">↓</span>';
+      return '<span style="color:var(--muted);font-size:14px">→</span>';
+    };
+
+    // Group signals
+    const groups = {};
+    data.signals.forEach(s => {
+      if (!groups[s.group]) groups[s.group] = [];
+      groups[s.group].push(s);
+    });
+
+    let tableHTML = `
+      <div style="margin-bottom:12px">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ${data.updated}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:28%">Indicator</th>
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Chart</th>
+            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:10%">Status</th>
+            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:10%">Trend</th>
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:30%">Detail</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    for (const [group, signals] of Object.entries(groups)) {
+      tableHTML += `
+        <tr>
+          <td colspan="5" style="padding:12px 10px 6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)">${group}</td>
+        </tr>`;
+
+      for (const s of signals) {
+        const isActive = s.status !== 'grey';
+        const rowOpacity = isActive ? '1' : '0.4';
+        const chartLink = s.chart_key && s.chart_tab
+          ? `<a href="#" onclick="selectView('${s.chart_tab}','${s.chart_key}');return false;" style="color:var(--graphite);text-decoration:none;border-bottom:1px dotted var(--muted);font-weight:500">${s.chart_name} →</a>`
+          : `<span style="color:var(--muted)">—</span>`;
+
+        tableHTML += `
+          <tr style="border-bottom:0.5px solid var(--border);opacity:${rowOpacity};transition:opacity 0.15s" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='${rowOpacity}'">
+            <td style="padding:9px 10px;font-weight:500">${s.name}</td>
+            <td style="padding:9px 10px">${chartLink}</td>
+            <td style="padding:9px 10px;text-align:center">${statusIcon(s.status)}</td>
+            <td style="padding:9px 10px;text-align:center">${trendIcon(s.trend)}</td>
+            <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${s.detail}</td>
+          </tr>`;
+      }
+    }
+
+    tableHTML += '</tbody></table>';
+    container.innerHTML = tableHTML;
+    canvas.parentElement.appendChild(container);
+
+    setTitle('Control Center', 'Signal monitor — attention routing layer');
+    document.getElementById('chart-spin').classList.remove('on');
+  } catch(e) { showErr(e); }
+}
+
+// ── Control Center: cleanup when switching away ───────────────────────────────
+const _origSelectView = selectView;
+// Patch handled inline — matrix container removed on next chart render via mkChart
+
 // ── Alt: ATH Drawdown ─────────────────────────────────────────────────────────
 
 // ── BTC: Moving Averages ──────────────────────────────────────────────────────
@@ -3917,7 +4026,7 @@ async function boot() {
   const ar    = await fetch('/api/assets?tab=individual');
   const all   = await ar.json();
   document.getElementById('db-count').textContent = `${all.length} assets`;
-  selectView('sector', 'sec-equal');
+  selectView('control_center', 'cc-matrix');
 }
 
 boot();
