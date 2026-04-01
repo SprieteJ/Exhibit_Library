@@ -667,3 +667,127 @@ def handle_btc_ma(params):
         "custom_ma":     list(tc) if custom_vals else [],
         "custom_window": custom_win,
     }
+
+
+def handle_btc_200w_floor(params):
+    """BTC price with 200-week (1400-day) moving average as a floor indicator.
+    Historically BTC has never closed below the 200-week MA in a sustained way —
+    it acts as the ultimate macro floor/support level."""
+    date_from = params.get("from", ["2015-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    # 200 weeks = 1400 days — need extra history
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=1410)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = "2012-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC'
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY timestamp
+    """, (dt_from_ext, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        return {"dates": [], "price": [], "ma200w": [], "multiplier": []}
+
+    all_dates = [str(r["date"]) for r in rows]
+    prices    = [float(r["price_usd"]) for r in rows]
+
+    # 200-week MA = 1400-day SMA
+    window = 1400
+    ma200w = []
+    for i in range(len(prices)):
+        if i < window - 1:
+            ma200w.append(None)
+        else:
+            avg = sum(prices[i - window + 1:i + 1]) / window
+            ma200w.append(round(avg, 2))
+
+    # Multiplier: how many x above the 200w MA
+    multiplier = []
+    for i in range(len(prices)):
+        if ma200w[i] and ma200w[i] > 0:
+            multiplier.append(round(prices[i] / ma200w[i], 4))
+        else:
+            multiplier.append(None)
+
+    # Trim to requested range
+    trimmed = [(d, p, m, x) for d, p, m, x in zip(all_dates, prices, ma200w, multiplier) if d >= date_from]
+    if not trimmed:
+        return {"dates": [], "price": [], "ma200w": [], "multiplier": []}
+
+    td, tp, tm, tx = zip(*trimmed)
+    return {
+        "dates":      list(td),
+        "price":      list(tp),
+        "ma200w":     list(tm),
+        "multiplier": list(tx),
+    }
+
+
+def handle_btc_200d_deviation(params):
+    """BTC % deviation from its 200-day moving average.
+    Positive = overextended above, negative = oversold below.
+    Useful for identifying mean-reversion opportunities."""
+    date_from = params.get("from", ["2015-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=210)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = "2012-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC'
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY timestamp
+    """, (dt_from_ext, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        return {"dates": [], "deviation": [], "price": [], "ma200": []}
+
+    all_dates = [str(r["date"]) for r in rows]
+    prices    = [float(r["price_usd"]) for r in rows]
+
+    window = 200
+    ma200 = []
+    for i in range(len(prices)):
+        if i < window - 1:
+            ma200.append(None)
+        else:
+            avg = sum(prices[i - window + 1:i + 1]) / window
+            ma200.append(round(avg, 2))
+
+    deviation = []
+    for i in range(len(prices)):
+        if ma200[i] and ma200[i] > 0:
+            deviation.append(round((prices[i] / ma200[i] - 1) * 100, 2))
+        else:
+            deviation.append(None)
+
+    trimmed = [(d, dev, p, m) for d, dev, p, m in zip(all_dates, deviation, prices, ma200) if d >= date_from]
+    if not trimmed:
+        return {"dates": [], "deviation": [], "price": [], "ma200": []}
+
+    td, tdev, tp, tm = zip(*trimmed)
+    return {
+        "dates":     list(td),
+        "deviation": list(tdev),
+        "price":     list(tp),
+        "ma200":     list(tm),
+    }

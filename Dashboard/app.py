@@ -18,7 +18,8 @@ from api.sector   import (handle_sectors, handle_sector_price, handle_intra_corr
 from api.bitcoin  import (handle_btc_epochs, handle_btc_cycles, handle_btc_gold, handle_btc_rolling,
                            handle_btc_bull, handle_btc_realvol, handle_btc_drawdown_ath,
                            handle_btc_gold_ratio, handle_btc_dominance, handle_btc_funding, handle_btc_oi,
-                           handle_btc_funding_delta, handle_btc_ma)
+                           handle_btc_funding_delta, handle_btc_ma,
+                           handle_btc_200w_floor, handle_btc_200d_deviation)
 from api.altcoins import (handle_price, handle_alt_scatter,
                            handle_alt_altseason, handle_alt_beta, handle_alt_heatmap,
                            handle_alt_ath_drawdown, handle_alt_funding_heatmap,
@@ -107,6 +108,8 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/btc-oi":            self.send_json(handle_btc_oi(params))
             elif p == "/api/btc-funding-delta": self.send_json(handle_btc_funding_delta(params))
             elif p == "/api/btc-ma":            self.send_json(handle_btc_ma(params))
+            elif p == "/api/btc-200w-floor":    self.send_json(handle_btc_200w_floor(params))
+            elif p == "/api/btc-200d-dev":      self.send_json(handle_btc_200d_deviation(params))
 
             elif p == "/api/alt-scatter":       self.send_json(handle_alt_scatter(params))
             elif p == "/api/alt-altseason":     self.send_json(handle_alt_altseason(params))
