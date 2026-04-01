@@ -191,132 +191,36 @@ def handle_btc_alt_ratio(params):
 
 def handle_alt_intracorr(params):
     """Rolling 30d pairwise correlation within top-N altcoins by mcap.
-    Returns separate series for top 10, 25, 50, 100, 250."""
+    Reads from precomputed alt_intracorr_daily table."""
     date_from = params.get("from", ["2024-01-01"])[0]
     date_to   = params.get("to",   ["2099-01-01"])[0]
-    window    = int(params.get("window", ["30"])[0])
-
-    try:
-        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
-    except:
-        ext = date_from
 
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-    # Get all alts ranked by mcap
     cur.execute("""
-        SELECT p.symbol, m.market_cap_usd
-        FROM price_daily p
-        JOIN (
-            SELECT coingecko_id, market_cap_usd
-            FROM marketcap_daily
-            WHERE timestamp::date = (SELECT MAX(timestamp::date) FROM marketcap_daily WHERE timestamp <= NOW())
-              AND market_cap_usd > 0
-        ) m ON p.coingecko_id = m.coingecko_id
-        WHERE p.symbol NOT IN ('BTC','ETH','USDT','USDC','DAI','BUSD','TUSD','USDP','FDUSD','PYUSD')
-        GROUP BY p.symbol, m.market_cap_usd
-        ORDER BY m.market_cap_usd DESC
-        LIMIT 250
-    """)
-    ranked = [r['symbol'] for r in cur.fetchall()]
-
-    if len(ranked) < 10:
-        conn.close()
-        return {"dates": [], "top10": [], "top25": [], "top50": [], "top100": [], "top250": []}
-
-    # Fetch prices for all 250
-    cur.execute("""
-        SELECT symbol, timestamp::date as date, price_usd
-        FROM price_daily
-        WHERE symbol = ANY(%s) AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
-        ORDER BY symbol, timestamp
-    """, (ranked, ext, date_to))
+        SELECT timestamp::date as date, tier, avg_corr
+        FROM alt_intracorr_daily
+        WHERE timestamp >= %s AND timestamp <= %s
+        ORDER BY timestamp
+    """, (date_from, date_to))
     rows = cur.fetchall()
     conn.close()
 
-    # Build price map
-    prices = {}
+    if not rows:
+        return {"dates": [], "top10": [], "top25": [], "top50": [], "top100": [], "top250": []}
+
+    tiers = {"top10": {}, "top25": {}, "top50": {}, "top100": {}, "top250": {}}
+    all_dates = set()
     for r in rows:
-        sym = r['symbol']
-        if sym not in prices: prices[sym] = {}
-        prices[sym][str(r['date'])] = float(r['price_usd'])
+        d = str(r['date'])
+        tier = r['tier']
+        all_dates.add(d)
+        if tier in tiers:
+            tiers[tier][d] = float(r['avg_corr']) if r['avg_corr'] is not None else None
 
-    all_dates = sorted(set(d for s in prices.values() for d in s))
-    all_dates = [d for d in all_dates if d >= date_from]
-
-    def compute_avg_corr(syms, dates_list):
-        """Compute average pairwise rolling correlation for a set of symbols."""
-        # Build return series
-        ret_series = {}
-        for sym in syms:
-            if sym not in prices: continue
-            sym_dates = sorted(prices[sym].keys())
-            rets = {}
-            for i in range(1, len(sym_dates)):
-                d = sym_dates[i]
-                prev = prices[sym].get(sym_dates[i-1])
-                curr = prices[sym].get(d)
-                if prev and curr and prev > 0:
-                    rets[d] = curr / prev - 1
-            if len(rets) > window:
-                ret_series[sym] = rets
-
-        if len(ret_series) < 3:
-            return [None] * len(dates_list)
-
-        # For each date, compute avg pairwise correlation over the window
-        sym_list = list(ret_series.keys())
-        result = []
-        for d in dates_list:
-            # Find window dates ending at d
-            d_idx = all_dates.index(d) if d in all_dates else -1
-            if d_idx < window: 
-                result.append(None); continue
-
-            win_dates = all_dates[d_idx - window + 1:d_idx + 1]
-            
-            # Get return vectors for this window
-            vectors = {}
-            for sym in sym_list:
-                vec = [ret_series[sym].get(wd) for wd in win_dates]
-                if sum(1 for v in vec if v is not None) >= window // 2:
-                    vectors[sym] = vec
-
-            if len(vectors) < 3:
-                result.append(None); continue
-
-            # Compute pairwise correlations
-            syms_v = list(vectors.keys())
-            corrs = []
-            for i in range(len(syms_v)):
-                for j in range(i + 1, len(syms_v)):
-                    va = vectors[syms_v[i]]
-                    vb = vectors[syms_v[j]]
-                    pairs = [(a, b) for a, b in zip(va, vb) if a is not None and b is not None]
-                    if len(pairs) < window // 3: continue
-                    am = sum(p[0] for p in pairs) / len(pairs)
-                    bm = sum(p[1] for p in pairs) / len(pairs)
-                    num = sum((p[0]-am)*(p[1]-bm) for p in pairs)
-                    da = math.sqrt(sum((p[0]-am)**2 for p in pairs))
-                    db = math.sqrt(sum((p[1]-bm)**2 for p in pairs))
-                    if da > 0 and db > 0:
-                        corrs.append(num / (da * db))
-
-            if corrs:
-                result.append(round(sum(corrs) / len(corrs), 4))
-            else:
-                result.append(None)
-
-        return result
-
-    tiers = {"top10": 10, "top25": 25, "top50": 50, "top100": 100, "top250": 250}
-    output = {"dates": all_dates}
-    for key, n in tiers.items():
-        syms = ranked[:min(n, len(ranked))]
-        if len(syms) >= 3:
-            output[key] = compute_avg_corr(syms, all_dates)
-        else:
-            output[key] = [None] * len(all_dates)
+    dates = sorted(all_dates)
+    output = {"dates": dates}
+    for tier_name in ["top10", "top25", "top50", "top100", "top250"]:
+        output[tier_name] = [tiers[tier_name].get(d) for d in dates]
 
     return output
