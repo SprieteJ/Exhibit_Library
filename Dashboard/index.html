@@ -550,11 +550,11 @@ const TABS = {
         { key:"btc-realvol",  label:"Realized volatility",  sub:"Is BTC volatility expanding or contracting? 30d, 90d, and 180d rolling annualized vol plotted together.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-drawdown", label:"Drawdown from ATH",    sub:"How far is BTC from its all-time high? Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
-      { label: "Pricing", children: [
-        { key:"btc-ma",       label:"Moving averages",    sub:"BTC price with 50d and 200d moving averages. Add a custom MA window for additional analysis.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-ma-gap",   label:"MA gap (50d vs 200d)", sub:"The % difference between 50d and 200d MA over time. Positive = golden cross territory. Velocity matters most.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-200w-floor", label:"200-week MA floor", sub:"BTC price vs 200-week (1400d) MA. Historically the ultimate macro floor — BTC has never closed below it.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-200d-dev", label:"200d MA deviation",  sub:"% deviation from 200d MA over time. >50% = blow-off top territory. <-30% = capitulation.", src:"CoinGecko Pro — Wintermute OTC" },
+      { label: "Moving Averages", children: [
+        { key:"btc-ma",       label:"50-day and 200-day moving average",    sub:"BTC price with 50d and 200d moving averages overlaid. Log scale.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-ma-gap",   label:"50d and 200d gap",    sub:"The % difference between 50d and 200d MA over time. Positive = golden cross territory. Velocity matters most.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-200w-floor", label:"200-week moving average", sub:"BTC price vs 200-week (1400d) MA. Historically the ultimate macro floor — BTC has never closed below it.", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-200d-dev", label:"200-week deviation",  sub:"% deviation from the 200-week MA. How extended is BTC from its long-term floor?", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-pi-cycle", label:"Pi Cycle Top",       sub:"111d MA vs 2×350d MA. Has called every BTC cycle top within 3 days historically.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-mcap",     label:"BTC market cap",     sub:"BTC market cap over time with key milestones ($100B, $500B, $1T, $2T) marked.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-rv-iv",    label:"RV vs IV (DVOL)",    sub:"30d realized vol vs Deribit DVOL. When DVOL > RV = market pricing risk. RV > DVOL = complacency.", src:"CoinGecko Pro + Deribit" },
@@ -576,7 +576,7 @@ const TABS = {
   ethereum: {
     label: "Ethereum",
     groups: [
-      { label: "Pricing", children: [
+      { label: "Moving Averages", children: [
         { key:"eth-ma",       label:"Moving averages",       sub:"ETH price with 50d, 200d, 200-week MA overlaid. Log scale.", src:"CoinGecko Pro" },
         { key:"eth-ma-gap",   label:"MA gap (50d vs 200d)",  sub:"The % difference between 50d and 200d MA. Golden/death cross proximity.", src:"CoinGecko Pro" },
         { key:"eth-200d-dev", label:"200d MA deviation",     sub:"% deviation from 200d MA. Mean-reversion signal.", src:"CoinGecko Pro" },
@@ -815,6 +815,10 @@ function buildTree(tab) {
 }
 
 // ── Select view ───────────────────────────────────────────────────────────────
+
+// Keys that should default to 'all' period when selected
+const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev']);
+
 async function selectView(tab, key) {
   let viewDef = null;
   for (const g of (TABS[tab]?.groups || []))
@@ -883,6 +887,10 @@ async function selectView(tab, key) {
   if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
     document.getElementById('empty-msg').textContent = 'Loading…';
+    if (ALL_PERIOD_KEYS.has(key)) {
+      const fromEl = document.getElementById('rp-from');
+      if (fromEl) fromEl.value = '2013-01-01';
+    }
     setTimeout(fetchCurrent, 100);
   }
 }

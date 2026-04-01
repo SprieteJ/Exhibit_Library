@@ -754,14 +754,14 @@ def handle_btc_200w_floor(params):
 
 
 def handle_btc_200d_deviation(params):
-    """BTC % deviation from its 200-day moving average.
-    Positive = overextended above, negative = oversold below.
-    Useful for identifying mean-reversion opportunities."""
+    """BTC % deviation from its 200-week (1400-day) moving average.
+    Positive = overextended above the macro floor, negative = approaching/below floor.
+    Useful for identifying cycle positioning."""
     date_from = params.get("from", ["2015-01-01"])[0]
     date_to   = params.get("to",   ["2099-01-01"])[0]
 
     try:
-        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=210)).strftime("%Y-%m-%d")
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=1410)).strftime("%Y-%m-%d")
     except:
         dt_from_ext = "2012-01-01"
 
@@ -779,30 +779,30 @@ def handle_btc_200d_deviation(params):
     conn.close()
 
     if not rows:
-        return {"dates": [], "deviation": [], "price": [], "ma200": []}
+        return {"dates": [], "deviation": [], "price": [], "ma200w": []}
 
     all_dates = [str(r["date"]) for r in rows]
     prices    = [float(r["price_usd"]) for r in rows]
 
-    window = 200
-    ma200 = []
+    window = 1400
+    ma200w = []
     for i in range(len(prices)):
         if i < window - 1:
-            ma200.append(None)
+            ma200w.append(None)
         else:
             avg = sum(prices[i - window + 1:i + 1]) / window
-            ma200.append(round(avg, 2))
+            ma200w.append(round(avg, 2))
 
     deviation = []
     for i in range(len(prices)):
-        if ma200[i] and ma200[i] > 0:
-            deviation.append(round((prices[i] / ma200[i] - 1) * 100, 2))
+        if ma200w[i] and ma200w[i] > 0:
+            deviation.append(round((prices[i] / ma200w[i] - 1) * 100, 2))
         else:
             deviation.append(None)
 
-    trimmed = [(d, dev, p, m) for d, dev, p, m in zip(all_dates, deviation, prices, ma200) if d >= date_from]
+    trimmed = [(d, dev, p, m) for d, dev, p, m in zip(all_dates, deviation, prices, ma200w) if d >= date_from]
     if not trimmed:
-        return {"dates": [], "deviation": [], "price": [], "ma200": []}
+        return {"dates": [], "deviation": [], "price": [], "ma200w": []}
 
     td, tdev, tp, tm = zip(*trimmed)
 
@@ -813,7 +813,7 @@ def handle_btc_200d_deviation(params):
         "dates":     list(td),
         "deviation": list(tdev),
         "price":     list(tp),
-        "ma200":     list(tm),
+        "ma200w":    list(tm),
         "dev_slope": dev_slope,
         "dev_inflections": dev_infl,
     }
