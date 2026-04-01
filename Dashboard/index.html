@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -482,8 +482,14 @@ const TABS = {
   control_center: {
     label: "Control Center",
     groups: [
-      { label: "Signal Matrix", children: [
-        { key:"cc-matrix", label:"Signal Matrix", sub:"BTC indicator dashboard — surfaces the 3-5 charts worth looking at today.", src:"Wintermute OTC — Multi-source" },
+      { label: "Overview", children: [
+        { key:"cc-matrix",    label:"Flagged signals",    sub:"Only the indicators that need attention right now. Everything else is greyed out in the deeper views.", src:"Wintermute OTC — Multi-source" },
+      ]},
+      { label: "Deep Dive", children: [
+        { key:"cc-bitcoin",   label:"Bitcoin signals",    sub:"All BTC indicators with status and trend — including the quiet ones.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-themes",    label:"Theme signals",      sub:"All sector/theme indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-altcoins",  label:"Altcoin signals",    sub:"All altcoin indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-macro",     label:"Macro signals",      sub:"All macro indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
       ]},
     ]
   },
@@ -632,7 +638,7 @@ let activeTab  = 'control_center';
 let activeView = null;
 let granularity   = 'daily';
 let alignMode     = 'own';
-let darkMode      = false;
+let darkMode      = true;
 let logScale      = false;
 let rrgGran       = 'daily';
 let rrgBenchmark  = 'market';
@@ -825,8 +831,8 @@ async function selectView(tab, key) {
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   const AUTO_VIEWS = new Set([
-    'cc-matrix','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
-    'cc-matrix','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
+    'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -840,7 +846,7 @@ async function selectView(tab, key) {
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
-  'cc-matrix','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1449,7 +1455,11 @@ async function fetchCurrent() {
       case 'btc-funding':    await fetchBtcFunding(from, to); break;
       case 'btc-oi':            await fetchBtcOI(from, to); break;
       case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
-      case 'cc-matrix':       await fetchControlCenter(); break;
+      case 'cc-matrix':       await fetchControlCenter('flagged'); break;
+      case 'cc-bitcoin':     await fetchControlCenter('bitcoin'); break;
+      case 'cc-themes':      await fetchControlCenter('themes'); break;
+      case 'cc-altcoins':    await fetchControlCenter('altcoins'); break;
+      case 'cc-macro':       await fetchControlCenter('macro'); break;
       case 'btc-ma':          await fetchBtcMA(from, to); break;
       case 'cm-total-mcap':   await fetchTotalMcap(from, to); break;
       case 'alt-altseason':  await fetchAltAltseason(from, to); break;
@@ -3613,7 +3623,7 @@ async function fetchAltBeta(to) {
 
 
 // ── Control Center: Signal Matrix ─────────────────────────────────────────────
-async function fetchControlCenter() {
+async function fetchControlCenter(mode) {
   spinOn();
   try {
     const data = await fetch('/api/control-center').then(r=>r.json());
@@ -3624,7 +3634,6 @@ async function fetchControlCenter() {
     const canvas = document.getElementById('main-chart');
     canvas.style.display = 'none';
 
-    // Build the matrix table
     let existing = document.getElementById('cc-matrix-container');
     if (existing) existing.remove();
 
@@ -3645,12 +3654,59 @@ async function fetchControlCenter() {
       return '<span style="color:var(--muted);font-size:14px">→</span>';
     };
 
+    // Filter signals based on mode
+    let signals = data.signals;
+    let title = 'Control Center';
+    let subtitle = 'Signal monitor — attention routing layer';
+
+    if (mode === 'flagged') {
+      signals = signals.filter(s => s.status !== 'grey');
+      title = 'Flagged Signals';
+      subtitle = signals.length === 0
+        ? 'All quiet — no indicators flagged right now'
+        : `${signals.length} indicator${signals.length !== 1 ? 's' : ''} flagged`;
+    } else if (mode === 'bitcoin') {
+      signals = data.signals.filter(s =>
+        ['Moving Averages','Risk','Volatility','Derivatives'].includes(s.group));
+      title = 'Bitcoin — All Signals';
+      subtitle = 'Full BTC indicator matrix including quiet signals';
+    } else if (mode === 'themes') {
+      signals = data.signals.filter(s =>
+        ['Market Structure','Themes','Sectors'].includes(s.group));
+      title = 'Themes — All Signals';
+      subtitle = 'Sector and theme indicators';
+    } else if (mode === 'altcoins') {
+      signals = data.signals.filter(s =>
+        ['Altcoins','Relative Performance'].includes(s.group));
+      title = 'Altcoins — All Signals';
+      subtitle = 'Altcoin indicators';
+    } else if (mode === 'macro') {
+      signals = data.signals.filter(s =>
+        ['Macro','Rates','FX'].includes(s.group));
+      title = 'Macro — All Signals';
+      subtitle = 'Macro and tradfi indicators';
+    }
+
     // Group signals
     const groups = {};
-    data.signals.forEach(s => {
+    signals.forEach(s => {
       if (!groups[s.group]) groups[s.group] = [];
       groups[s.group].push(s);
     });
+
+    // If flagged mode and no signals, show a clean empty state
+    if (mode === 'flagged' && signals.length === 0) {
+      container.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;gap:12px">
+          <div style="font-size:48px;opacity:0.2">✓</div>
+          <div style="font-size:15px;font-weight:500;color:var(--graphite)">All quiet</div>
+          <div style="font-size:13px;color:var(--muted)">No indicators flagged right now. Check the deep dive views for the full picture.</div>
+        </div>`;
+      canvas.parentElement.appendChild(container);
+      setTitle(title, subtitle);
+      document.getElementById('chart-spin').classList.remove('on');
+      return;
+    }
 
     let tableHTML = `
       <div style="margin-bottom:12px">
@@ -3659,35 +3715,35 @@ async function fetchControlCenter() {
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr style="border-bottom:1px solid var(--border)">
-            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:28%">Indicator</th>
-            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Chart</th>
-            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:10%">Status</th>
-            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:10%">Trend</th>
-            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:30%">Detail</th>
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:24%">Indicator</th>
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:20%">Chart</th>
+            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:8%">Status</th>
+            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:8%">Trend</th>
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:40%">Detail</th>
           </tr>
         </thead>
         <tbody>`;
 
-    for (const [group, signals] of Object.entries(groups)) {
+    for (const [group, sigs] of Object.entries(groups)) {
       tableHTML += `
         <tr>
-          <td colspan="5" style="padding:12px 10px 6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)">${group}</td>
+          <td colspan="5" style="padding:14px 10px 6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)">${group}</td>
         </tr>`;
 
-      for (const s of signals) {
+      for (const s of sigs) {
         const isActive = s.status !== 'grey';
-        const rowOpacity = isActive ? '1' : '0.4';
+        const rowOpacity = (mode === 'flagged' || isActive) ? '1' : '0.35';
         const chartLink = s.chart_key && s.chart_tab
           ? `<a href="#" onclick="selectView('${s.chart_tab}','${s.chart_key}');return false;" style="color:var(--graphite);text-decoration:none;border-bottom:1px dotted var(--muted);font-weight:500">${s.chart_name} →</a>`
           : `<span style="color:var(--muted)">—</span>`;
 
         tableHTML += `
           <tr style="border-bottom:0.5px solid var(--border);opacity:${rowOpacity};transition:opacity 0.15s" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='${rowOpacity}'">
-            <td style="padding:9px 10px;font-weight:500">${s.name}</td>
+            <td style="padding:9px 10px;font-weight:${isActive ? '600' : '400'}">${s.name}</td>
             <td style="padding:9px 10px">${chartLink}</td>
             <td style="padding:9px 10px;text-align:center">${statusIcon(s.status)}</td>
             <td style="padding:9px 10px;text-align:center">${trendIcon(s.trend)}</td>
-            <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--muted)">${s.detail}</td>
+            <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:${isActive ? 'var(--graphite)' : 'var(--muted)'}">${s.detail}</td>
           </tr>`;
       }
     }
@@ -3696,7 +3752,7 @@ async function fetchControlCenter() {
     container.innerHTML = tableHTML;
     canvas.parentElement.appendChild(container);
 
-    setTitle('Control Center', 'Signal monitor — attention routing layer');
+    setTitle(title, subtitle);
     document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { showErr(e); }
 }
