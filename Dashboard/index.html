@@ -3896,17 +3896,19 @@ async function fetchControlCenter(mode) {
         </thead>
         <tbody>`;
 
-    // Category mapping: group -> parent category
-    const GROUP_CATEGORY = {
-      'Moving Averages': 'Bitcoin', 'Risk': 'Bitcoin', 'Volatility': 'Bitcoin',
-      'Cycle Indicators': 'Bitcoin', 'Derivatives': 'Bitcoin', 'Market Structure': 'Bitcoin',
-      'Ethereum': 'Ethereum',
-      'Altcoins': 'Altcoins',
-    };
+    // Order signals by category, preserving group order within each
+    const CAT_ORDER = ['Bitcoin', 'Ethereum', 'Altcoins'];
+    const ordered = {};
+    for (const [group, sigs] of Object.entries(groups)) {
+      const cat = sigs[0]?.category || 'Other';
+      if (!ordered[cat]) ordered[cat] = {};
+      ordered[cat][group] = sigs;
+    }
 
     let lastCategory = null;
-    for (const [group, sigs] of Object.entries(groups)) {
-      const cat = GROUP_CATEGORY[group] || group;
+    for (const cat of CAT_ORDER) {
+      if (!ordered[cat]) continue;
+      for (const [group, sigs] of Object.entries(ordered[cat])) {
       if (cat !== lastCategory) {
         lastCategory = cat;
         tableHTML += `
@@ -3918,6 +3920,8 @@ async function fetchControlCenter(mode) {
         <tr>
           <td colspan="6" style="padding:10px 10px 4px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)">${group}</td>
         </tr>`;
+      }
+    }
 
       for (const s of sigs) {
         const isActive = s.status !== 'grey';
