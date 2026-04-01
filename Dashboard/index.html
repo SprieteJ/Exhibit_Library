@@ -3653,11 +3653,29 @@ async function fetchControlCenter(mode) {
     container.id = 'cc-matrix-container';
     container.style.cssText = 'position:absolute;inset:0;overflow-y:auto;padding:16px 20px;';
 
-    const statusIcon = (s) => {
-      if (s === 'green')  return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00D64A"></span>';
-      if (s === 'yellow') return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FFB800"></span>';
-      if (s === 'red')    return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EC5B5B"></span>';
-      return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--border)"></span>';
+    const STATUS_THRESHOLDS = {
+      'ma-cross':       '🟢 Within 3% of crossing or crossed in last 7d\n🟡 Gap < 10%\n⬚ Gap > 10% — no signal',
+      'price-200d':     '🟢 Within 3% of 200d MA or just crossed\n🟡 5-20% below or >50% above\n🔴 >20% below\n⬚ Comfortably above',
+      '200d-deviation': '🟢 Within ±5% of MA (near mean)\n🟡 15-30% below or 30-50% above\n🔴 >60% above or >30% below (extreme)',
+      '200w-floor':     '🔴 <1.1x the 200-week MA (testing floor)\n🟡 <1.3x or >5x (approaching floor or overheated)\n⬚ Normal range',
+      'pi-cycle':       '🟢 Within 2% of crossing or crossed in last 7d\n🟡 Gap < 5%\n⬚ MAs far apart — no signal',
+      'drawdown-ath':   '🟢 <5% from ATH\n🟡 5-20% drawdown\n🔴 >20% drawdown — bear territory',
+      'realvol-30d':    '🟢 <30% (unusually low — move brewing)\n🟡 60-90% (elevated)\n🔴 >90% (crisis-level)\n⬚ 30-60% normal',
+      'dvol':           '🟢 Crossing 60 or 80 threshold recently\n🟡 >70 (elevated)\n🔴 >90 (extreme)\n⬚ Normal range',
+      'rv-iv':          '🟡 Spread > ±20pp\n🔴 Spread > ±30pp\n⬚ Spread < 20pp — normal',
+      'funding':        '🟢 Sign flip in last 7d (positioning reversal)\n🟡 Rate elevated (>0.03% or <-0.01%)\n🔴 Extreme (>0.05% or <-0.03%)\n⬚ Normal',
+      'btc-dominance':  '🟢 30d change > ±5pp (big rotation)\n🟡 30d change > ±2pp\n⬚ Stable — no rotation signal',
+      'btc-mcap':       '🟢 Within 3% of a milestone ($1T, $2T)\n🟡 Within 10%\n⬚ No milestone nearby',
+    };
+
+    const statusIcon = (s, id) => {
+      const tip = STATUS_THRESHOLDS[id] || '';
+      const escaped = tip.replace(/"/g, '&quot;');
+      const dot = `width:10px;height:10px;border-radius:50%;display:inline-block;cursor:help`;
+      if (s === 'green')  return `<span style="${dot};background:#00D64A" title="${escaped}"></span>`;
+      if (s === 'yellow') return `<span style="${dot};background:#FFB800" title="${escaped}"></span>`;
+      if (s === 'red')    return `<span style="${dot};background:#EC5B5B" title="${escaped}"></span>`;
+      return `<span style="${dot};background:var(--border)" title="${escaped}"></span>`;
     };
 
     const trendIcon = (t) => {
@@ -3754,7 +3772,7 @@ async function fetchControlCenter(mode) {
           <tr style="border-bottom:0.5px solid var(--border);opacity:${rowOpacity};transition:opacity 0.15s" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='${rowOpacity}'">
             <td style="padding:9px 10px;font-weight:${isActive ? '600' : '400'}">${s.name}</td>
             <td style="padding:9px 10px">${chartLink}</td>
-            <td style="padding:9px 10px;text-align:center">${statusIcon(s.status)}</td>
+            <td style="padding:9px 10px;text-align:center">${statusIcon(s.status, s.id)}</td>
             <td style="padding:9px 10px;text-align:center">${trendIcon(s.trend)}</td>
             <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:${isActive ? 'var(--graphite)' : 'var(--muted)'}">${s.detail}</td>
             <td style="padding:9px 10px;font-size:11px;color:var(--muted);font-style:italic">${s.context || ''}</td>
