@@ -8,6 +8,23 @@ from api.shared import get_conn, rolling_corr
 import psycopg2.extras
 
 
+def _slope(series, window=5):
+    result = [None] * len(series)
+    for i in range(window, len(series)):
+        if series[i] is not None and series[i - window] is not None and series[i - window] != 0:
+            result[i] = round((series[i] / series[i - window] - 1) * 100, 4)
+    return result
+
+def _inflections(slope_series):
+    result = [False] * len(slope_series)
+    for i in range(1, len(slope_series)):
+        if slope_series[i] is not None and slope_series[i - 1] is not None:
+            if (slope_series[i - 1] < 0 and slope_series[i] >= 0) or \
+               (slope_series[i - 1] > 0 and slope_series[i] <= 0):
+                result[i] = True
+    return result
+
+
 def _sma(vals, window):
     return [None if i < window - 1 else sum(vals[i - window + 1:i + 1]) / window
             for i in range(len(vals))]
@@ -89,7 +106,9 @@ def handle_alt_mcap_gap(params):
     trimmed = [(d, g) for d, g in zip(dates, gap) if d >= date_from]
     if not trimmed: return {"dates": [], "gap": []}
     td, tg = zip(*trimmed)
-    return {"dates": list(td), "gap": list(tg)}
+    gap_slope = _slope(list(tg))
+    gap_infl  = _inflections(gap_slope)
+    return {"dates": list(td), "gap": list(tg), "gap_slope": gap_slope, "gap_inflections": gap_infl}
 
 
 def handle_alt_mcap_dev(params):
@@ -114,7 +133,9 @@ def handle_alt_mcap_dev(params):
     trimmed = [(d, v) for d, v in zip(dates, dev) if d >= date_from]
     if not trimmed: return {"dates": [], "deviation": []}
     td, tv = zip(*trimmed)
-    return {"dates": list(td), "deviation": list(tv)}
+    dev_slope = _slope(list(tv))
+    dev_infl  = _inflections(dev_slope)
+    return {"dates": list(td), "deviation": list(tv), "dev_slope": dev_slope, "dev_inflections": dev_infl}
 
 
 def handle_dominance_shares(params):

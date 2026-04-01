@@ -7,6 +7,26 @@ from api.shared import get_conn, rebase_series, macro_table, rolling_corr
 import psycopg2.extras
 
 
+def _slope(series, window=5):
+    """Compute N-day rate of change for a series. Returns same-length array."""
+    result = [None] * len(series)
+    for i in range(window, len(series)):
+        if series[i] is not None and series[i - window] is not None and series[i - window] != 0:
+            result[i] = round((series[i] / series[i - window] - 1) * 100, 4)
+    return result
+
+
+def _inflections(slope_series):
+    """Find zero-crossings in a slope series. Returns same-length boolean array."""
+    result = [False] * len(slope_series)
+    for i in range(1, len(slope_series)):
+        if slope_series[i] is not None and slope_series[i - 1] is not None:
+            if (slope_series[i - 1] < 0 and slope_series[i] >= 0) or \
+               (slope_series[i - 1] > 0 and slope_series[i] <= 0):
+                result[i] = True
+    return result
+
+
 def handle_btc_epochs(params):
     """BTC x-fold from halving price. Epoch 3/4/5."""
     days_to_show = int(params.get("days", ["1400"])[0])
@@ -785,11 +805,17 @@ def handle_btc_200d_deviation(params):
         return {"dates": [], "deviation": [], "price": [], "ma200": []}
 
     td, tdev, tp, tm = zip(*trimmed)
+
+    dev_slope = _slope(list(tdev))
+    dev_infl  = _inflections(dev_slope)
+
     return {
         "dates":     list(td),
         "deviation": list(tdev),
         "price":     list(tp),
         "ma200":     list(tm),
+        "dev_slope": dev_slope,
+        "dev_inflections": dev_infl,
     }
 
 
@@ -835,7 +861,20 @@ def handle_btc_ma_gap(params):
         return {"dates": [], "gap": [], "ma50": [], "ma200": []}
 
     td, tg, t5, t2 = zip(*trimmed)
-    return {"dates": list(td), "gap": list(tg), "ma50": list(t5), "ma200": list(t2)}
+
+    # Compute slopes and inflections on the trimmed data
+    ma50_slope  = _slope(list(t5))
+    ma200_slope = _slope(list(t2))
+    gap_slope   = _slope(list(tg))
+    ma50_infl   = _inflections(ma50_slope)
+    ma200_infl  = _inflections(ma200_slope)
+    gap_infl    = _inflections(gap_slope)
+
+    return {
+        "dates": list(td), "gap": list(tg), "ma50": list(t5), "ma200": list(t2),
+        "ma50_slope": ma50_slope, "ma200_slope": ma200_slope, "gap_slope": gap_slope,
+        "ma50_inflections": ma50_infl, "ma200_inflections": ma200_infl, "gap_inflections": gap_infl,
+    }
 
 
 def handle_btc_pi_cycle(params):
