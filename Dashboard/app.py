@@ -27,6 +27,7 @@ from api.altcoins import (handle_price, handle_alt_scatter,
 from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_dxy_btc,
                            handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin)
 from api.crypto_market import handle_total_mcap
+from api.control_center import handle_control_center
 
 PORT     = int(os.environ.get("PORT", 8080))
 BASE_DIR = Path(__file__).parent
@@ -125,6 +126,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/macro-real-yields": self.send_json(handle_macro_real_yields(params))
             elif p == "/api/macro-stablecoin":  self.send_json(handle_macro_stablecoin(params))
             elif p == "/api/total-mcap":        self.send_json(handle_total_mcap(params))
+            elif p == "/api/control-center":    self.send_json(handle_control_center(params))
 
             elif p.startswith("/static/"):
                 self.send_file(BASE_DIR / p[8:])
