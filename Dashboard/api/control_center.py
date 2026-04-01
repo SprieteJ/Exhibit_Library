@@ -372,6 +372,8 @@ def handle_control_center(params):
     dates, prices = _fetch_btc_prices(cur)
 
     signals = []
+
+    # BTC price-based signals
     for fn in [_signal_ma_cross, _signal_price_vs_200d, _signal_200d_deviation,
                _signal_200w_floor, _signal_pi_cycle, _signal_drawdown, _signal_realvol]:
         try:
@@ -379,11 +381,274 @@ def handle_control_center(params):
             if s: signals.append(s)
         except: pass
 
+    # BTC DB-based signals
     for fn in [_signal_dvol, _signal_rv_iv, _signal_funding, _signal_dominance, _signal_btc_mcap]:
         try:
             s = fn(cur)
             if s: signals.append(s)
         except: pass
 
+    # ETH signals
+    try:
+        eth_dates, eth_prices = _fetch_eth_prices(cur)
+        for fn in [_signal_eth_ma_cross, _signal_eth_200d_dev, _signal_eth_drawdown]:
+            try:
+                s = fn(eth_dates, eth_prices)
+                if s: signals.append(s)
+            except: pass
+        try:
+            s = _signal_eth_btc_ratio(cur)
+            if s: signals.append(s)
+        except: pass
+    except: pass
+
+    # ALT signals
+    try:
+        for fn in [_signal_alt_mcap_cross, _signal_alt_mcap_dev, _signal_alt_share]:
+            try:
+                s = fn(cur)
+                if s: signals.append(s)
+            except: pass
+    except: pass
+
     conn.close()
     return {"updated": datetime.now().strftime("%Y-%m-%d %H:%M UTC"), "signals": signals}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ETH SIGNALS
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _fetch_eth_prices(cur, days_back=1500):
+    dt_from = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd FROM price_daily
+        WHERE symbol = 'ETH' AND timestamp >= %s AND price_usd > 0 ORDER BY timestamp
+    """, (dt_from,))
+    rows = cur.fetchall()
+    return [str(r['date']) for r in rows], [float(r['price_usd']) for r in rows]
+
+
+def _signal_eth_ma_cross(dates, prices):
+    if len(prices) < 200: return None
+    ma50, ma200 = _sma(prices, 50), _sma(prices, 200)
+    m50, m200 = ma50[-1], ma200[-1]
+    if not m50 or not m200 or m200 == 0: return None
+    gap = (m50 / m200 - 1) * 100
+
+    recent_cross = False
+    for i in range(-7, 0):
+        idx = len(ma50) + i
+        if idx < 1 or not ma50[idx] or not ma50[idx-1] or not ma200[idx] or not ma200[idx-1]: continue
+        if (ma50[idx-1] < ma200[idx-1] and ma50[idx] >= ma200[idx]) or \
+           (ma50[idx-1] > ma200[idx-1] and ma50[idx] <= ma200[idx]):
+            recent_cross = True; break
+
+    status = "green" if (recent_cross or abs(gap) < 3) else ("yellow" if abs(gap) < 10 else "grey")
+    gap_prev = ((ma50[-8] / ma200[-8]) - 1) * 100 if ma50[-8] and ma200[-8] and ma200[-8] > 0 else None
+    trend = "flat"
+    if gap_prev is not None:
+        d = abs(gap) - abs(gap_prev)
+        trend = "down" if d > 0.3 else ("up" if d < -0.3 else "flat")
+
+    return {"id": "eth-ma-cross", "name": "ETH 50d/200d Cross",
+            "chart_name": "ETH MA Gap", "chart_tab": "ethereum", "chart_key": "eth-ma-gap",
+            "group": "Ethereum", "status": status, "trend": trend,
+            "detail": f"50d MA {abs(gap):.1f}% {'above' if gap > 0 else 'below'} 200d MA",
+            "context": "Same logic as BTC cross but ETH often leads or lags BTC by days/weeks. Divergence between the two is informative."}
+
+
+def _signal_eth_200d_dev(dates, prices):
+    if len(prices) < 200: return None
+    ma200 = _sma(prices, 200)
+    m200, price = ma200[-1], prices[-1]
+    if not m200 or m200 == 0: return None
+    dev = (price / m200 - 1) * 100
+
+    if abs(dev) < 5: status = "green"
+    elif dev > 60 or dev < -30: status = "red"
+    elif dev > 30 or dev < -15: status = "yellow"
+    else: status = "grey"
+
+    dev_prev = (prices[-8] / ma200[-8] - 1) * 100 if len(prices) > 8 and ma200[-8] and ma200[-8] > 0 else None
+    trend = "up" if dev_prev and dev > dev_prev + 1 else ("down" if dev_prev and dev < dev_prev - 1 else "flat")
+
+    return {"id": "eth-200d-dev", "name": "ETH Deviation 200d MA",
+            "chart_name": "ETH 200d Deviation", "chart_tab": "ethereum", "chart_key": "eth-200d-dev",
+            "group": "Ethereum", "status": status, "trend": trend,
+            "detail": f"{dev:+.1f}% from 200d MA",
+            "context": "ETH often overshoots BTC in both directions. Extreme deviation + divergence from BTC = potential mean reversion trade."}
+
+
+def _signal_eth_drawdown(dates, prices):
+    if not prices: return None
+    rm = max(prices)
+    dd = (prices[-1] / rm - 1) * 100
+
+    if dd > -5: status = "green"
+    elif dd > -20: status = "yellow"
+    else: status = "red"
+
+    rm_7d = max(prices[:-7]) if len(prices) > 7 else rm
+    dd_7d = (prices[-8] / rm_7d - 1) * 100 if len(prices) > 8 else dd
+    trend = "up" if dd > dd_7d + 1 else ("down" if dd < dd_7d - 1 else "flat")
+
+    return {"id": "eth-drawdown", "name": "ETH Drawdown from ATH",
+            "chart_name": "ETH Drawdown", "chart_tab": "ethereum", "chart_key": "eth-drawdown",
+            "group": "Ethereum", "status": status, "trend": trend,
+            "detail": f"{dd:.1f}% from ATH",
+            "context": "ETH drawdowns are typically deeper than BTC. >30% while BTC <15% signals relative ETH weakness."}
+
+
+def _signal_eth_btc_ratio(cur):
+    cur.execute("""
+        SELECT e.price_usd / b.price_usd as ratio
+        FROM price_daily e
+        JOIN price_daily b ON e.timestamp::date = b.timestamp::date
+        WHERE e.symbol = 'ETH' AND b.symbol = 'BTC' AND e.price_usd > 0 AND b.price_usd > 0
+        ORDER BY e.timestamp DESC LIMIT 60
+    """)
+    rows = cur.fetchall()
+    if len(rows) < 8: return None
+    rows.reverse()
+    ratios = [float(r['ratio']) for r in rows]
+    current, prev_7d = ratios[-1], ratios[-8]
+    prev_30d = ratios[-30] if len(ratios) >= 30 else ratios[0]
+    delta_30d = ((current / prev_30d) - 1) * 100 if prev_30d > 0 else 0
+
+    if abs(delta_30d) > 15: status = "green"
+    elif abs(delta_30d) > 7: status = "yellow"
+    else: status = "grey"
+
+    trend = "up" if current > prev_7d * 1.01 else ("down" if current < prev_7d * 0.99 else "flat")
+
+    return {"id": "eth-btc-ratio", "name": "ETH/BTC Ratio",
+            "chart_name": "ETH/BTC Ratio", "chart_tab": "ethereum", "chart_key": "eth-btc-ratio",
+            "group": "Ethereum", "status": status, "trend": trend,
+            "detail": f"{current:.5f} (30d Δ {delta_30d:+.1f}%)",
+            "context": "The ETH/BTC ratio is the single best gauge of altcoin risk appetite. Falling ratio = BTC dominance rising, risk-off."}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ALTCOIN SIGNALS
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _signal_alt_mcap_cross(cur):
+    try:
+        cur.execute("""
+            SELECT t.timestamp::date as date,
+                   t.total_mcap_usd - b.market_cap_usd - e.market_cap_usd as alt_mcap
+            FROM total_marketcap_daily t
+            JOIN marketcap_daily b ON b.timestamp::date = t.timestamp::date
+            JOIN marketcap_daily e ON e.timestamp::date = t.timestamp::date
+            WHERE b.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+              AND e.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'ETH' LIMIT 1)
+              AND b.market_cap_usd > 0 AND e.market_cap_usd > 0 AND t.total_mcap_usd > 0
+            ORDER BY t.timestamp::date DESC LIMIT 210
+        """)
+        rows = cur.fetchall()
+    except: return None
+    if len(rows) < 200: return None
+    rows.reverse()
+    mcaps = [float(r['alt_mcap']) for r in rows]
+
+    ma50  = _sma(mcaps, 50)
+    ma200 = _sma(mcaps, 200)
+    m50, m200 = ma50[-1], ma200[-1]
+    if not m50 or not m200 or m200 == 0: return None
+    gap = (m50 / m200 - 1) * 100
+
+    recent_cross = False
+    for i in range(-7, 0):
+        idx = len(ma50) + i
+        if idx < 1 or not ma50[idx] or not ma50[idx-1] or not ma200[idx] or not ma200[idx-1]: continue
+        if (ma50[idx-1] < ma200[idx-1] and ma50[idx] >= ma200[idx]) or \
+           (ma50[idx-1] > ma200[idx-1] and ma50[idx] <= ma200[idx]):
+            recent_cross = True; break
+
+    status = "green" if (recent_cross or abs(gap) < 3) else ("yellow" if abs(gap) < 10 else "grey")
+    gap_prev = ((ma50[-8] / ma200[-8]) - 1) * 100 if ma50[-8] and ma200[-8] and ma200[-8] > 0 else None
+    trend = "flat"
+    if gap_prev:
+        d = abs(gap) - abs(gap_prev)
+        trend = "down" if d > 0.3 else ("up" if d < -0.3 else "flat")
+
+    return {"id": "alt-mcap-cross", "name": "Altcoin Mcap 50d/200d Cross",
+            "chart_name": "Altcoin Mcap", "chart_tab": "alt_market", "chart_key": "am-mcap",
+            "group": "Altcoins", "status": status, "trend": trend,
+            "detail": f"50d MA {abs(gap):.1f}% {'above' if gap > 0 else 'below'} 200d MA",
+            "context": "Alt mcap golden cross = capital flowing into alts. Death cross = sustained outflow back to BTC or fiat."}
+
+
+def _signal_alt_mcap_dev(cur):
+    try:
+        cur.execute("""
+            SELECT t.total_mcap_usd - b.market_cap_usd - e.market_cap_usd as alt_mcap
+            FROM total_marketcap_daily t
+            JOIN marketcap_daily b ON b.timestamp::date = t.timestamp::date
+            JOIN marketcap_daily e ON e.timestamp::date = t.timestamp::date
+            WHERE b.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+              AND e.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'ETH' LIMIT 1)
+              AND b.market_cap_usd > 0 AND e.market_cap_usd > 0 AND t.total_mcap_usd > 0
+            ORDER BY t.timestamp::date DESC LIMIT 210
+        """)
+        rows = cur.fetchall()
+    except: return None
+    if len(rows) < 200: return None
+    rows.reverse()
+    mcaps = [float(r['alt_mcap']) for r in rows]
+
+    ma200 = _sma(mcaps, 200)
+    if not ma200[-1] or ma200[-1] == 0: return None
+    dev = (mcaps[-1] / ma200[-1] - 1) * 100
+
+    if abs(dev) < 5: status = "green"
+    elif dev > 60 or dev < -30: status = "red"
+    elif dev > 30 or dev < -15: status = "yellow"
+    else: status = "grey"
+
+    dev_prev = (mcaps[-8] / ma200[-8] - 1) * 100 if ma200[-8] and ma200[-8] > 0 else None
+    trend = "up" if dev_prev and dev > dev_prev + 1 else ("down" if dev_prev and dev < dev_prev - 1 else "flat")
+
+    return {"id": "alt-mcap-dev", "name": "Altcoin Deviation 200d MA",
+            "chart_name": "Altcoin Deviation", "chart_tab": "alt_market", "chart_key": "am-mcap-dev",
+            "group": "Altcoins", "status": status, "trend": trend,
+            "detail": f"{dev:+.1f}% from 200d MA",
+            "context": "Alt mcap deviation >50% = altseason euphoria. <-30% = max pain, capitulation territory. Mean reversion dominates."}
+
+
+def _signal_alt_share(cur):
+    try:
+        cur.execute("""
+            SELECT t.total_mcap_usd as total,
+                   b.market_cap_usd as btc,
+                   e.market_cap_usd as eth
+            FROM total_marketcap_daily t
+            JOIN marketcap_daily b ON b.timestamp::date = t.timestamp::date
+            JOIN marketcap_daily e ON e.timestamp::date = t.timestamp::date
+            WHERE b.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+              AND e.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'ETH' LIMIT 1)
+              AND b.market_cap_usd > 0 AND e.market_cap_usd > 0 AND t.total_mcap_usd > 0
+            ORDER BY t.timestamp::date DESC LIMIT 60
+        """)
+        rows = cur.fetchall()
+    except: return None
+    if len(rows) < 8: return None
+    rows.reverse()
+    shares = [round((float(r['total']) - float(r['btc']) - float(r['eth'])) / float(r['total']) * 100, 2) for r in rows]
+    current, prev_7d = shares[-1], shares[-8]
+    prev_30d = shares[-30] if len(shares) >= 30 else shares[0]
+    delta_30d = current - prev_30d
+
+    if abs(delta_30d) > 5: status = "green"
+    elif abs(delta_30d) > 2: status = "yellow"
+    else: status = "grey"
+
+    trend = "up" if current > prev_7d + 0.3 else ("down" if current < prev_7d - 0.3 else "flat")
+
+    return {"id": "alt-share", "name": "Altcoin Share of Total",
+            "chart_name": "Dominance Chart", "chart_tab": "alt_market", "chart_key": "am-dominance",
+            "group": "Altcoins", "status": status, "trend": trend,
+            "detail": f"{current:.1f}% (30d Δ {delta_30d:+.1f}pp)",
+            "context": "Rising alt share = capital rotating into risk. Combined with ETH/BTC ratio rising = full altseason. Falling = flight to BTC quality."}
+

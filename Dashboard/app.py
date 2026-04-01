@@ -29,6 +29,11 @@ from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_
                            handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin)
 from api.crypto_market import handle_total_mcap
 from api.control_center import handle_control_center
+from api.ethereum import (handle_eth_ma, handle_eth_ma_gap, handle_eth_200d_dev,
+                           handle_eth_drawdown, handle_eth_mcap, handle_eth_btc_ratio)
+from api.alt_market import (handle_alt_mcap, handle_alt_mcap_gap, handle_alt_mcap_dev,
+                             handle_dominance_shares, handle_alt_relative_share,
+                             handle_btc_alt_ratio, handle_alt_intracorr)
 
 PORT     = int(os.environ.get("PORT", 8080))
 BASE_DIR = Path(__file__).parent
@@ -132,6 +137,21 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/macro-stablecoin":  self.send_json(handle_macro_stablecoin(params))
             elif p == "/api/total-mcap":        self.send_json(handle_total_mcap(params))
             elif p == "/api/control-center":    self.send_json(handle_control_center(params))
+
+            elif p == "/api/eth-ma":            self.send_json(handle_eth_ma(params))
+            elif p == "/api/eth-ma-gap":        self.send_json(handle_eth_ma_gap(params))
+            elif p == "/api/eth-200d-dev":      self.send_json(handle_eth_200d_dev(params))
+            elif p == "/api/eth-drawdown":      self.send_json(handle_eth_drawdown(params))
+            elif p == "/api/eth-mcap":          self.send_json(handle_eth_mcap(params))
+            elif p == "/api/eth-btc-ratio":     self.send_json(handle_eth_btc_ratio(params))
+
+            elif p == "/api/alt-mcap-total":    self.send_json(handle_alt_mcap(params))
+            elif p == "/api/alt-mcap-gap":      self.send_json(handle_alt_mcap_gap(params))
+            elif p == "/api/alt-mcap-dev":      self.send_json(handle_alt_mcap_dev(params))
+            elif p == "/api/dominance-shares":  self.send_json(handle_dominance_shares(params))
+            elif p == "/api/alt-rel-share":     self.send_json(handle_alt_relative_share(params))
+            elif p == "/api/btc-alt-ratio":     self.send_json(handle_btc_alt_ratio(params))
+            elif p == "/api/alt-intracorr":     self.send_json(handle_alt_intracorr(params))
 
             elif p.startswith("/static/"):
                 self.send_file(BASE_DIR / p[8:])

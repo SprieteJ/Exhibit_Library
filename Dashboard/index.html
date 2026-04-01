@@ -409,6 +409,8 @@ input[type=number] { width: 70px; }
   <button class="tab active" data-tab="control_center">Control Center</button>
   <button class="tab" data-tab="sector">Themes</button>
   <button class="tab" data-tab="bitcoin">Bitcoin</button>
+  <button class="tab" data-tab="ethereum">Ethereum</button>
+  <button class="tab" data-tab="alt_market">Alt Market</button>
   <button class="tab" data-tab="altcoins">Altcoins</button>
   <button class="tab" data-tab="macro">Macro</button>
   <button class="tab" data-tab="crypto_market">Crypto Market</button>
@@ -568,6 +570,41 @@ const TABS = {
         { key:"btc-funding",       label:"Funding rate",       sub:"Is the futures market crowded long or short? BTC perpetual 8h funding rate, bar chart.", src:"CoinGecko Pro + Derivatives" },
         { key:"btc-oi",            label:"Open interest",      sub:"How much leverage is in the BTC market? Total BTC OI in USD with price overlay.", src:"CoinGecko Pro + Derivatives" },
         { key:"btc-funding-delta", label:"Funding rate delta", sub:"30d rolling change in BTC funding rate (bps) vs 30d rolling BTC price return (%). Spots regime shifts in sentiment.", src:"CoinGecko Pro + Derivatives" },
+      ]},
+    ]
+  },
+  ethereum: {
+    label: "Ethereum",
+    groups: [
+      { label: "Pricing", children: [
+        { key:"eth-ma",       label:"Moving averages",       sub:"ETH price with 50d, 200d, 200-week MA overlaid. Log scale.", src:"CoinGecko Pro" },
+        { key:"eth-ma-gap",   label:"MA gap (50d vs 200d)",  sub:"The % difference between 50d and 200d MA. Golden/death cross proximity.", src:"CoinGecko Pro" },
+        { key:"eth-200d-dev", label:"200d MA deviation",     sub:"% deviation from 200d MA. Mean-reversion signal.", src:"CoinGecko Pro" },
+      ]},
+      { label: "Risk", children: [
+        { key:"eth-drawdown", label:"Drawdown from ATH",     sub:"Continuous drawdown from ETH rolling all-time high.", src:"CoinGecko Pro" },
+        { key:"eth-mcap",     label:"ETH market cap",        sub:"ETH market cap over time with milestone levels ($50B, $100B, $200B, $500B).", src:"CoinGecko Pro" },
+      ]},
+      { label: "Relative", children: [
+        { key:"eth-btc-ratio", label:"ETH/BTC ratio",        sub:"The single best gauge of altcoin risk appetite. Falling = BTC dominance, rising = alt season.", src:"CoinGecko Pro" },
+      ]},
+    ]
+  },
+  alt_market: {
+    label: "Alt Market",
+    groups: [
+      { label: "Market Cap", children: [
+        { key:"am-mcap",      label:"Altcoin mcap",          sub:"Total altcoin mcap (ex-BTC, ex-ETH) with 50d and 200d MA.", src:"CoinGecko Pro" },
+        { key:"am-mcap-gap",  label:"MA gap (50d vs 200d)",  sub:"Altcoin mcap 50d/200d MA gap — golden/death cross on the alt market.", src:"CoinGecko Pro" },
+        { key:"am-mcap-dev",  label:"200d MA deviation",     sub:"% deviation of alt mcap from its 200d MA.", src:"CoinGecko Pro" },
+      ]},
+      { label: "Dominance", children: [
+        { key:"am-dominance", label:"Dominance shares",      sub:"BTC, ETH, and altcoin share of total crypto mcap — 3 lines.", src:"CoinGecko Pro" },
+        { key:"am-rel-share", label:"Altcoin relative share", sub:"Altcoin mcap as % of total, vs BTC mcap, and vs ETH mcap — 3 lines.", src:"CoinGecko Pro" },
+        { key:"am-btc-ratio", label:"BTC/Altcoin mcap ratio", sub:"BTC mcap divided by altcoin mcap. Rising = BTC dominance, falling = alt rotation.", src:"CoinGecko Pro" },
+      ]},
+      { label: "Correlation", children: [
+        { key:"am-intracorr", label:"Altcoin intracorrelation", sub:"Rolling 30d avg pairwise correlation within top 10/25/50/100/250 alts. High = everything moves together.", src:"CoinGecko Pro" },
       ]},
     ]
   },
@@ -830,7 +867,7 @@ async function selectView(tab, key) {
   if (tab === 'sector') {
     allItems = allSectors;
   } else {
-    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab === 'crypto_market' ? 'majors' : tab === 'control_center' ? 'majors' : tab}`);
+    const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab === 'crypto_market' ? 'majors' : tab === 'control_center' ? 'majors' : tab === 'ethereum' ? 'majors' : tab === 'alt_market' ? 'majors' : tab}`);
     allItems  = await res.json();
   }
 
@@ -840,7 +877,7 @@ async function selectView(tab, key) {
     'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
     'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
-    'btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
+    'btc-ma','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
@@ -854,7 +891,7 @@ async function selectView(tab, key) {
 const NEW_AUTO_KEYS = new Set([
   'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
-  'btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
+  'btc-ma','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
@@ -1467,6 +1504,19 @@ async function fetchCurrent() {
       case 'cc-altcoins':    await fetchControlCenter('altcoins'); break;
       case 'cc-macro':       await fetchControlCenter('macro'); break;
       case 'btc-ma':          await fetchBtcMA(from, to); break;
+      case 'eth-ma':          await fetchEthMA(from, to); break;
+      case 'eth-ma-gap':      await fetchEthMAGap(from, to); break;
+      case 'eth-200d-dev':    await fetchEth200dDev(from, to); break;
+      case 'eth-drawdown':    await fetchEthDrawdown(from, to); break;
+      case 'eth-mcap':        await fetchEthMcap(from, to); break;
+      case 'eth-btc-ratio':   await fetchEthBtcRatio(from, to); break;
+      case 'am-mcap':         await fetchAltMcap(from, to); break;
+      case 'am-mcap-gap':     await fetchAltMcapGap(from, to); break;
+      case 'am-mcap-dev':     await fetchAltMcapDev(from, to); break;
+      case 'am-dominance':    await fetchDominanceShares(from, to); break;
+      case 'am-rel-share':    await fetchAltRelShare(from, to); break;
+      case 'am-btc-ratio':    await fetchBtcAltRatio(from, to); break;
+      case 'am-intracorr':    await fetchAltIntracorr(from, to); break;
       case 'btc-ma-gap':      await fetchBtcMAGap(from, to); break;
       case 'btc-200w-floor':  await fetchBtc200wFloor(from, to); break;
       case 'btc-200d-dev':    await fetchBtc200dDev(from, to); break;
@@ -3665,6 +3715,13 @@ async function fetchControlCenter(mode) {
       'rv-iv':          '🟡 Spread > ±20pp\n🔴 Spread > ±30pp\n⬚ Spread < 20pp — normal',
       'funding':        '🟢 Sign flip in last 7d (positioning reversal)\n🟡 Rate elevated (>0.03% or <-0.01%)\n🔴 Extreme (>0.05% or <-0.03%)\n⬚ Normal',
       'btc-dominance':  '🟢 30d change > ±5pp (big rotation)\n🟡 30d change > ±2pp\n⬚ Stable — no rotation signal',
+      'eth-ma-cross':   '🟢 Within 3% of crossing or crossed in last 7d\n🟡 Gap < 10%\n⬚ Gap > 10%',
+      'eth-200d-dev':   '🟢 Within ±5% of MA\n🟡 15-30% below or 30-50% above\n🔴 >60% above or >30% below',
+      'eth-drawdown':   '🟢 <5% from ATH\n🟡 5-20%\n🔴 >20%',
+      'eth-btc-ratio':  '🟢 30d change > ±15%\n🟡 30d change > ±7%\n⬚ Stable',
+      'alt-mcap-cross': '🟢 Within 3% of crossing or crossed recently\n🟡 Gap < 10%\n⬚ Gap > 10%',
+      'alt-mcap-dev':   '🟢 Within ±5%\n🟡 15-30% below or 30-50% above\n🔴 >60% above or >30% below',
+      'alt-share':      '🟢 30d change > ±5pp\n🟡 30d change > ±2pp\n⬚ Stable',
       'btc-mcap':       '🟢 Within 3% of a milestone ($1T, $2T)\n🟡 Within 10%\n⬚ No milestone nearby',
     };
 
@@ -3697,17 +3754,17 @@ async function fetchControlCenter(mode) {
         : `${signals.length} indicator${signals.length !== 1 ? 's' : ''} flagged`;
     } else if (mode === 'bitcoin') {
       signals = data.signals.filter(s =>
-        ['Moving Averages','Risk','Volatility','Derivatives'].includes(s.group));
+        ['Moving Averages','Risk','Volatility','Derivatives','Cycle Indicators'].includes(s.group));
       title = 'Bitcoin — All Signals';
       subtitle = 'Full BTC indicator matrix including quiet signals';
     } else if (mode === 'themes') {
       signals = data.signals.filter(s =>
-        ['Market Structure','Themes','Sectors'].includes(s.group));
+        ['Market Structure','Themes','Sectors','Ethereum'].includes(s.group));
       title = 'Themes — All Signals';
       subtitle = 'Sector and theme indicators';
     } else if (mode === 'altcoins') {
       signals = data.signals.filter(s =>
-        ['Altcoins','Relative Performance'].includes(s.group));
+        ['Altcoins','Relative Performance','Alt Market'].includes(s.group));
       title = 'Altcoins — All Signals';
       subtitle = 'Altcoin indicators';
     } else if (mode === 'macro') {
@@ -3794,6 +3851,191 @@ const _origSelectView = selectView;
 // Patch handled inline — matrix container removed on next chart render via mkChart
 
 // ── Alt: ATH Drawdown ─────────────────────────────────────────────────────────
+
+
+
+// ── ETH: Moving Averages ──────────────────────────────────────────────────────
+async function fetchEthMA(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/eth-ma?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [
+      { label: 'ETH Price', data: data.price, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.1 },
+      { label: '50d MA', data: data.ma50, borderColor: '#2471CC', backgroundColor: 'transparent', borderWidth: 1.2, pointRadius: 0, borderDash: [4,3] },
+      { label: '200d MA', data: data.ma200, borderColor: '#EC5B5B', backgroundColor: 'transparent', borderWidth: 1.2, pointRadius: 0, borderDash: [6,4] },
+      { label: '200w MA', data: data.ma200w, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.0, pointRadius: 0, borderDash: [2,6] },
+    ]}, { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$'+(v>=1000?(v/1000).toFixed(0)+'k':v.toFixed(0)) }, grid: YGRID } },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
+    setTitle('ETH Price — Moving Averages', 'Source: CoinGecko · log scale');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchEthMAGap(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/eth-ma-gap?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [{ label: '50d/200d Gap (%)', data: data.gap, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.08)',below:'rgba(236,91,91,0.08)'} }] },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
+    setTitle('ETH 50d / 200d MA Gap', 'Source: CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchEth200dDev(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/eth-200d-dev?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [{ label: '% Deviation', data: data.deviation, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.06)',below:'rgba(236,91,91,0.06)'} }] },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
+    setTitle('ETH Deviation from 200d MA', 'Source: CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchEthDrawdown(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/eth-drawdown?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [{ label: 'Drawdown %', data: data.values, borderColor: '#EC5B5B', backgroundColor: 'rgba(236,91,91,0.06)', borderWidth: 1.4, pointRadius: 0, fill: true }] },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { max: 0, ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
+    setTitle('ETH Drawdown from ATH', 'Source: CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchEthMcap(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/eth-mcap?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    const fmtT = v => { if(v>=1e12) return '$'+(v/1e12).toFixed(1)+'T'; if(v>=1e9) return '$'+(v/1e9).toFixed(0)+'B'; return '$'+(v/1e6).toFixed(0)+'M'; };
+    mkChart('line', { labels: data.dates, datasets: [{ label: 'ETH Mcap', data: data.mcap, borderColor: '#746BE6', backgroundColor: 'rgba(116,107,230,0.06)', borderWidth: 1.6, pointRadius: 0, fill: true }] },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => fmtT(v) }, grid: YGRID } }, plugins: { legend: { display: false } } });
+    setTitle('ETH Market Cap', 'Source: CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchEthBtcRatio(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/eth-btc-ratio?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [{ label: 'ETH/BTC', data: data.values, borderColor: '#746BE6', backgroundColor: 'rgba(116,107,230,0.06)', borderWidth: 1.6, pointRadius: 0, fill: true }] },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => v.toFixed(4) }, grid: YGRID } }, plugins: { legend: { display: false } } });
+    setTitle('ETH/BTC Ratio', 'Source: CoinGecko · falling = BTC dominance, rising = alt appetite');
+  } catch(e) { showErr(e); }
+}
+
+// ── Alt Market charts ─────────────────────────────────────────────────────────
+async function fetchAltMcap(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-mcap-total?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    const fmtT = v => { if(v>=1e12) return '$'+(v/1e12).toFixed(2)+'T'; if(v>=1e9) return '$'+(v/1e9).toFixed(0)+'B'; return '$'+(v/1e6).toFixed(0)+'M'; };
+    mkChart('line', { labels: data.dates, datasets: [
+      { label: 'Altcoin Mcap', data: data.mcap, borderColor: '#00D64A', backgroundColor: 'rgba(0,214,74,0.06)', borderWidth: 1.6, pointRadius: 0, fill: true },
+      { label: '50d MA', data: data.ma50, borderColor: '#2471CC', backgroundColor: 'transparent', borderWidth: 1.2, pointRadius: 0, borderDash: [4,3] },
+      { label: '200d MA', data: data.ma200, borderColor: '#EC5B5B', backgroundColor: 'transparent', borderWidth: 1.2, pointRadius: 0, borderDash: [6,4] },
+    ]}, { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => fmtT(v) }, grid: YGRID } },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
+    setTitle('Altcoin Market Cap (ex-BTC, ex-ETH)', 'Source: CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchAltMcapGap(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-mcap-gap?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [{ label: '50d/200d Gap (%)', data: data.gap, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.08)',below:'rgba(236,91,91,0.08)'} }] },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
+    setTitle('Altcoin Mcap — 50d/200d MA Gap', 'Source: CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchAltMcapDev(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-mcap-dev?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [{ label: '% Deviation', data: data.deviation, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.06)',below:'rgba(236,91,91,0.06)'} }] },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
+    setTitle('Altcoin Mcap — Deviation from 200d MA', 'Source: CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchDominanceShares(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/dominance-shares?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [
+      { label: 'BTC', data: data.btc_pct, borderColor: '#F7931A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0 },
+      { label: 'ETH', data: data.eth_pct, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0 },
+      { label: 'Altcoins', data: data.alt_pct, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0 },
+    ]}, { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
+    setTitle('Dominance — BTC / ETH / Altcoins', 'Source: CoinGecko · share of total crypto mcap');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchAltRelShare(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-rel-share?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [
+      { label: 'vs Total Mcap', data: data.vs_total, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0 },
+      { label: 'vs BTC Mcap', data: data.vs_btc, borderColor: '#F7931A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0 },
+      { label: 'vs ETH Mcap', data: data.vs_eth, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0 },
+    ]}, { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
+    setTitle('Altcoin Relative Share', 'Source: CoinGecko');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchBtcAltRatio(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-alt-ratio?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    mkChart('line', { labels: data.dates, datasets: [{ label: 'BTC/Alt Ratio', data: data.ratio, borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.06)', borderWidth: 1.6, pointRadius: 0, fill: true }] },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { ticks: YTICK, grid: YGRID } }, plugins: { legend: { display: false } } });
+    setTitle('BTC / Altcoin Mcap Ratio', 'Source: CoinGecko · rising = BTC dominance');
+  } catch(e) { showErr(e); }
+}
+
+async function fetchAltIntracorr(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/alt-intracorr?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+    const ds = [];
+    const tiers = [['top10','Top 10','#F7931A'],['top25','Top 25','#2471CC'],['top50','Top 50','#746BE6'],['top100','Top 100','#00D64A'],['top250','Top 250','#888']];
+    for (const [k,l,c] of tiers) {
+      if (data[k]?.length) ds.push({ label: l, data: data[k], borderColor: c, backgroundColor: 'transparent', borderWidth: 1.2, pointRadius: 0, tension: 0.1 });
+    }
+    mkChart('line', { labels: data.dates, datasets: ds },
+    { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
+      y: { min: -0.2, max: 1, ticks: { ...YTICK, callback: v => v.toFixed(1) }, grid: YGRID } },
+      plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
+    setTitle('Altcoin Intracorrelation', 'Source: CoinGecko · avg pairwise 30d Pearson · high = everything moves together');
+  } catch(e) { showErr(e); }
+}
 
 
 // ── BTC: MA Gap (50d vs 200d) ─────────────────────────────────────────────────
