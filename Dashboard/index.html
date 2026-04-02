@@ -838,10 +838,7 @@ async function selectView(tab, key) {
   const _mc = document.getElementById('main-chart');
   if (_mc) _mc.style.display = '';
   // Always clean up control center matrix when switching views
-  const _ccEl = document.getElementById('cc-matrix-container');
-  if (_ccEl) _ccEl.remove();
-  const _mc = document.getElementById('main-chart');
-  if (_mc) _mc.style.display = '';
+
   let viewDef = null;
   for (const g of (TABS[tab]?.groups || []))
     for (const c of g.children)
