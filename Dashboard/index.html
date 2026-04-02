@@ -497,6 +497,9 @@ const TABS = {
   sector: {
     label: "Themes",
     groups: [
+      { label: "Overview", children: [
+        { key:"sec-overview", label:"Sector overview", sub:"Summary matrix: market cap, median cap, 1-month performance, and constituents for every sector.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
       { label: "Price Action", children: [
         { key:"sec-equal",  label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",        src:"CoinGecko Pro — Wintermute OTC" },
         { key:"sec-mcap",   label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",    src:"CoinGecko Pro — Wintermute OTC" },
@@ -636,6 +639,9 @@ const TABS = {
   macro: {
     label: "Macro",
     groups: [
+      { label: "Overview", children: [
+        { key:"sec-overview", label:"Sector overview", sub:"Summary matrix: market cap, median cap, 1-month performance, and constituents for every sector.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
       { label: "Price Action", children: [
         { key:"mac-price",        label:"Price comparison",             sub:"Macro assets · Rebased to 100",                                                          src:"Yahoo Finance via yfinance" },
       ]},
@@ -811,10 +817,19 @@ function buildTree(tab) {
 // ── Select view ───────────────────────────────────────────────────────────────
 
 // Keys that should default to 'all' period when selected
+const DEFAULT_SELECTIONS = {
+  'sec-equal': ['General Purpose Blockchain Networks', 'Layer 2'],
+  'sec-mcap':  ['General Purpose Blockchain Networks', 'Layer 2'],
+};
 const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','eth-ma','eth-ma-gap','eth-200d-dev']);
 const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01'};
 
 async function selectView(tab, key) {
+  // Always clean up control center matrix when switching views
+  const _ccEl = document.getElementById('cc-matrix-container');
+  if (_ccEl) _ccEl.remove();
+  const _mc = document.getElementById('main-chart');
+  if (_mc) _mc.style.display = '';
   let viewDef = null;
   for (const g of (TABS[tab]?.groups || []))
     for (const c of g.children)
@@ -873,8 +888,8 @@ async function selectView(tab, key) {
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   const AUTO_VIEWS = new Set([
-    'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
-    'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'cc-matrix','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
+    'cc-matrix','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -886,13 +901,21 @@ async function selectView(tab, key) {
       const fromEl = document.getElementById('rp-from');
       if (fromEl) fromEl.value = CUSTOM_START_DATE[key] || '2013-01-01';
     }
+    // Apply default selections if defined and nothing currently selected
+    if (DEFAULT_SELECTIONS[key] && (!selected || selected.length === 0)) {
+      selected = [...DEFAULT_SELECTIONS[key]];
+      // Check the corresponding checkboxes
+      document.querySelectorAll('.sel-cb').forEach(cb => {
+        cb.checked = selected.includes(cb.value);
+      });
+    }
     setTimeout(fetchCurrent, 100);
   }
 }
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
-  'cc-matrix','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'cc-matrix','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1501,6 +1524,7 @@ async function fetchCurrent() {
       case 'btc-funding':    await fetchBtcFunding(from, to); break;
       case 'btc-oi':            await fetchBtcOI(from, to); break;
       case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
+      case 'sec-overview': await fetchSectorOverview(); break;
       case 'cc-matrix':       await fetchControlCenter('flagged'); break;
       case 'cc-bitcoin':     await fetchControlCenter('bitcoin'); break;
       case 'cc-themes':      await fetchControlCenter('themes'); break;
@@ -4276,6 +4300,73 @@ async function fetchBtcRvIv(from, to) {
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
     });
     setTitle('Realized Vol vs Implied Vol (DVOL)', 'Source: CoinGecko + Deribit · positive spread = market pricing risk');
+  } catch(e) { showErr(e); }
+}
+
+
+
+// ── Themes: Sector Overview Matrix ────────────────────────────────────────────
+async function fetchSectorOverview() {
+  spinOn();
+  try {
+    const data = await fetch('/api/sector-overview').then(r=>r.json());
+    if (!data.sectors?.length) throw new Error('no data');
+
+    // Destroy chart, show table
+    if (chart) { chart.destroy(); chart = null; }
+    const canvas = document.getElementById('main-chart');
+    canvas.style.display = 'none';
+
+    let existing = document.getElementById('cc-matrix-container');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'cc-matrix-container';
+    container.style.cssText = 'position:absolute;inset:0;overflow-y:auto;padding:16px 20px;';
+
+    const fmtM = v => {
+      if (v == null) return '—';
+      if (v >= 1e12) return '$' + (v/1e12).toFixed(2) + 'T';
+      if (v >= 1e9)  return '$' + (v/1e9).toFixed(1) + 'B';
+      if (v >= 1e6)  return '$' + (v/1e6).toFixed(0) + 'M';
+      return '$' + v.toFixed(0);
+    };
+
+    let tableHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px">Sector</th>
+            <th style="text-align:right;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px">Total Mcap</th>
+            <th style="text-align:right;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px">Median Mcap</th>
+            <th style="text-align:right;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px">1M Perf (EW)</th>
+            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px"># Assets</th>
+            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px">Constituents</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    for (const s of data.sectors) {
+      const perfColor = s.perf_1m > 0 ? '#00D64A' : (s.perf_1m < 0 ? '#EC5B5B' : 'var(--muted)');
+      const perfStr = s.perf_1m != null ? (s.perf_1m > 0 ? '+' : '') + s.perf_1m.toFixed(1) + '%' : '—';
+      const constStr = s.constituents?.slice(0, 8).join(', ') + (s.constituents?.length > 8 ? ', …' : '');
+
+      tableHTML += `
+        <tr style="border-bottom:0.5px solid var(--border)">
+          <td style="padding:9px 10px;font-weight:600"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:8px"></span>${s.name}</td>
+          <td style="padding:9px 10px;text-align:right;font-family:var(--mono);font-size:12px">${fmtM(s.total_mcap)}</td>
+          <td style="padding:9px 10px;text-align:right;font-family:var(--mono);font-size:12px">${fmtM(s.median_mcap)}</td>
+          <td style="padding:9px 10px;text-align:right;font-family:var(--mono);font-size:12px;color:${perfColor}">${perfStr}</td>
+          <td style="padding:9px 10px;text-align:center;font-family:var(--mono);font-size:12px">${s.count}</td>
+          <td style="padding:9px 10px;font-size:11px;color:var(--muted)">${constStr}</td>
+        </tr>`;
+    }
+
+    tableHTML += '</tbody></table>';
+    container.innerHTML = tableHTML;
+    canvas.parentElement.appendChild(container);
+    setTitle('Sector Overview', 'Source: CoinGecko Pro — Wintermute OTC');
+    document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { showErr(e); }
 }
 
