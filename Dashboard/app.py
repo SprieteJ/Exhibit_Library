@@ -103,6 +103,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/sector-oi":         self.send_json(handle_sector_oi(params))
             elif p == "/api/sector-sharpe":     self.send_json(handle_sector_sharpe(params))
             elif p == "/api/sector-overview":   self.send_json(handle_sector_overview(params))
+            elif p == "/api/sector-overview":   self.send_json(handle_sector_overview(params))
 
             elif p == "/api/btc-epochs":        self.send_json(handle_btc_epochs(params))
             elif p == "/api/btc-cycles":        self.send_json(handle_btc_cycles(params))

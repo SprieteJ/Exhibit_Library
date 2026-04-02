@@ -949,3 +949,71 @@ def handle_sector_overview(params):
     # Sort by total mcap descending
     results.sort(key=lambda x: x['total_mcap'] or 0, reverse=True)
     return {"sectors": results}
+
+
+def handle_sector_overview(params):
+    """Overview matrix: name, color, total mcap, median mcap, 1m EW perf, count, constituents."""
+    from statistics import median
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    results = []
+    for sector_name, cg_ids in SECTORS.items():
+        color = SECTOR_COLORS.get(sector_name, "#888888")
+
+        # Get constituent symbols
+        cur.execute("""
+            SELECT symbol FROM asset_registry WHERE coingecko_id = ANY(%s) ORDER BY symbol
+        """, (cg_ids,))
+        symbols = [r['symbol'] for r in cur.fetchall()]
+
+        # Total + median mcap (latest date)
+        cur.execute("""
+            SELECT market_cap_usd FROM marketcap_daily
+            WHERE coingecko_id = ANY(%s)
+              AND timestamp::date = (SELECT MAX(timestamp::date) FROM marketcap_daily WHERE timestamp <= NOW())
+              AND market_cap_usd > 0
+        """, (cg_ids,))
+        mcaps = [float(r['market_cap_usd']) for r in cur.fetchall()]
+        total_mcap = sum(mcaps) if mcaps else None
+        median_mcap = median(mcaps) if mcaps else None
+
+        # 1-month equal-weight performance
+        cur.execute("""
+            WITH latest AS (
+                SELECT coingecko_id, price_usd as p_now
+                FROM price_daily
+                WHERE coingecko_id = ANY(%s)
+                  AND timestamp::date = (SELECT MAX(timestamp::date) FROM price_daily WHERE timestamp <= NOW())
+                  AND price_usd > 0
+            ),
+            month_ago AS (
+                SELECT coingecko_id, price_usd as p_old
+                FROM price_daily
+                WHERE coingecko_id = ANY(%s)
+                  AND timestamp::date = (SELECT MAX(timestamp::date) FROM price_daily WHERE timestamp <= NOW() - INTERVAL '30 days')
+                  AND price_usd > 0
+            )
+            SELECT AVG((l.p_now / m.p_old - 1) * 100) as avg_ret
+            FROM latest l
+            JOIN month_ago m ON l.coingecko_id = m.coingecko_id
+            WHERE m.p_old > 0
+        """, (cg_ids, cg_ids))
+        row = cur.fetchone()
+        perf_1m = round(float(row['avg_ret']), 2) if row and row['avg_ret'] is not None else None
+
+        results.append({
+            "name": sector_name,
+            "color": color,
+            "total_mcap": round(total_mcap, 2) if total_mcap else None,
+            "median_mcap": round(median_mcap, 2) if median_mcap else None,
+            "perf_1m": perf_1m,
+            "count": len(cg_ids),
+            "constituents": symbols,
+        })
+
+    conn.close()
+
+    # Sort by total mcap descending
+    results.sort(key=lambda x: x['total_mcap'] or 0, reverse=True)
+    return {"sectors": results}
