@@ -157,7 +157,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/alt-intracorr":     self.send_json(handle_alt_intracorr(params))
 
             elif p.startswith("/static/"):
-                self.send_file(BASE_DIR / p[8:])
+                self.send_file(BASE_DIR / p[1:])
             else:
                 self.send_response(404); self.end_headers()
 
