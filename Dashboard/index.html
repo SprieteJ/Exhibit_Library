@@ -893,7 +893,7 @@ function buildRightPanel(tab, key) {
   const isRRG       = key === 'sec-rrg';
   const isNewAuto   = NEW_AUTO_KEYS.has(key);
   const isSelChart  = SELECTION_KEYS.has(key);
-  const needsSearch = tab !== 'sector' && !isBtcView && key !== 'alt-scatter' && key !== 'btc-gold' && key !== 'btc-rolling' && !isNewAuto;
+  const needsSearch = tab !== 'baskets' && !isBtcView && key !== 'alt-scatter' && key !== 'btc-gold' && key !== 'btc-rolling' && !isNewAuto;
   const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble' || key === 'alt-scatter' || key === 'btc-rolling';
   const needsVersus = key === 'sec-vs';
   const isAutoView  = isBubble || isRRG || isBtcView || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling' || isNewAuto;
