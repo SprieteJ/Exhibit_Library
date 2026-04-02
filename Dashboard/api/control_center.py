@@ -55,37 +55,156 @@ def _rules_ma_gap(prices, category, tab, prefix):
     ma200 = _sma(prices, 200)
     m50, m200 = ma50[-1], ma200[-1]
     if not m50 or not m200 or m200 == 0: return []
-    gap = (m50 / m200 - 1) * 100
-    gap_series = [(ma50[i] / ma200[i] - 1) * 100 if ma50[i] and ma200[i] and ma200[i] > 0 else None for i in range(len(prices))]
-    sl50, sl200, sl_gap = _slope(ma50), _slope(ma200), _slope(gap_series)
-    pos = "above" if gap > 0 else "below"
 
-    near = abs(gap) < 3
-    cross_type = "golden cross" if gap > 0 and near else ("death cross" if gap < 0 and near else "")
-    crossed_50, dir_50 = _recent_zero_cross(sl50)
-    sl50_now = _last_valid(sl50)
-    near_zero_50 = sl50_now is not None and abs(sl50_now) < 0.3
-    crossed_200, dir_200 = _recent_zero_cross(sl200)
-    sl200_now = _last_valid(sl200)
-    near_zero_200 = sl200_now is not None and abs(sl200_now) < 0.15
-    crossed_gap, dir_gap = _recent_zero_cross(sl_gap)
+    price = prices[-1]
+    gap = (m50 / m200 - 1) * 100
+    gap_series = [(ma50[i] / ma200[i] - 1) * 100 if ma50[i] and ma200[i] and ma200[i] > 0 else None
+                  for i in range(len(prices))]
+    sl50 = _slope(ma50)
+    sl_gap = _slope(gap_series)
     sl_gap_now = _last_valid(sl_gap)
 
     key = f"{prefix.lower()}-ma-gap" if prefix != "Alt" else "am-mcap-gap"
-    rules = [
-        {"name": "Near crossing", "active": near,
-         "detail": f"Gap at {gap:+.1f}% — {cross_type}" if near else f"Gap at {gap:+.1f}%, 50d {pos} 200d",
-         "context": "When the gap approaches zero a golden or death cross is imminent."},
-        {"name": "50d MA inflecting", "active": crossed_50 or near_zero_50,
-         "detail": f"50d just turned {'up' if dir_50 == 'up' else 'down'}" if crossed_50 else (f"50d slope flattening ({sl50_now:+.2f}%/5d)" if near_zero_50 else f"50d slope {sl50_now:+.2f}%/5d" if sl50_now else "—"),
-         "context": "Short-term momentum shift. The 50d turning is the first sign of a trend change."},
-        {"name": "200d MA inflecting", "active": crossed_200 or near_zero_200,
-         "detail": f"200d just turned {'up' if dir_200 == 'up' else 'down'}" if crossed_200 else (f"200d slope flattening ({sl200_now:+.3f}%/5d)" if near_zero_200 else f"200d slope {sl200_now:+.3f}%/5d" if sl200_now else "—"),
-         "context": "The slowest-moving signal. When the 200d turns, institutions notice."},
-        {"name": "Gap direction reversing", "active": crossed_gap,
-         "detail": f"Gap now {'widening' if dir_gap == 'up' else 'narrowing'} after reversal" if crossed_gap else (f"Gap {'widening' if sl_gap_now and sl_gap_now > 0 else 'narrowing'} ({sl_gap_now:+.2f}%/5d)" if sl_gap_now else "—"),
-         "context": "Gap re-widening = trend re-accelerating. Narrowing = momentum fading, cross risk rising."},
-    ]
+    rules = []
+
+    # ── Rule 1: Cross just happened (event, major) ──
+    # Check if gap changed sign within last 14 days
+    cross_happened = False
+    cross_days_ago = None
+    cross_type = None
+    valid_gaps = [(i, g) for i, g in enumerate(gap_series) if g is not None]
+    if len(valid_gaps) >= 2:
+        for j in range(len(valid_gaps) - 1, max(len(valid_gaps) - 15, 0), -1):
+            idx_now, g_now = valid_gaps[j]
+            idx_prev, g_prev = valid_gaps[j - 1]
+            if (g_prev < 0 and g_now >= 0):
+                cross_happened = True
+                cross_days_ago = len(prices) - 1 - idx_now
+                cross_type = "Golden cross"
+                break
+            elif (g_prev > 0 and g_now <= 0):
+                cross_happened = True
+                cross_days_ago = len(prices) - 1 - idx_now
+                cross_type = "Death cross"
+                break
+
+    rules.append({
+        "name": "Cross just happened",
+        "type": "event", "weight": "major",
+        "active": cross_happened,
+        "detail": f"{cross_type} {cross_days_ago}d ago" if cross_happened else f"No cross in last 14d — gap at {gap:+.1f}%",
+        "context": "A confirmed cross is the primary trend change signal.",
+    })
+
+    # ── Rule 2: Cross imminent (momentum, major) ──
+    # Active if gap is narrowing toward zero and days-to-cross < 30
+    cross_imminent = False
+    days_to_cross = None
+    if sl_gap_now is not None and sl_gap_now != 0:
+        # Gap narrowing toward zero means: gap positive & slope negative, or gap negative & slope positive
+        narrowing = (gap > 0 and sl_gap_now < 0) or (gap < 0 and sl_gap_now > 0)
+        if narrowing:
+            # days_to_cross = abs(gap) / abs(sl_gap_now) * 5  (slope is per 5 days)
+            dtc = abs(gap) / abs(sl_gap_now) * 5
+            if dtc < 30:
+                cross_imminent = True
+                days_to_cross = round(dtc)
+
+    imminent_type = "golden" if gap < 0 else "death"
+    rules.append({
+        "name": "Cross imminent",
+        "type": "momentum", "weight": "major",
+        "active": cross_imminent,
+        "detail": f"~{days_to_cross}d to {imminent_type} cross at current rate, gap at {gap:+.1f}%" if cross_imminent else f"Gap at {gap:+.1f}%, {'narrowing' if sl_gap_now and ((gap > 0 and sl_gap_now < 0) or (gap < 0 and sl_gap_now > 0)) else 'widening'}",
+        "context": "Gap compressing fast — cross risk within a month.",
+    })
+
+    # ── Rule 3: 50d MA inflected (event, minor) ──
+    # Active if 50d slope changed sign in last 7 days with 3-day persistence before flip
+    ma50_inflected = False
+    ma50_dir = None
+    ma50_days_ago = None
+    sl50_valid = [(i, s) for i, s in enumerate(sl50) if s is not None]
+    if len(sl50_valid) >= 5:
+        for j in range(len(sl50_valid) - 1, max(len(sl50_valid) - 8, 0), -1):
+            idx_now, s_now = sl50_valid[j]
+            idx_prev, s_prev = sl50_valid[j - 1]
+            if (s_prev < 0 and s_now >= 0) or (s_prev > 0 and s_now <= 0):
+                days_ago = len(prices) - 1 - idx_now
+                if days_ago > 7:
+                    break
+                # Persistence check: was slope consistently in prior direction for 3+ days before flip
+                prior_consistent = 0
+                for k in range(j - 1, max(j - 5, 0), -1):
+                    if sl50_valid[k][1] is not None:
+                        if (s_prev < 0 and sl50_valid[k][1] < 0) or (s_prev > 0 and sl50_valid[k][1] > 0):
+                            prior_consistent += 1
+                        else:
+                            break
+                if prior_consistent >= 3:
+                    ma50_inflected = True
+                    ma50_dir = "up" if s_now >= 0 else "down"
+                    ma50_days_ago = days_ago
+                break
+
+    sl50_now = _last_valid(sl50)
+    rules.append({
+        "name": "50d MA inflected",
+        "type": "event", "weight": "minor",
+        "active": ma50_inflected,
+        "detail": f"50d turned {ma50_dir} {ma50_days_ago}d ago" if ma50_inflected else f"50d slope at {sl50_now:+.2f}%/5d" if sl50_now else "—",
+        "context": "Short-term momentum shift. First sign of a potential trend change.",
+    })
+
+    # ── Rule 4: Gap historically extreme (structure, minor) ──
+    # Active if current gap > 1.5 std from 2-year trailing mean
+    gap_extreme = False
+    gap_z = None
+    valid_gap_vals = [g for g in gap_series if g is not None]
+    trailing = valid_gap_vals[-730:] if len(valid_gap_vals) >= 365 else None
+    if trailing:
+        mean_gap = sum(trailing) / len(trailing)
+        std_gap = math.sqrt(sum((g - mean_gap) ** 2 for g in trailing) / len(trailing))
+        if std_gap > 0:
+            gap_z = (gap - mean_gap) / std_gap
+            gap_extreme = abs(gap_z) > 1.5
+
+    if gap_extreme and gap_z is not None:
+        direction = "above" if gap_z > 0 else "below"
+        detail = f"Gap at {gap:+.1f}% — {abs(gap_z):.1f} std {direction} 2yr mean"
+    else:
+        detail = f"Gap at {gap:+.1f}%" + (f" ({abs(gap_z):.1f} std)" if gap_z else "")
+
+    rules.append({
+        "name": "Gap historically extreme",
+        "type": "structure", "weight": "minor",
+        "active": gap_extreme,
+        "detail": detail,
+        "context": "Gap at a historical extreme — mean reversion or trend exhaustion likely.",
+    })
+
+    # ── Rule 5: Price/structure contradiction (structure, major) ──
+    # Active when price and MA structure disagree
+    golden_cross = m50 > m200
+    price_below_both = price < m50 and price < m200
+    price_above_both = price > m50 and price > m200
+    contradiction = (golden_cross and price_below_both) or (not golden_cross and price_above_both)
+
+    if golden_cross and price_below_both:
+        contra_detail = f"Golden cross but price below both MAs (price ${price:,.0f}, 50d ${m50:,.0f}, 200d ${m200:,.0f})"
+    elif not golden_cross and price_above_both:
+        contra_detail = f"Death cross but price above both MAs (price ${price:,.0f}, 50d ${m50:,.0f}, 200d ${m200:,.0f})"
+    else:
+        contra_detail = f"Price and structure aligned — {'bullish' if golden_cross and price_above_both else 'bearish' if not golden_cross and price_below_both else 'mixed'}"
+
+    rules.append({
+        "name": "Price/structure contradiction",
+        "type": "structure", "weight": "major",
+        "active": contradiction,
+        "detail": contra_detail,
+        "context": "Price and MA structure disagree — possible false cross or key retest level.",
+    })
+
     return [{"category": category, "chart_name": f"{prefix} 50d and 200d Gap", "chart_tab": tab, "chart_key": key, "rules": rules}]
 
 
