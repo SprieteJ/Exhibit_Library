@@ -3668,7 +3668,7 @@ async function fetchCategoryOverview(category) {
       // Group band row
       if (group !== lastGroup) {
         lastGroup = group;
-        tableHTML += '<tr><td colspan="7" style="padding:14px 10px 6px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);background:' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">' + group + '</td></tr>';
+        tableHTML += '<tr><td colspan="7" style="padding:16px 10px 8px;font-size:13px;font-weight:700;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase;text-align:center;border-bottom:1px solid var(--border);background:' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">' + group + '</td></tr>';
       }
 
       for (let ri = 0; ri < c.rules.length; ri++) {
