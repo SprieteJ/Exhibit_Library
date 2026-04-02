@@ -3649,14 +3649,13 @@ async function fetchCategoryOverview(category) {
     let tableHTML = '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
     tableHTML += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
     tableHTML += '<thead><tr style="border-bottom:1px solid var(--border)">';
-    tableHTML += '<th style="' + thStyle + ';width:13%">Group</th>';
-    tableHTML += '<th style="' + thStyle + ';width:16%">Chart</th>';
-    tableHTML += '<th style="' + thStyle + ';width:16%">What to watch</th>';
-    tableHTML += '<th style="' + thStyle + ';width:7%">Type</th>';
-    tableHTML += '<th style="' + thStyle + ';width:6%">Weight</th>';
+    tableHTML += '<th style="' + thStyle + ';width:18%">Chart</th>';
+    tableHTML += '<th style="' + thStyle + ';width:18%">What to watch</th>';
+    tableHTML += '<th style="' + thStyle + ';width:8%">Type</th>';
+    tableHTML += '<th style="' + thStyle + ';width:7%">Weight</th>';
     tableHTML += '<th style="text-align:center;' + thStyle + ';width:5%">Status</th>';
-    tableHTML += '<th style="' + thStyle + ';width:20%">Detail</th>';
-    tableHTML += '<th style="' + thStyle + ';width:17%">Context</th>';
+    tableHTML += '<th style="' + thStyle + ';width:22%">Detail</th>';
+    tableHTML += '<th style="' + thStyle + ';width:22%">Context</th>';
     tableHTML += '</tr></thead><tbody>';
 
     let lastGroup = null;
@@ -3665,6 +3664,12 @@ async function fetchCategoryOverview(category) {
       const chartLink = c.chart_key && c.chart_tab
         ? '<a href="#" onclick="selectView(\'' + c.chart_tab + '\',\'' + c.chart_key + '\');return false;" style="color:var(--graphite);text-decoration:none;border-bottom:1px dotted var(--muted);font-weight:500">' + c.chart_name + ' &#8594;</a>'
         : '<span style="color:var(--muted)">' + c.chart_name + '</span>';
+
+      // Group band row
+      if (group !== lastGroup) {
+        lastGroup = group;
+        tableHTML += '<tr><td colspan="7" style="padding:14px 10px 6px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);background:' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">' + group + '</td></tr>';
+      }
 
       for (let ri = 0; ri < c.rules.length; ri++) {
         const r = c.rules[ri];
@@ -3679,12 +3684,7 @@ async function fetchCategoryOverview(category) {
           ? '<span style="font-size:10px;font-weight:600;color:var(--graphite)">major</span>'
           : '<span style="font-size:10px;color:var(--muted)">minor</span>';
 
-        // Show group name only on first row of that group
-        const showGroup = group !== lastGroup;
-        if (showGroup) lastGroup = group;
-
         tableHTML += '<tr style="border-bottom:0.5px solid var(--border);background:' + bgColor + ';opacity:' + opacity + ';transition:opacity 0.15s" onmouseenter="this.style.opacity=\'1\'" onmouseleave="this.style.opacity=\'' + opacity + '\'">';
-        tableHTML += '<td style="padding:8px 10px;font-weight:600;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;vertical-align:top">' + (showGroup ? group : '') + '</td>';
         tableHTML += '<td style="padding:8px 10px">' + (ri === 0 ? chartLink : '') + '</td>';
         tableHTML += '<td style="padding:8px 10px;font-weight:' + (isActive ? '600' : '400') + '">' + r.name + '</td>';
         tableHTML += '<td style="padding:8px 10px">' + typeTag + '</td>';
@@ -3766,7 +3766,7 @@ async function fetchControlCenter(mode) {
       // Category band
       if (c.category !== lastCat) {
         lastCat = c.category;
-        tableHTML += '<tr><td colspan="5" style="padding:18px 0 8px;text-align:center;font-size:13px;font-weight:700;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase;background:' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + ';border-top:2px solid var(--border);border-bottom:1px solid var(--border)">' + c.category + '</td></tr>';
+        tableHTML += '<tr><td colspan="7" style="padding:18px 0 8px;text-align:center;font-size:13px;font-weight:700;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase;background:' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + ';border-top:2px solid var(--border);border-bottom:1px solid var(--border)">' + c.category + '</td></tr>';
       }
 
       // Chart rows
