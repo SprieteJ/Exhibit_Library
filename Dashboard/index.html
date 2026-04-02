@@ -407,12 +407,12 @@ input[type=number] { width: 70px; }
 <!-- Tab bar -->
 <div class="tabbar">
   <button class="tab active" data-tab="control_center">Control Center</button>
-  <button class="tab" data-tab="sector">Themes</button>
   <button class="tab" data-tab="bitcoin">Bitcoin</button>
   <button class="tab" data-tab="ethereum">Ethereum</button>
   <button class="tab" data-tab="altcoins">Altcoins</button>
-  <button class="tab" data-tab="macro">Macro</button>
+  <button class="tab" data-tab="baskets">Baskets</button>
   <button class="tab" data-tab="crypto_market">Crypto Market</button>
+  <button class="tab" data-tab="macro">Macro</button>
   <button class="tab" data-tab="equity">Equity</button>
   <button class="tab" data-tab="data">
     <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-right:4px;vertical-align:-2px" viewBox="0 0 16 16"><ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v4c0 1.1 2.69 2 6 2s6-.9 6-2V4"/><path d="M2 8v4c0 1.1 2.69 2 6 2s6-.9 6-2V8"/></svg>
@@ -494,139 +494,84 @@ const TABS = {
       ]},
     ]
   },
-  sector: {
-    label: "Themes",
+  baskets: {
+    label: "Baskets",
     groups: [
-      
-      { label: "Overview", children: [
-        { key:"sec-overview", label:"Sector overview", sub:"Summary matrix: market cap, median cap, 1-month performance, and constituents for every sector.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Price Action", children: [
-        { key:"sec-equal",  label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",        src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-mcap",   label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",    src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Market Cap", children: [
-        { key:"mc-total",       label:"Total market cap",       sub:"Sum of constituent market caps per sector (USD)",                                       src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"mc-median",      label:"Median market cap",      sub:"Median constituent market cap per sector (USD)",                                       src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-dominance",  label:"Dominance over time",    sub:"How is capital rotating between sectors? Each sector's mcap as % of total, 100% stacked area.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Correlation", children: [
-        { key:"sec-intra",      label:"Intracorrelation",       sub:"Rolling pairwise correlation between sectors",                                          src:"CoinGecko Pro — Rolling Pearson" },
-        { key:"sec-vs",         label:"vs BTC / ETH / Alts",   sub:"Rolling correlation of sectors vs reference asset",                                     src:"CoinGecko Pro — Rolling Pearson" },
-        { key:"sec-xheatmap",   label:"Cross-sector heatmap",  sub:"Which sectors move together? Rolling 30d pairwise Pearson correlation between all sector EW indices.", src:"CoinGecko Pro — Rolling Pearson" },
-      ]},
-      { label: "Momentum", children: [
-        { key:"sec-mom",        label:"30d Rolling return",     sub:"Rolling N-day return of equal-weighted sector index",                                   src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-zscore",     label:"Z-score of returns",     sub:"Z-score of daily returns vs rolling window",                                            src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-cumulative", label:"Cumulative returns ranking", sub:"Which sectors delivered the most total return over the chosen period? Bar chart sorted by return.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Volatility", children: [
-        { key:"sec-vol",        label:"Realized volatility",    sub:"Which sectors carry the most risk? 30d rolling annualized realized vol of EW daily log returns.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-drawdown",   label:"Drawdown from peak",     sub:"How far is each sector from its best recent level? Rolling drawdown from peak of EW index.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Breadth", children: [
-        { key:"sec-breadth",    label:"Breadth indicator",      sub:"Is a sector rally broad-based or carried by a few names? % of constituents above their 50d SMA.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Derivatives", children: [
-        { key:"sec-funding",    label:"Sector funding rate",    sub:"Is the derivatives market paying a premium to be long or short each sector? Avg 8h funding rate by sector.", src:"CoinGecko Pro + Derivatives" },
-        { key:"sec-oi",         label:"Sector open interest",  sub:"How much leveraged positioning is in each sector? Sum of OI (USD) across constituents.",  src:"CoinGecko Pro + Derivatives" },
-      ]},
-      { label: "Rotation", children: [
-        { key:"sec-rrg",        label:"RRG scatter",            sub:"Shows which sectors are leading the market, catching up, losing steam, or lagging — and which direction they're rotating.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Analysis", children: [
-        { key:"ana-bubble",     label:"Momentum vs correlation", sub:"Bubble · Y = momentum · X = autocorrelation · Size = market cap",                    src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"sec-sharpe",     label:"Risk-adjusted returns",  sub:"Which sectors deliver the best return per unit of risk? Scatter: x=30d vol, y=30d return.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
+      { key:"sec-overview", label:"Sector overview", sub:"Summary matrix: market cap, median cap, 1-month performance, and constituents for every sector.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-equal",  label:"Equal-weighted",     sub:"Equal-weighted sector index · Rebased to 100",        src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-mcap",   label:"Marketcap-weighted", sub:"Marketcap-weighted sector index · Rebased to 100",    src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"mc-total",       label:"Total market cap",       sub:"Sum of constituent market caps per sector (USD)",                                       src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"mc-median",      label:"Median market cap",      sub:"Median constituent market cap per sector (USD)",                                       src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-dominance",  label:"Dominance over time",    sub:"How is capital rotating between sectors? Each sector's mcap as % of total, 100% stacked area.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-intra",      label:"Intracorrelation",       sub:"Rolling pairwise correlation between sectors",                                          src:"CoinGecko Pro — Rolling Pearson" },
+      { key:"sec-vs",         label:"vs BTC / ETH / Alts",   sub:"Rolling correlation of sectors vs reference asset",                                     src:"CoinGecko Pro — Rolling Pearson" },
+      { key:"sec-xheatmap",   label:"Cross-sector heatmap",  sub:"Which sectors move together? Rolling 30d pairwise Pearson correlation between all sector EW indices.", src:"CoinGecko Pro — Rolling Pearson" },
+      { key:"sec-mom",        label:"30d Rolling return",     sub:"Rolling N-day return of equal-weighted sector index",                                   src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-zscore",     label:"Z-score of returns",     sub:"Z-score of daily returns vs rolling window",                                            src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-cumulative", label:"Cumulative returns ranking", sub:"Which sectors delivered the most total return over the chosen period? Bar chart sorted by return.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-vol",        label:"Realized volatility",    sub:"Which sectors carry the most risk? 30d rolling annualized realized vol of EW daily log returns.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-drawdown",   label:"Drawdown from peak",     sub:"How far is each sector from its best recent level? Rolling drawdown from peak of EW index.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-breadth",    label:"Breadth indicator",      sub:"Is a sector rally broad-based or carried by a few names? % of constituents above their 50d SMA.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-funding",    label:"Sector funding rate",    sub:"Is the derivatives market paying a premium to be long or short each sector? Avg 8h funding rate by sector.", src:"CoinGecko Pro + Derivatives" },
+      { key:"sec-oi",         label:"Sector open interest",  sub:"How much leveraged positioning is in each sector? Sum of OI (USD) across constituents.",  src:"CoinGecko Pro + Derivatives" },
+      { key:"sec-rrg",        label:"RRG scatter",            sub:"Shows which sectors are leading the market, catching up, losing steam, or lagging — and which direction they're rotating.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"ana-bubble",     label:"Momentum vs correlation", sub:"Bubble · Y = momentum · X = autocorrelation · Size = market cap",                    src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"sec-sharpe",     label:"Risk-adjusted returns",  sub:"Which sectors deliver the best return per unit of risk? Scatter: x=30d vol, y=30d return.", src:"CoinGecko Pro — Wintermute OTC" },
     ]
   },
   bitcoin: {
     label: "Bitcoin",
     groups: [
-      { label: "Moving Averages", children: [
-        { key:"btc-ma",       label:"50-day and 200-day moving average",    sub:"BTC price with 50d and 200d moving averages overlaid. Log scale.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-ma-gap",   label:"50d and 200d gap",    sub:"The % difference between 50d and 200d MA over time. Positive = golden cross territory. Velocity matters most.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-200w-floor", label:"200-week moving average", sub:"BTC price vs 200-week (1400d) MA. Historically the ultimate macro floor — BTC has never closed below it.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-200d-dev", label:"200-week deviation",  sub:"% deviation from the 200-week MA. How extended is BTC from its long-term floor?", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-pi-cycle", label:"Pi cycle top",       sub:"111d MA vs 2×350d MA. Has called every BTC cycle top within 3 days historically.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Market Cap", children: [
-        { key:"btc-mcap",     label:"Total market cap",     sub:"BTC market cap over time with key milestones ($100B, $500B, $1T, $2T) marked.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-dominance", label:"Market dominance (%)", sub:"Is capital flowing into or out of BTC relative to all crypto? BTC mcap as % of total crypto mcap.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Volatility", children: [
-        { key:"btc-realvol",  label:"Realised volatility",  sub:"Is BTC volatility expanding or contracting? 30d, 90d, and 180d rolling annualized vol plotted together.", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-rv-iv",    label:"RV vs IV (DVOL)",    sub:"30d realized vol vs Deribit DVOL. When DVOL > RV = market pricing risk. RV > DVOL = complacency.", src:"CoinGecko Pro + Deribit" },
-      ]},
-      { label: "Price performance", children: [
-        { key:"btc-rolling",  label:"Rolling return",       sub:"BTC N-day rolling return (%) · Green = positive · Red = negative", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-drawdown", label:"Drawdown from ATH",    sub:"How far is BTC from its all-time high? Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
-      { label: "Bitcoin vs Gold", children: [
-        { key:"btc-gold",       label:"Bitcoin vs Gold",    sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)", src:"CoinGecko Pro + yfinance" },
-        { key:"btc-gold-ratio", label:"BTC/Gold ratio",     sub:"Is BTC gaining or losing ground against gold? BTC price divided by gold price.", src:"CoinGecko Pro + yfinance" },
-      ]},
-      { label: "Derivatives", children: [
-        { key:"btc-funding",       label:"Funding rate",       sub:"Is the futures market crowded long or short? BTC perpetual 8h funding rate, bar chart.", src:"CoinGecko Pro + Derivatives" },
-        { key:"btc-oi",            label:"Open interest",      sub:"How much leverage is in the BTC market? Total BTC OI in USD with price overlay.", src:"CoinGecko Pro + Derivatives" },
-        { key:"btc-funding-delta", label:"Funding rate delta", sub:"30d rolling change in BTC funding rate (bps) vs 30d rolling BTC price return (%). Spots regime shifts in sentiment.", src:"CoinGecko Pro + Derivatives" },
-      ]},
-      { label: "Cycle analysis", children: [
-        { key:"btc-epochs",   label:"Halving epochs",       sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-cycles",   label:"Bear market cycles",   sub:"BTC indexed to peak (peak = 100) · Days since peak", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-bull",     label:"Bull market cycles",   sub:"How does the current rally compare to prior bull runs? BTC indexed to cycle trough (=100), days since trough.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
+      { key:"btc-ma",       label:"50-day and 200-day moving average",    sub:"BTC price with 50d and 200d moving averages overlaid. Log scale.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-ma-gap",   label:"50d and 200d gap",    sub:"The % difference between 50d and 200d MA over time. Positive = golden cross territory. Velocity matters most.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-200w-floor", label:"200-week moving average", sub:"BTC price vs 200-week (1400d) MA. Historically the ultimate macro floor — BTC has never closed below it.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-200d-dev", label:"200-week deviation",  sub:"% deviation from the 200-week MA. How extended is BTC from its long-term floor?", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-pi-cycle", label:"Pi cycle top",       sub:"111d MA vs 2×350d MA. Has called every BTC cycle top within 3 days historically.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-mcap",     label:"Total market cap",     sub:"BTC market cap over time with key milestones ($100B, $500B, $1T, $2T) marked.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-dominance", label:"Market dominance (%)", sub:"Is capital flowing into or out of BTC relative to all crypto? BTC mcap as % of total crypto mcap.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-realvol",  label:"Realised volatility",  sub:"Is BTC volatility expanding or contracting? 30d, 90d, and 180d rolling annualized vol plotted together.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-rv-iv",    label:"RV vs IV (DVOL)",    sub:"30d realized vol vs Deribit DVOL. When DVOL > RV = market pricing risk. RV > DVOL = complacency.", src:"CoinGecko Pro + Deribit" },
+      { key:"btc-rolling",  label:"Rolling return",       sub:"BTC N-day rolling return (%) · Green = positive · Red = negative", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-drawdown", label:"Drawdown from ATH",    sub:"How far is BTC from its all-time high? Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-gold",       label:"Bitcoin vs Gold",    sub:"BTC price (left axis, orange) vs Gold/GLD ETF (right axis)", src:"CoinGecko Pro + yfinance" },
+      { key:"btc-gold-ratio", label:"BTC/Gold ratio",     sub:"Is BTC gaining or losing ground against gold? BTC price divided by gold price.", src:"CoinGecko Pro + yfinance" },
+      { key:"btc-funding",       label:"Funding rate",       sub:"Is the futures market crowded long or short? BTC perpetual 8h funding rate, bar chart.", src:"CoinGecko Pro + Derivatives" },
+      { key:"btc-oi",            label:"Open interest",      sub:"How much leverage is in the BTC market? Total BTC OI in USD with price overlay.", src:"CoinGecko Pro + Derivatives" },
+      { key:"btc-funding-delta", label:"Funding rate delta", sub:"30d rolling change in BTC funding rate (bps) vs 30d rolling BTC price return (%). Spots regime shifts in sentiment.", src:"CoinGecko Pro + Derivatives" },
+      { key:"btc-epochs",   label:"Halving epochs",       sub:"BTC x-fold from halving price · Log scale · Epochs 3, 4, 5", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-cycles",   label:"Bear market cycles",   sub:"BTC indexed to peak (peak = 100) · Days since peak", src:"CoinGecko Pro — Wintermute OTC" },
+      { key:"btc-bull",     label:"Bull market cycles",   sub:"How does the current rally compare to prior bull runs? BTC indexed to cycle trough (=100), days since trough.", src:"CoinGecko Pro — Wintermute OTC" },
     ]
   },
   ethereum: {
     label: "Ethereum",
     groups: [
-      { label: "Moving Averages", children: [
-        { key:"eth-ma",       label:"50-day and 200-day moving average", sub:"ETH price with 50d, 200d, 200-week MA overlaid. Log scale.", src:"CoinGecko Pro" },
-        { key:"eth-ma-gap",   label:"50d and 200d gap",  sub:"The % difference between ETH 50d and 200d MA. Golden/death cross proximity.", src:"CoinGecko Pro" },
-        { key:"eth-200d-dev", label:"200-week deviation", sub:"% deviation from the 200-week MA. How extended is ETH from its long-term floor?", src:"CoinGecko Pro" },
-      ]},
-      { label: "Market Cap", children: [
-        { key:"eth-mcap",     label:"Total market cap",   sub:"ETH market cap over time with milestone levels ($50B, $100B, $200B, $500B).", src:"CoinGecko Pro" },
-      ]},
-      { label: "Price performance", children: [
-        { key:"eth-drawdown", label:"Drawdown from ATH",  sub:"Continuous drawdown from ETH rolling all-time high.", src:"CoinGecko Pro" },
-      ]},
-      { label: "Relative", children: [
-        { key:"eth-btc-ratio", label:"ETH/BTC ratio",     sub:"The single best gauge of altcoin risk appetite. Falling = BTC dominance, rising = alt season.", src:"CoinGecko Pro" },
-      ]},
+      { key:"eth-ma",       label:"50-day and 200-day moving average", sub:"ETH price with 50d, 200d, 200-week MA overlaid. Log scale.", src:"CoinGecko Pro" },
+      { key:"eth-ma-gap",   label:"50d and 200d gap",  sub:"The % difference between ETH 50d and 200d MA. Golden/death cross proximity.", src:"CoinGecko Pro" },
+      { key:"eth-200d-dev", label:"200-week deviation", sub:"% deviation from the 200-week MA. How extended is ETH from its long-term floor?", src:"CoinGecko Pro" },
+      { key:"eth-mcap",     label:"Total market cap",   sub:"ETH market cap over time with milestone levels ($50B, $100B, $200B, $500B).", src:"CoinGecko Pro" },
+      { key:"eth-drawdown", label:"Drawdown from ATH",  sub:"Continuous drawdown from ETH rolling all-time high.", src:"CoinGecko Pro" },
+      { key:"eth-btc-ratio", label:"ETH/BTC ratio",     sub:"The single best gauge of altcoin risk appetite. Falling = BTC dominance, rising = alt season.", src:"CoinGecko Pro" },
     ]
   },
   
   altcoins: {
     label: "Altcoins",
     groups: [
-      { label: "Moving Averages", children: [
-        { key:"am-mcap",      label:"Altcoin mcap with MAs",  sub:"Total altcoin mcap (ex-BTC, ex-ETH) with 50d and 200d MA.", src:"CoinGecko Pro" },
-        { key:"am-mcap-gap",  label:"50d and 200d gap",       sub:"Altcoin mcap 50d/200d MA gap. Golden/death cross on the alt market.", src:"CoinGecko Pro" },
-        { key:"am-mcap-dev",  label:"200d MA deviation",      sub:"% deviation of alt mcap from its 200d MA.", src:"CoinGecko Pro" },
-      ]},
-      { label: "Dominance", children: [
-        { key:"am-dominance", label:"Dominance shares",       sub:"BTC, ETH, and altcoin share of total crypto mcap — 3 lines.", src:"CoinGecko Pro" },
-        { key:"am-rel-share", label:"Altcoin relative share", sub:"Altcoin mcap as % of total, vs BTC mcap, and vs ETH mcap — 3 lines.", src:"CoinGecko Pro" },
-        { key:"am-btc-ratio", label:"BTC/Altcoin mcap ratio", sub:"BTC mcap divided by altcoin mcap. Rising = BTC dominance, falling = alt rotation.", src:"CoinGecko Pro" },
-      ]},
-      { label: "Relative Performance", children: [
-        { key:"alt-scatter",          label:"Performance vs BTC",      sub:"Scatter: Y = % vs BTC, X = volatility vs BTC, period-adjusted.", src:"CoinGecko Pro" },
-        { key:"alt-altseason",        label:"Altseason indicator",     sub:"Is it altseason? % of top-50 alts (ex-BTC) outperforming BTC over a rolling 90d window.", src:"CoinGecko Pro" },
-        { key:"alt-beta",             label:"Beta to BTC",             sub:"Which alts amplify BTC moves? Scatter: x=60d beta to BTC, y=60d alpha (annualized).", src:"CoinGecko Pro" },
-      ]},
-      { label: "Correlation", children: [
-        { key:"alt-heatmap",          label:"Correlation heatmap",     sub:"Which altcoins move together? Rolling 30d pairwise Pearson correlations.", src:"CoinGecko Pro" },
-        { key:"am-intracorr", label:"Altcoin intracorrelation", sub:"Rolling 30d avg pairwise correlation within top 10/25/50/100/250 alts. High = everything moves together.", src:"CoinGecko Pro" },
-      ]},
-      { label: "Drawdown", children: [
-        { key:"alt-ath-drawdown",     label:"Distance from ATH",       sub:"How beaten-down is each alt? Current drawdown from all-time high, sorted worst-first.", src:"CoinGecko Pro" },
-        { key:"alt-drawdown-ts",      label:"Drawdown over time",      sub:"How has each alt drawdown from its running ATH evolved over time?", src:"CoinGecko Pro" },
-      ]},
-      { label: "Derivatives", children: [
-        { key:"alt-funding-heatmap",  label:"Funding rate heatmap",    sub:"Where is the derivatives market most crowded across alts? Heatmap of funding rates by asset over time.", src:"CoinGecko Pro + Derivatives" },
-      ]},
+      { key:"am-mcap",      label:"Altcoin mcap with MAs",  sub:"Total altcoin mcap (ex-BTC, ex-ETH) with 50d and 200d MA.", src:"CoinGecko Pro" },
+      { key:"am-mcap-gap",  label:"50d and 200d gap",       sub:"Altcoin mcap 50d/200d MA gap. Golden/death cross on the alt market.", src:"CoinGecko Pro" },
+      { key:"am-mcap-dev",  label:"200d MA deviation",      sub:"% deviation of alt mcap from its 200d MA.", src:"CoinGecko Pro" },
+      { key:"am-dominance", label:"Dominance shares",       sub:"BTC, ETH, and altcoin share of total crypto mcap — 3 lines.", src:"CoinGecko Pro" },
+      { key:"am-rel-share", label:"Altcoin relative share", sub:"Altcoin mcap as % of total, vs BTC mcap, and vs ETH mcap — 3 lines.", src:"CoinGecko Pro" },
+      { key:"am-btc-ratio", label:"BTC/Altcoin mcap ratio", sub:"BTC mcap divided by altcoin mcap. Rising = BTC dominance, falling = alt rotation.", src:"CoinGecko Pro" },
+      { key:"alt-scatter",          label:"Performance vs BTC",      sub:"Scatter: Y = % vs BTC, X = volatility vs BTC, period-adjusted.", src:"CoinGecko Pro" },
+      { key:"alt-altseason",        label:"Altseason indicator",     sub:"Is it altseason? % of top-50 alts (ex-BTC) outperforming BTC over a rolling 90d window.", src:"CoinGecko Pro" },
+      { key:"alt-beta",             label:"Beta to BTC",             sub:"Which alts amplify BTC moves? Scatter: x=60d beta to BTC, y=60d alpha (annualized).", src:"CoinGecko Pro" },
+      { key:"alt-heatmap",          label:"Correlation heatmap",     sub:"Which altcoins move together? Rolling 30d pairwise Pearson correlations.", src:"CoinGecko Pro" },
+      { key:"am-intracorr", label:"Altcoin intracorrelation", sub:"Rolling 30d avg pairwise correlation within top 10/25/50/100/250 alts. High = everything moves together.", src:"CoinGecko Pro" },
+      { key:"alt-ath-drawdown",     label:"Distance from ATH",       sub:"How beaten-down is each alt? Current drawdown from all-time high, sorted worst-first.", src:"CoinGecko Pro" },
+      { key:"alt-drawdown-ts",      label:"Drawdown over time",      sub:"How has each alt drawdown from its running ATH evolved over time?", src:"CoinGecko Pro" },
+      { key:"alt-funding-heatmap",  label:"Funding rate heatmap",    sub:"Where is the derivatives market most crowded across alts? Heatmap of funding rates by asset over time.", src:"CoinGecko Pro + Derivatives" },
     ]
   },
   crypto_market: {
@@ -846,7 +791,7 @@ async function selectView(tab, key) {
   activeView = { tab, key, def: viewDef };
   // Disable hourly for sector tab (too expensive + not meaningful)
   const hourlyBtn = document.getElementById('gran-hourly');
-  if (tab === 'sector') {
+  if (tab === 'baskets') {
     hourlyBtn.disabled = true;
     hourlyBtn.title = 'Hourly not available for sector views';
     hourlyBtn.style.opacity = '0.35';
@@ -885,7 +830,7 @@ async function selectView(tab, key) {
   document.getElementById('perf-row').innerHTML = '';
 
   // Load items for this tab
-  if (tab === 'sector') {
+  if (tab === 'baskets') {
     allItems = allSectors;
   } else {
     const res = await fetch(`/api/assets?tab=${tab === 'bitcoin' ? 'majors' : tab === 'crypto_market' ? 'majors' : tab === 'control_center' ? 'majors' : tab === 'ethereum' ? 'majors' : tab}`);
@@ -1154,12 +1099,12 @@ function buildRightPanel(tab, key) {
   // Asset/sector list
   if (isSelChart) {
     html += `<div class="rp-block" style="padding:8px 14px 6px">
-      <div class="rp-label">${tab === 'sector' ? 'Sectors' : 'Assets'}</div>
+      <div class="rp-label">${tab === 'baskets' ? 'Sectors' : 'Assets'}</div>
     </div>
     <div class="rp-list" id="rp-list"></div>`;
   } else if (showList && !isNewAuto) {
     html += `<div class="rp-block" style="padding:8px 14px 6px">
-      <div class="rp-label">${tab === 'sector' ? 'Sectors' : 'Assets'}</div>
+      <div class="rp-label">${tab === 'baskets' ? 'Sectors' : 'Assets'}</div>
     </div>
     <div class="rp-list" id="rp-list"></div>`;
   } else if (isBubble || isRRG || isNewAuto) {
@@ -1242,7 +1187,7 @@ function renderRPList(q = '') {
     ? allItems.filter(a => (a.symbol||a.name||'').toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q))
     : allItems;
 
-  if (activeView?.tab === 'sector') {
+  if (activeView?.tab === 'baskets') {
     el.innerHTML = items.map(s => `
       <div class="list-item ${selected.includes(s.name) ? 'active' : ''}" onclick="toggleItem('${s.name}')">
         <div class="item-dot" style="${!selected.includes(s.name) ? `background:${s.color}30;border:1px solid ${s.color}` : ''}"></div>
@@ -1279,7 +1224,7 @@ function renderTags() {
     return;
   }
   el.innerHTML = selected.map((s, i) => {
-    const col = activeView?.tab === 'sector' ? (SECTOR_COLORS[s] || PAL[i%PAL.length]) : PAL[i%PAL.length];
+    const col = activeView?.tab === 'baskets' ? (SECTOR_COLORS[s] || PAL[i%PAL.length]) : PAL[i%PAL.length];
     return `<span class="tag" style="background:${col}">${s}<span class="tag-x" onclick="toggleItem('${s}')">×</span></span>`;
   }).join('');
 }
@@ -1417,7 +1362,7 @@ function drawChart(data, keys, isCorr = false, isMom = false, isZscore = false, 
   c.data.labels   = data[firstKey].dates;
   c.data.datasets = keys.filter(k => data[k]).map((k, i) => {
     const isBtcSymbol = k === 'BTC' && activeView?.tab === 'bitcoin';
-    const col = isBtcSymbol ? '#F7931A' : (data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length]);
+    const col = isBtcSymbol ? '#F7931A' : (data[k].color || (activeView?.tab === 'baskets' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length]);
     return {
       label:            k,
       data:             data[k].rebased,
@@ -1438,7 +1383,7 @@ function updatePerf(data, keys, isCorr = false, isMom = false, isZscore = false,
   document.getElementById('perf-row').innerHTML = keys.filter(k => data[k]).map((k, i) => {
     const r    = (data[k].rebased || []).filter(v => v != null);
     const last = r.length ? r[r.length - 1] : null;
-    const col  = data[k].color || (activeView?.tab === 'sector' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length];
+    const col  = data[k].color || (activeView?.tab === 'baskets' ? SECTOR_COLORS[k] : null) || PAL[i % PAL.length];
     let valHtml;
     if (isCorr) {
       const cls = last === null ? 'neu' : last >= 0.5 ? 'pos' : last <= -0.2 ? 'neg' : 'neu';
