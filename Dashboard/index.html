@@ -487,10 +487,10 @@ const TABS = {
         { key:"cc-matrix",    label:"Flagged signals",    sub:"Only the indicators that need attention right now. Everything else is greyed out in the deeper views.", src:"Wintermute OTC — Multi-source" },
       ]},
       { label: "Deep Dive", children: [
-        { key:"cc-bitcoin",   label:"Bitcoin signals",    sub:"All BTC indicators with status and trend — including the quiet ones.", src:"Wintermute OTC — Multi-source" },
-        { key:"cc-themes",    label:"Theme signals",      sub:"All sector/theme indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
-        { key:"cc-altcoins",  label:"Altcoin signals",    sub:"All altcoin indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
-        { key:"cc-macro",     label:"Macro signals",      sub:"All macro indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-bitcoin",   label:"Bitcoin rules",    sub:"All BTC indicators with status and trend — including the quiet ones.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-themes",    label:"Theme rules",      sub:"All sector/theme indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-altcoins",  label:"Altcoin rules",    sub:"All altcoin indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-macro",     label:"Macro rules",      sub:"All macro indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
       ]},
     ]
   },
@@ -3809,9 +3809,8 @@ async function fetchControlCenter(mode) {
   spinOn();
   try {
     const data = await fetch('/api/control-center').then(r=>r.json());
-    if (!data.signals?.length) throw new Error('no signals');
+    if (!data.charts?.length) throw new Error('no data');
 
-    // Destroy existing chart if any
     if (chart) { chart.destroy(); chart = null; }
     const canvas = document.getElementById('main-chart');
     canvas.style.display = 'none';
@@ -3823,166 +3822,84 @@ async function fetchControlCenter(mode) {
     container.id = 'cc-matrix-container';
     container.style.cssText = 'position:absolute;inset:0;overflow-y:auto;padding:16px 20px;';
 
-    const STATUS_THRESHOLDS = {
-      'ma-cross':       '🟢 Within 3% of crossing or crossed in last 7d\n🟡 Gap < 10%\n⬚ Gap > 10% — no signal',
-      'price-200d':     '🟢 Within 3% of 200d MA or just crossed\n🟡 5-20% below or >50% above\n🔴 >20% below\n⬚ Comfortably above',
-      '200d-deviation': '🟢 Within ±5% of MA (near mean)\n🟡 15-30% below or 30-50% above\n🔴 >60% above or >30% below (extreme)',
-      '200w-floor':     '🔴 <1.1x the 200-week MA (testing floor)\n🟡 <1.3x or >5x (approaching floor or overheated)\n⬚ Normal range',
-      'pi-cycle':       '🟢 Within 2% of crossing or crossed in last 7d\n🟡 Gap < 5%\n⬚ MAs far apart — no signal',
-      'drawdown-ath':   '🟢 <5% from ATH\n🟡 5-20% drawdown\n🔴 >20% drawdown — bear territory',
-      'realvol-30d':    '🟢 <30% (unusually low — move brewing)\n🟡 60-90% (elevated)\n🔴 >90% (crisis-level)\n⬚ 30-60% normal',
-      'dvol':           '🟢 Crossing 60 or 80 threshold recently\n🟡 >70 (elevated)\n🔴 >90 (extreme)\n⬚ Normal range',
-      'rv-iv':          '🟡 Spread > ±20pp\n🔴 Spread > ±30pp\n⬚ Spread < 20pp — normal',
-      'funding':        '🟢 Sign flip in last 7d (positioning reversal)\n🟡 Rate elevated (>0.03% or <-0.01%)\n🔴 Extreme (>0.05% or <-0.03%)\n⬚ Normal',
-      'btc-dominance':  '🟢 30d change > ±5pp (big rotation)\n🟡 30d change > ±2pp\n⬚ Stable — no rotation signal',
-      'eth-ma-cross':   '🟢 Within 3% of crossing or crossed in last 7d\n🟡 Gap < 10%\n⬚ Gap > 10%',
-      'eth-200d-dev':   '🟢 Within ±5% of MA\n🟡 15-30% below or 30-50% above\n🔴 >60% above or >30% below',
-      'eth-drawdown':   '🟢 <5% from ATH\n🟡 5-20%\n🔴 >20%',
-      'eth-btc-ratio':  '🟢 30d change > ±15%\n🟡 30d change > ±7%\n⬚ Stable',
-      'alt-mcap-cross': '🟢 Within 3% of crossing or crossed recently\n🟡 Gap < 10%\n⬚ Gap > 10%',
-      'alt-mcap-dev':   '🟢 Within ±5%\n🟡 15-30% below or 30-50% above\n🔴 >60% above or >30% below',
-      'alt-share':      '🟢 30d change > ±5pp\n🟡 30d change > ±2pp\n⬚ Stable',
-      'btc-50d-infl':   '🟢 50d MA just changed direction (crossed zero slope in last 7d)\n🟡 Slope near zero — flattening\n⬚ Clear trend, no inflection',
-      'btc-200d-infl':  '🟢 200d MA just changed direction\n🟡 Slope near zero\n⬚ Clear trend',
-      'btc-gap-infl':   '🟢 MA gap direction just reversed\n🟡 Gap slope near zero\n⬚ Gap trending clearly',
-      'eth-50d-infl':   '🟢 ETH 50d MA just turned\n🟡 Flattening\n⬚ Clear trend',
-      'eth-200d-infl':  '🟢 ETH 200d MA just turned\n🟡 Flattening\n⬚ Clear trend',
-      'eth-gap-infl':   '🟢 ETH gap direction reversed\n🟡 Near zero\n⬚ Trending',
-      'alt-50d-infl':   '🟢 Alt mcap 50d MA just turned\n🟡 Flattening\n⬚ Clear trend',
-      'alt-200d-infl':  '🟢 Alt mcap 200d MA just turned\n🟡 Flattening\n⬚ Clear trend',
-      'alt-gap-infl':   '🟢 Alt gap direction reversed\n🟡 Near zero\n⬚ Trending',
-      'btc-mcap':       '🟢 Within 3% of a milestone ($1T, $2T)\n🟡 Within 10%\n⬚ No milestone nearby',
-    };
-
-    const statusIcon = (s, id) => {
-      const tip = STATUS_THRESHOLDS[id] || '';
-      const escaped = tip.replace(/"/g, '&quot;');
-      const dot = `width:10px;height:10px;border-radius:50%;display:inline-block;cursor:help`;
-      if (s === 'green')  return `<span style="${dot};background:#00D64A" title="${escaped}"></span>`;
-      if (s === 'yellow') return `<span style="${dot};background:#FFB800" title="${escaped}"></span>`;
-      if (s === 'red')    return `<span style="${dot};background:#EC5B5B" title="${escaped}"></span>`;
-      return `<span style="${dot};background:var(--border)" title="${escaped}"></span>`;
-    };
-
-    const trendIcon = (t) => {
-      if (t === 'up')   return '<span style="color:#00D64A;font-size:14px;font-weight:600">↑</span>';
-      if (t === 'down') return '<span style="color:#EC5B5B;font-size:14px;font-weight:600">↓</span>';
-      return '<span style="color:var(--muted);font-size:14px">→</span>';
-    };
-
-    // Filter signals based on mode
-    let signals = data.signals;
+    // Filter based on mode
+    let charts = data.charts;
     let title = 'Control Center';
     let subtitle = 'Signal monitor — attention routing layer';
 
     if (mode === 'flagged') {
-      signals = signals.filter(s => s.status !== 'grey');
+      charts = charts.map(c => ({...c, rules: c.rules.filter(r => r.active)})).filter(c => c.rules.length > 0);
       title = 'Flagged Signals';
-      subtitle = signals.length === 0
-        ? 'All quiet — no indicators flagged right now'
-        : `${signals.length} indicator${signals.length !== 1 ? 's' : ''} flagged`;
+      subtitle = charts.length === 0 ? 'All quiet — no rules triggered right now' : charts.reduce((n, c) => n + c.rules.length, 0) + ' rules active';
     } else if (mode === 'bitcoin') {
-      signals = data.signals.filter(s =>
-        ['Moving Averages','Risk','Volatility','Derivatives','Cycle Indicators'].includes(s.group));
-      title = 'Bitcoin — All Signals';
-      subtitle = 'Full BTC indicator matrix including quiet signals';
-    } else if (mode === 'themes') {
-      signals = data.signals.filter(s =>
-        ['Market Structure','Themes','Sectors','Ethereum'].includes(s.group));
-      title = 'Themes — All Signals';
-      subtitle = 'Sector and theme indicators';
+      charts = charts.filter(c => c.category === 'Bitcoin');
+      title = 'Bitcoin — All Rules'; subtitle = 'Full BTC rule matrix';
+    } else if (mode === 'ethereum') {
+      charts = charts.filter(c => c.category === 'Ethereum');
+      title = 'Ethereum — All Rules'; subtitle = 'Full ETH rule matrix';
     } else if (mode === 'altcoins') {
-      signals = data.signals.filter(s =>
-        ['Altcoins','Relative Performance','Alt Market'].includes(s.group));
-      title = 'Altcoins — All Signals';
-      subtitle = 'Altcoin indicators';
-    } else if (mode === 'macro') {
-      signals = data.signals.filter(s =>
-        ['Macro','Rates','FX'].includes(s.group));
-      title = 'Macro — All Signals';
-      subtitle = 'Macro and tradfi indicators';
+      charts = charts.filter(c => c.category === 'Altcoins');
+      title = 'Altcoins — All Rules'; subtitle = 'Full altcoin rule matrix';
     }
 
-    // Group signals
-    const groups = {};
-    signals.forEach(s => {
-      if (!groups[s.group]) groups[s.group] = [];
-      groups[s.group].push(s);
-    });
-
-    // If flagged mode and no signals, show a clean empty state
-    if (mode === 'flagged' && signals.length === 0) {
-      container.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;gap:12px">
-          <div style="font-size:48px;opacity:0.2">✓</div>
-          <div style="font-size:15px;font-weight:500;color:var(--graphite)">All quiet</div>
-          <div style="font-size:13px;color:var(--muted)">No indicators flagged right now. Check the deep dive views for the full picture.</div>
-        </div>`;
+    // Empty state for flagged
+    if (mode === 'flagged' && charts.length === 0) {
+      container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;gap:12px"><div style="font-size:48px;opacity:0.2">&#10003;</div><div style="font-size:15px;font-weight:500;color:var(--graphite)">All quiet</div><div style="font-size:13px;color:var(--muted)">No rules triggered. Check the deep dive views for the full picture.</div></div>';
       canvas.parentElement.appendChild(container);
       setTitle(title, subtitle);
       document.getElementById('chart-spin').classList.remove('on');
       return;
     }
 
-    let tableHTML = `
-      <div style="margin-bottom:12px">
-        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ${data.updated}</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead>
-          <tr style="border-bottom:1px solid var(--border)">
-            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:24%">Indicator</th>
-            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:20%">Chart</th>
-            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:8%">Status</th>
-            <th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:8%">Trend</th>
-            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Detail</th>
-            <th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Context</th>
-          </tr>
-        </thead>
-        <tbody>`;
+    let tableHTML = '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
+    tableHTML += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    tableHTML += '<thead><tr style="border-bottom:1px solid var(--border)">';
+    tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Chart</th>';
+    tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:20%">Rule</th>';
+    tableHTML += '<th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:6%">Status</th>';
+    tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:25%">Detail</th>';
+    tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:27%">Context</th>';
+    tableHTML += '</tr></thead><tbody>';
 
-    let _lastCat = null;
-    for (const [group, sigs] of Object.entries(groups)) {
-      const _cat = sigs[0]?.category || '';
-      if (_cat && _cat !== _lastCat) {
-        _lastCat = _cat;
-        tableHTML += `
-          <tr>
-            <td colspan="6" style="padding:18px 0 8px;text-align:center;font-size:13px;font-weight:700;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase;background:${darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'};border-top:2px solid var(--border);border-bottom:1px solid var(--border)">${_cat}</td>
-          </tr>`;
+    let lastCat = null;
+    for (const c of charts) {
+      // Category band
+      if (c.category !== lastCat) {
+        lastCat = c.category;
+        tableHTML += '<tr><td colspan="5" style="padding:18px 0 8px;text-align:center;font-size:13px;font-weight:700;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase;background:' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + ';border-top:2px solid var(--border);border-bottom:1px solid var(--border)">' + c.category + '</td></tr>';
       }
-      tableHTML += `
-        <tr>
-          <td colspan="6" style="padding:10px 10px 4px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)">${group}</td>
-        </tr>`;
 
-      for (const s of sigs) {
-        const isActive = s.status !== 'grey';
-        const rowOpacity = (mode === 'flagged' || isActive) ? '1' : '0.35';
-        const chartLink = s.chart_key && s.chart_tab
-          ? `<a href="#" onclick="selectView('${s.chart_tab}','${s.chart_key}');return false;" style="color:var(--graphite);text-decoration:none;border-bottom:1px dotted var(--muted);font-weight:500">${s.chart_name} →</a>`
-          : `<span style="color:var(--muted)">—</span>`;
+      // Chart rows
+      const chartLink = c.chart_key && c.chart_tab
+        ? '<a href="#" onclick="selectView(\'' + c.chart_tab + '\',\'' + c.chart_key + '\');return false;" style="color:var(--graphite);text-decoration:none;border-bottom:1px dotted var(--muted);font-weight:600">' + c.chart_name + ' &#8594;</a>'
+        : '<span style="color:var(--muted)">' + c.chart_name + '</span>';
 
-        tableHTML += `
-          <tr style="border-bottom:0.5px solid var(--border);opacity:${rowOpacity};transition:opacity 0.15s" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='${rowOpacity}'">
-            <td style="padding:9px 10px;font-weight:${isActive ? '600' : '400'}">${s.name}</td>
-            <td style="padding:9px 10px">${chartLink}</td>
-            <td style="padding:9px 10px;text-align:center">${statusIcon(s.status, s.id)}</td>
-            <td style="padding:9px 10px;text-align:center">${trendIcon(s.trend)}</td>
-            <td style="padding:9px 10px;font-family:var(--mono);font-size:12px;color:${isActive ? 'var(--graphite)' : 'var(--muted)'}">${s.detail}</td>
-            <td style="padding:9px 10px;font-size:11px;color:var(--muted);font-style:italic">${s.context || ''}</td>
-          </tr>`;
+      for (let ri = 0; ri < c.rules.length; ri++) {
+        const r = c.rules[ri];
+        const opacity = (mode === 'flagged' || r.active) ? '1' : '0.35';
+        const dot = r.active
+          ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00D64A"></span>'
+          : '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--border)"></span>';
+
+        tableHTML += '<tr style="border-bottom:0.5px solid var(--border);opacity:' + opacity + ';transition:opacity 0.15s" onmouseenter="this.style.opacity=\'1\'" onmouseleave="this.style.opacity=\'' + opacity + '\'">';
+        // Only show chart link on first rule row for this chart
+        tableHTML += '<td style="padding:8px 10px">' + (ri === 0 ? chartLink : '') + '</td>';
+        tableHTML += '<td style="padding:8px 10px;font-weight:' + (r.active ? '600' : '400') + '">' + r.name + '</td>';
+        tableHTML += '<td style="padding:8px 10px;text-align:center">' + dot + '</td>';
+        tableHTML += '<td style="padding:8px 10px;font-family:var(--mono);font-size:12px;color:' + (r.active ? 'var(--graphite)' : 'var(--muted)') + '">' + r.detail + '</td>';
+        tableHTML += '<td style="padding:8px 10px;font-size:11px;color:var(--muted);font-style:italic">' + (r.context || '') + '</td>';
+        tableHTML += '</tr>';
       }
     }
 
     tableHTML += '</tbody></table>';
     container.innerHTML = tableHTML;
     canvas.parentElement.appendChild(container);
-
     setTitle(title, subtitle);
     document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { showErr(e); }
 }
+
 
 // ── Control Center: cleanup when switching away ───────────────────────────────
 const _origSelectView = selectView;
