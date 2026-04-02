@@ -497,9 +497,7 @@ const TABS = {
   sector: {
     label: "Themes",
     groups: [
-      { label: "Overview", children: [
-        { key:"sec-overview", label:"Sector overview", sub:"Summary matrix: market cap, median cap, 1-month performance, and constituents for every sector.", src:"CoinGecko Pro — Wintermute OTC" },
-      ]},
+      
       { label: "Overview", children: [
         { key:"sec-overview", label:"Sector overview", sub:"Summary matrix: market cap, median cap, 1-month performance, and constituents for every sector.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
@@ -911,7 +909,7 @@ async function selectView(tab, key) {
       if (fromEl) fromEl.value = CUSTOM_START_DATE[key] || '2013-01-01';
     }
     // Apply default selections if defined and nothing currently selected
-    if (DEFAULT_SELECTIONS[key] && (!selected || selected.length === 0)) {
+    if (DEFAULT_SELECTIONS[key]) {
       selected = [...DEFAULT_SELECTIONS[key]];
       // Check the corresponding checkboxes
       document.querySelectorAll('.sel-cb').forEach(cb => {
@@ -919,7 +917,7 @@ async function selectView(tab, key) {
       });
     }
     // Apply default selections if defined and nothing currently selected
-    if (DEFAULT_SELECTIONS[key] && (!selected || selected.length === 0)) {
+    if (DEFAULT_SELECTIONS[key]) {
       selected = [...DEFAULT_SELECTIONS[key]];
       // Check the corresponding checkboxes
       document.querySelectorAll('.sel-cb').forEach(cb => {
@@ -4055,7 +4053,7 @@ async function fetchSectorOverview() {
     for (const s of data.sectors) {
       const perfColor = s.perf_1m > 0 ? '#00D64A' : (s.perf_1m < 0 ? '#EC5B5B' : 'var(--muted)');
       const perfStr = s.perf_1m != null ? (s.perf_1m > 0 ? '+' : '') + s.perf_1m.toFixed(1) + '%' : '—';
-      const constStr = s.constituents?.slice(0, 8).join(', ') + (s.constituents?.length > 8 ? ', …' : '');
+      const constStr = s.constituents?.join(', ');
 
       tableHTML += `
         <tr style="border-bottom:0.5px solid var(--border)">
