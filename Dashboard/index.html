@@ -783,7 +783,16 @@ async function selectView(tab, key) {
   if (_ccEl) _ccEl.remove();
   const _mc = document.getElementById('main-chart');
   if (_mc) _mc.style.display = '';
-  // Always clean up control center matrix when switching views
+
+  // Switch tab if navigating across tabs (e.g. from control center links)
+  if (tab !== activeTab && TABS[tab]) {
+    activeTab = tab;
+    document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === activeTab));
+    // Hide equity/data special views
+    const ep = document.getElementById('equity-ph');
+    if (ep) ep.style.display = 'none';
+    hideDataView && hideDataView();
+  }
 
   let viewDef = null;
   for (const g of (TABS[tab]?.groups || []))
