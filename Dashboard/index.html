@@ -500,6 +500,10 @@ const TABS = {
       { label: "Overview", children: [
         { key:"btc-overview", label:"Signal overview", sub:"Active control center rules for Bitcoin.", src:"Wintermute OTC" },
       ]},
+      { label: "Price Performance", children: [
+        { key:"btc-rolling",  label:"Rolling return",        sub:"BTC N-day rolling return (%).", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-drawdown", label:"Drawdown from ATH",     sub:"Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
+      ]},
       { label: "Moving Averages", children: [
         { key:"btc-ma",         label:"50-day and 200-day moving average", sub:"BTC price with 50d and 200d moving averages overlaid. Log scale.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-ma-gap",     label:"50d and 200d gap",    sub:"The % difference between 50d and 200d MA over time. Positive = golden cross territory.", src:"CoinGecko Pro — Wintermute OTC" },
@@ -514,10 +518,6 @@ const TABS = {
       { label: "Volatility", children: [
         { key:"btc-realvol",  label:"Realised volatility",   sub:"30d, 90d, and 180d rolling annualized vol.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-rv-iv",    label:"RV vs IV (DVOL)",       sub:"30d realized vol vs Deribit DVOL.", src:"CoinGecko Pro + Deribit" },
-      ]},
-      { label: "Price Performance", children: [
-        { key:"btc-rolling",  label:"Rolling return",        sub:"BTC N-day rolling return (%).", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-drawdown", label:"Drawdown from ATH",     sub:"Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Bitcoin vs Gold", children: [
         { key:"btc-gold",       label:"Bitcoin vs Gold",     sub:"BTC price vs Gold/GLD ETF.", src:"CoinGecko Pro + yfinance" },
@@ -541,6 +541,9 @@ const TABS = {
       { label: "Overview", children: [
         { key:"eth-overview", label:"Signal overview", sub:"Active control center rules for Ethereum.", src:"Wintermute OTC" },
       ]},
+      { label: "Price Performance", children: [
+        { key:"eth-drawdown", label:"Drawdown from ATH",  sub:"Continuous drawdown from ETH rolling ATH.", src:"CoinGecko Pro" },
+      ]},
       { label: "Moving Averages", children: [
         { key:"eth-ma",       label:"50-day and 200-day moving average", sub:"ETH price with 50d, 200d, 200-week MA. Log scale.", src:"CoinGecko Pro" },
         { key:"eth-ma-gap",   label:"50d and 200d gap",  sub:"ETH 50d/200d MA gap. Golden/death cross proximity.", src:"CoinGecko Pro" },
@@ -548,9 +551,6 @@ const TABS = {
       ]},
       { label: "Market Cap", children: [
         { key:"eth-mcap",     label:"Total market cap",   sub:"ETH market cap with milestones ($50B, $100B, $200B, $500B).", src:"CoinGecko Pro" },
-      ]},
-      { label: "Price Performance", children: [
-        { key:"eth-drawdown", label:"Drawdown from ATH",  sub:"Continuous drawdown from ETH rolling ATH.", src:"CoinGecko Pro" },
       ]},
       { label: "Relative", children: [
         { key:"eth-btc-ratio", label:"ETH/BTC ratio",     sub:"The best gauge of altcoin risk appetite.", src:"CoinGecko Pro" },
@@ -568,7 +568,7 @@ const TABS = {
         { key:"am-mcap-gap",  label:"50d and 200d gap",       sub:"Altcoin mcap 50d/200d MA gap.", src:"CoinGecko Pro" },
         { key:"am-mcap-dev",  label:"200d MA deviation",      sub:"% deviation of alt mcap from its 200d MA.", src:"CoinGecko Pro" },
       ]},
-      { label: "Dominance", children: [
+      { label: "Market Cap", children: [
         { key:"am-dominance", label:"Dominance shares",       sub:"BTC, ETH, and altcoin share of total crypto mcap.", src:"CoinGecko Pro" },
         { key:"am-rel-share", label:"Altcoin relative share", sub:"Altcoin mcap as % of total, vs BTC, vs ETH.", src:"CoinGecko Pro" },
         { key:"am-btc-ratio", label:"BTC/Altcoin mcap ratio", sub:"BTC mcap / altcoin mcap. Rising = BTC dominance.", src:"CoinGecko Pro" },
@@ -3638,7 +3638,7 @@ async function fetchCategoryOverview(category) {
     }
 
     // Sort charts by group
-    const groupOrder = ['Moving Averages', 'Market Cap', 'Volatility', 'Price Performance', 'Derivatives', 'Relative', 'Other'];
+    const groupOrder = ['Price Performance', 'Moving Averages', 'Market Cap', 'Volatility', 'Derivatives', 'Relative', 'Other'];
     charts.sort((a, b) => {
       const ga = groupOrder.indexOf(inferGroup(a.chart_name));
       const gb = groupOrder.indexOf(inferGroup(b.chart_name));
