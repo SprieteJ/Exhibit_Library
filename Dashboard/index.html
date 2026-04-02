@@ -497,6 +497,9 @@ const TABS = {
   bitcoin: {
     label: "Bitcoin",
     groups: [
+      { label: "Overview", children: [
+        { key:"btc-overview", label:"Signal overview", sub:"Active control center rules for Bitcoin.", src:"Wintermute OTC" },
+      ]},
       { label: "Moving Averages", children: [
         { key:"btc-ma",         label:"50-day and 200-day moving average", sub:"BTC price with 50d and 200d moving averages overlaid. Log scale.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-ma-gap",     label:"50d and 200d gap",    sub:"The % difference between 50d and 200d MA over time. Positive = golden cross territory.", src:"CoinGecko Pro — Wintermute OTC" },
@@ -535,6 +538,9 @@ const TABS = {
   ethereum: {
     label: "Ethereum",
     groups: [
+      { label: "Overview", children: [
+        { key:"eth-overview", label:"Signal overview", sub:"Active control center rules for Ethereum.", src:"Wintermute OTC" },
+      ]},
       { label: "Moving Averages", children: [
         { key:"eth-ma",       label:"50-day and 200-day moving average", sub:"ETH price with 50d, 200d, 200-week MA. Log scale.", src:"CoinGecko Pro" },
         { key:"eth-ma-gap",   label:"50d and 200d gap",  sub:"ETH 50d/200d MA gap. Golden/death cross proximity.", src:"CoinGecko Pro" },
@@ -554,6 +560,9 @@ const TABS = {
   altcoins: {
     label: "Altcoins",
     groups: [
+      { label: "Overview", children: [
+        { key:"alt-overview", label:"Signal overview", sub:"Active control center rules for Altcoins.", src:"Wintermute OTC" },
+      ]},
       { label: "Moving Averages", children: [
         { key:"am-mcap",      label:"Altcoin mcap with MAs",  sub:"Total altcoin mcap (ex-BTC, ex-ETH) with 50d and 200d MA.", src:"CoinGecko Pro" },
         { key:"am-mcap-gap",  label:"50d and 200d gap",       sub:"Altcoin mcap 50d/200d MA gap.", src:"CoinGecko Pro" },
@@ -586,6 +595,7 @@ const TABS = {
     label: "Baskets",
     groups: [
       { label: "Overview", children: [
+        { key:"bas-overview", label:"Signal overview", sub:"Active control center rules for Baskets.", src:"Wintermute OTC" },
         { key:"sec-overview", label:"Sector overview", sub:"Summary matrix: market cap, median cap, 1-month performance, and constituents.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Price Action", children: [
@@ -894,8 +904,8 @@ async function selectView(tab, key) {
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   const AUTO_VIEWS = new Set([
-    'cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
-    'cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -929,7 +939,7 @@ async function selectView(tab, key) {
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
-  'cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1540,6 +1550,10 @@ async function fetchCurrent() {
       case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
       case 'sec-overview': await fetchSectorOverview(); break;
       case 'sec-overview': await fetchSectorOverview(); break;
+      case 'btc-overview': await fetchCategoryOverview('Bitcoin'); break;
+      case 'eth-overview': await fetchCategoryOverview('Ethereum'); break;
+      case 'alt-overview': await fetchCategoryOverview('Altcoins'); break;
+      case 'bas-overview': await fetchCategoryOverview('Baskets'); break;
       case 'cc-matrix':       await fetchControlCenter('flagged'); break;
       case 'cc-bitcoin':     await fetchControlCenter('bitcoin'); break;
       case 'cc-themes':      await fetchControlCenter('themes'); break;
@@ -3570,6 +3584,84 @@ async function fetchAltBeta(to) {
 
 
 // ── Control Center: Signal Matrix ─────────────────────────────────────────────
+
+// ── Category Overview (embedded CC rules per tab) ─────────────────────────────
+let _ccDataCache = null;
+
+async function fetchCategoryOverview(category) {
+  spinOn();
+  try {
+    if (!_ccDataCache) {
+      _ccDataCache = await fetch('/api/control-center').then(r=>r.json());
+    }
+    const data = _ccDataCache;
+    if (!data.charts?.length) throw new Error('no data');
+
+    if (chart) { chart.destroy(); chart = null; }
+    const canvas = document.getElementById('main-chart');
+    canvas.style.display = 'none';
+
+    let existing = document.getElementById('cc-matrix-container');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'cc-matrix-container';
+    container.style.cssText = 'position:absolute;inset:0;overflow-y:auto;padding:16px 20px;';
+
+    // Filter to this category
+    const charts = data.charts.filter(c => c.category === category);
+
+    if (!charts.length) {
+      container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;gap:12px"><div style="font-size:48px;opacity:0.2">&#10003;</div><div style="font-size:15px;font-weight:500;color:var(--graphite)">All quiet</div><div style="font-size:13px;color:var(--muted)">No rules configured for ' + category + ' yet.</div></div>';
+      canvas.parentElement.appendChild(container);
+      setTitle(category + ' — Signal Overview', 'Control center rules for ' + category);
+      document.getElementById('chart-spin').classList.remove('on');
+      return;
+    }
+
+    let tableHTML = '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
+    tableHTML += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    tableHTML += '<thead><tr style="border-bottom:1px solid var(--border)">';
+    tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Chart</th>';
+    tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:20%">Rule</th>';
+    tableHTML += '<th style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:6%">Status</th>';
+    tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:25%">Detail</th>';
+    tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:27%">Context</th>';
+    tableHTML += '</tr></thead><tbody>';
+
+    for (const c of charts) {
+      const chartLink = c.chart_key && c.chart_tab
+        ? '<a href="#" onclick="selectView(\'' + c.chart_tab + '\',\'' + c.chart_key + '\');return false;" style="color:var(--graphite);text-decoration:none;border-bottom:1px dotted var(--muted);font-weight:600">' + c.chart_name + ' &#8594;</a>'
+        : '<span style="color:var(--muted)">' + c.chart_name + '</span>';
+
+      for (let ri = 0; ri < c.rules.length; ri++) {
+        const r = c.rules[ri];
+        const isActive = r.active;
+        const bgColor = isActive ? (darkMode ? 'rgba(0,214,74,0.06)' : 'rgba(0,180,60,0.06)') : 'transparent';
+        const opacity = isActive ? '1' : '0.4';
+        const dot = isActive
+          ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00D64A"></span>'
+          : '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--border)"></span>';
+
+        tableHTML += '<tr style="border-bottom:0.5px solid var(--border);background:' + bgColor + ';opacity:' + opacity + ';transition:opacity 0.15s" onmouseenter="this.style.opacity=\'1\'" onmouseleave="this.style.opacity=\'' + opacity + '\'">';
+        tableHTML += '<td style="padding:8px 10px">' + (ri === 0 ? chartLink : '') + '</td>';
+        tableHTML += '<td style="padding:8px 10px;font-weight:' + (isActive ? '600' : '400') + '">' + r.name + '</td>';
+        tableHTML += '<td style="padding:8px 10px;text-align:center">' + dot + '</td>';
+        tableHTML += '<td style="padding:8px 10px;font-family:var(--mono);font-size:12px;color:' + (isActive ? 'var(--graphite)' : 'var(--muted)') + '">' + r.detail + '</td>';
+        tableHTML += '<td style="padding:8px 10px;font-size:11px;color:var(--muted);font-style:italic">' + (r.context || '') + '</td>';
+        tableHTML += '</tr>';
+      }
+    }
+
+    tableHTML += '</tbody></table>';
+    container.innerHTML = tableHTML;
+    canvas.parentElement.appendChild(container);
+    setTitle(category + ' — Signal Overview', 'Control center rules for ' + category);
+    document.getElementById('chart-spin').classList.remove('on');
+  } catch(e) { showErr(e); }
+}
+
+
 async function fetchControlCenter(mode) {
   spinOn();
   try {
@@ -3642,11 +3734,12 @@ async function fetchControlCenter(mode) {
       for (let ri = 0; ri < c.rules.length; ri++) {
         const r = c.rules[ri];
         const opacity = (mode === 'flagged' || r.active) ? '1' : '0.35';
+        const rowBg = r.active ? (darkMode ? 'rgba(0,214,74,0.06)' : 'rgba(0,180,60,0.06)') : 'transparent';
         const dot = r.active
           ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00D64A"></span>'
           : '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--border)"></span>';
 
-        tableHTML += '<tr style="border-bottom:0.5px solid var(--border);opacity:' + opacity + ';transition:opacity 0.15s" onmouseenter="this.style.opacity=\'1\'" onmouseleave="this.style.opacity=\'' + opacity + '\'">';
+        tableHTML += '<tr style="border-bottom:0.5px solid var(--border);background:' + rowBg + ';opacity:' + opacity + ';transition:opacity 0.15s" onmouseenter="this.style.opacity=\'1\'" onmouseleave="this.style.opacity=\'' + opacity + '\'">';
         // Only show chart link on first rule row for this chart
         tableHTML += '<td style="padding:8px 10px">' + (ri === 0 ? chartLink : '') + '</td>';
         tableHTML += '<td style="padding:8px 10px;font-weight:' + (r.active ? '600' : '400') + '">' + r.name + '</td>';
