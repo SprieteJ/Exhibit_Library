@@ -735,7 +735,7 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn => {
       if (ep) ep.style.display = 'none';
       const firstGroup = TABS[activeTab]?.groups?.[0];
       const firstView  = firstGroup?.children?.[0];
-      if (firstView) selectView(activeTab, firstView.key);
+      console.log("TAB SWITCH:", activeTab, firstView?.key, TABS[activeTab]); if (firstView) selectView(activeTab, firstView.key);
     }
   });
 });
