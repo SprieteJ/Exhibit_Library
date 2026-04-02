@@ -733,8 +733,8 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn => {
       hideDataView();
       const ep = document.getElementById('equity-ph');
       if (ep) ep.style.display = 'none';
-      const firstGroup = TABS[activeTab]?.groups[0];
-      const firstView  = firstGroup?.children[0];
+      const firstGroup = TABS[activeTab]?.groups?.[0];
+      const firstView  = firstGroup?.children?.[0];
       if (firstView) selectView(activeTab, firstView.key);
     }
   });
