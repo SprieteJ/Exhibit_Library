@@ -727,9 +727,6 @@ document.querySelectorAll('.tab[data-tab]').forEach(btn => {
     if (activeTab === 'equity') {
       hideDataView();
       showEquityPlaceholder();
-    } else if (activeTab === 'equity') {
-      const ep2 = document.getElementById('equity-ph');
-      if (ep2) ep2.style.display = '';
     } else if (activeTab === 'data') {
       showDataView();
     } else {
