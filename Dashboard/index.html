@@ -1737,6 +1737,144 @@ async function fetchCurrent() {
 }
 
 // ── Save PNG ──────────────────────────────────────────────────────────────────
+
+// ── Export combined dual-panel chart ──────────────────────────────────────────
+function exportCombinedChart(topChart, botChart) {
+  const showLogo   = document.getElementById('exp-logo')?.checked ?? true;
+  const showTitle  = document.getElementById('exp-title')?.checked ?? true;
+  const showSource = document.getElementById('exp-source')?.checked ?? true;
+
+  const W = 2400, H = 1000;
+  const PAD = 40;
+  const CHART_PAD = 16;
+  const HEADER_H = showTitle ? 56 : 16;
+  const FOOTER_H = showSource ? 40 : 16;
+  const GAP = 12;
+
+  const EXP_BG    = '#BEC1BF';
+  const EXP_FRAME = '#070B09';
+  const EXP_TEXT  = '#070B09';
+
+  // Save originals for both charts
+  const saves = [topChart, botChart].map(c => ({
+    dpr: c.options.devicePixelRatio,
+    w: c.canvas.style.width, h: c.canvas.style.height,
+    cw: c.canvas.width, ch: c.canvas.height,
+    scales: Object.fromEntries(Object.entries(c.options.scales || {}).map(([id, s]) => [id, {
+      tickColor: s.ticks?.color, tickFontSize: s.ticks?.font?.size,
+      borderColor: s.border?.color, borderDisplay: s.border?.display,
+      gridColor: s.grid?.color, gridDisplay: s.grid?.display,
+    }])),
+    legendColor: c.options.plugins?.legend?.labels?.color,
+    legendSize: c.options.plugins?.legend?.labels?.font?.size,
+    titleColor: c.options.plugins?.title?.color,
+    titleSize: c.options.plugins?.title?.font?.size,
+  }));
+
+  // Panel dimensions: top gets 60%, bottom gets 40%
+  const totalChartH = H - HEADER_H - FOOTER_H;
+  const topH = Math.round(totalChartH * 0.6 - GAP / 2);
+  const botH = Math.round(totalChartH * 0.4 - GAP / 2);
+  const chartW = W - PAD * 2 - CHART_PAD * 2;
+
+  // Apply export theme to both charts
+  [topChart, botChart].forEach(c => {
+    for (const [id, scale] of Object.entries(c.options.scales || {})) {
+      if (scale.ticks) { scale.ticks.color = EXP_FRAME; if (!scale.ticks.font) scale.ticks.font = {}; scale.ticks.font.size = 14; }
+      if (!scale.border) scale.border = {}; scale.border.color = EXP_FRAME; scale.border.display = true;
+      if (scale.grid) { scale.grid.color = 'rgba(0,0,0,0)'; scale.grid.display = false; }
+    }
+    if (c.options.plugins?.legend?.labels) { c.options.plugins.legend.labels.color = EXP_TEXT; if (!c.options.plugins.legend.labels.font) c.options.plugins.legend.labels.font = {}; c.options.plugins.legend.labels.font.size = 14; }
+    if (c.options.plugins?.title) { c.options.plugins.title.color = EXP_TEXT; if (!c.options.plugins.title.font) c.options.plugins.title.font = {}; c.options.plugins.title.font.size = 16; }
+    c.options.devicePixelRatio = 1;
+  });
+
+  // Resize and render top chart
+  topChart.canvas.width = chartW; topChart.canvas.height = topH - CHART_PAD * 2;
+  topChart.canvas.style.width = chartW + 'px'; topChart.canvas.style.height = (topH - CHART_PAD * 2) + 'px';
+  topChart.resize(chartW, topH - CHART_PAD * 2); topChart.update();
+
+  // Resize and render bottom chart
+  botChart.canvas.width = chartW; botChart.canvas.height = botH - CHART_PAD * 2;
+  botChart.canvas.style.width = chartW + 'px'; botChart.canvas.style.height = (botH - CHART_PAD * 2) + 'px';
+  botChart.resize(chartW, botH - CHART_PAD * 2); botChart.update();
+
+  // Build export canvas
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const ctx = off.getContext('2d');
+
+  // Background
+  ctx.fillStyle = EXP_BG;
+  ctx.fillRect(0, 0, W, H);
+
+  // Top panel frame
+  const topY = HEADER_H;
+  ctx.strokeStyle = EXP_FRAME; ctx.lineWidth = 1.5;
+  ctx.strokeRect(PAD, topY, W - PAD * 2, topH);
+  ctx.drawImage(topChart.canvas, PAD + CHART_PAD, topY + CHART_PAD);
+
+  // Bottom panel frame
+  const botY = HEADER_H + topH + GAP;
+  ctx.strokeRect(PAD, botY, W - PAD * 2, botH);
+  ctx.drawImage(botChart.canvas, PAD + CHART_PAD, botY + CHART_PAD);
+
+  // Logo
+  if (showLogo && _exportLogo.naturalWidth) {
+    const logoH = 36;
+    const logoW = (logoH / _exportLogo.naturalHeight) * _exportLogo.naturalWidth;
+    try { ctx.drawImage(_exportLogo, PAD, 10, logoW, logoH); } catch(e) {}
+  }
+
+  // Title
+  if (showTitle) {
+    const title = document.getElementById('chart-title')?.textContent || '';
+    ctx.fillStyle = EXP_TEXT;
+    ctx.font = '400 22px DM Sans, Helvetica Neue, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, W / 2, 36);
+    ctx.textAlign = 'left';
+  }
+
+  // Source
+  if (showSource) {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const now = new Date();
+    const dateFormatted = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+    ctx.fillStyle = 'rgba(7,11,9,0.6)';
+    ctx.font = '400 14px DM Sans, Helvetica Neue, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('Source: Wintermute    Data as of: ' + dateFormatted, W - PAD, H - 12);
+    ctx.textAlign = 'left';
+  }
+
+  // Download
+  const a = document.createElement('a');
+  const vk = activeView?.key || 'chart';
+  const dt = new Date().toISOString().split('T')[0];
+  a.download = vk + '_' + dt + '.png';
+  a.href = off.toDataURL('image/png');
+  a.click();
+
+  // Restore both charts
+  [topChart, botChart].forEach((c, i) => {
+    const s = saves[i];
+    c.options.devicePixelRatio = s.dpr || undefined;
+    for (const [id, scale] of Object.entries(c.options.scales || {})) {
+      const orig = s.scales[id] || {};
+      if (scale.ticks) { scale.ticks.color = orig.tickColor; if (scale.ticks.font) scale.ticks.font.size = orig.tickFontSize; }
+      if (scale.border) { scale.border.color = orig.borderColor; scale.border.display = orig.borderDisplay; }
+      if (scale.grid) { scale.grid.color = orig.gridColor; scale.grid.display = orig.gridDisplay; }
+    }
+    if (c.options.plugins?.legend?.labels) { c.options.plugins.legend.labels.color = s.legendColor; if (c.options.plugins.legend.labels.font) c.options.plugins.legend.labels.font.size = s.legendSize; }
+    if (c.options.plugins?.title) { c.options.plugins.title.color = s.titleColor; if (c.options.plugins.title.font) c.options.plugins.title.font.size = s.titleSize; }
+    c.canvas.width = s.cw; c.canvas.height = s.ch;
+    c.canvas.style.width = s.w; c.canvas.style.height = s.h;
+    c.resize(); c.update();
+  });
+}
+
+
 // Preload logo for PNG export
 const _exportLogo = new Image();
 _exportLogo.crossOrigin = 'anonymous';
@@ -1744,6 +1882,13 @@ _exportLogo.src = '/static/logo.png';
 
 document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
+
+  // Check if this is a combined dual-panel chart
+  const combContainer = document.getElementById('combined-chart-container');
+  if (combContainer && chart._combinedBot) {
+    exportCombinedChart(chart, chart._combinedBot);
+    return;
+  }
 
   const showLogo   = document.getElementById('exp-logo')?.checked ?? true;
   const showTitle  = document.getElementById('exp-title')?.checked ?? true;
