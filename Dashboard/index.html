@@ -1756,12 +1756,15 @@ document.getElementById('btn-save').addEventListener('click', () => {
   const chartAreaH = H - PAD - TITLE_H - FOOTER_H - CHART_PAD * 2;
 
   // Resize chart to export resolution
+  const origDPR = chart.options.devicePixelRatio;
+  chart.options.devicePixelRatio = 1;
   chart.canvas.width = chartAreaW;
   chart.canvas.height = chartAreaH;
   chart.canvas.style.width = chartAreaW + 'px';
   chart.canvas.style.height = chartAreaH + 'px';
   chart.resize();
-  chart.update('none');
+  chart.resize(chartAreaW, chartAreaH);
+  chart.update();
 
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
@@ -1863,10 +1866,12 @@ document.getElementById('btn-save').addEventListener('click', () => {
   // Restore original chart size
   chart.canvas.width = origCW;
   chart.canvas.height = origCH;
+  chart.options.devicePixelRatio = origDPR || undefined;
   chart.canvas.style.width = origW;
   chart.canvas.style.height = origH;
   chart.resize();
-  chart.update('none');
+  chart.resize(chartAreaW, chartAreaH);
+  chart.update();
 });
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function showDataView() {
