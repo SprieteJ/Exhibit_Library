@@ -448,6 +448,11 @@ input[type=number] { width: 70px; }
       <svg viewBox="0 0 16 16"><path d="M3 13h10M8 3v7M5 7l3 3 3-3"/></svg>
       Save PNG
     </button>
+    <div style="display:flex;gap:12px;align-items:center;margin-left:8px;font-size:11px;color:var(--muted)">
+      <label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" id="exp-logo" checked style="width:13px;height:13px">Logo</label>
+      <label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" id="exp-title" checked style="width:13px;height:13px">Title</label>
+      <label style="display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" id="exp-source" checked style="width:13px;height:13px">Source</label>
+    </div>
   </div>
   <div class="perf-row" id="perf-row"></div>
   <div class="chart-area">
@@ -1735,25 +1740,23 @@ const _exportLogo = new Image();
 _exportLogo.crossOrigin = 'anonymous';
 _exportLogo.src = '/static/logo.png';
 
-// Export toggles — change in browser console or via UI
-let _exportShowLogo   = true;
-let _exportShowTitle  = true;
-let _exportShowSource = true;
-
 document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
 
-  // 12:5 aspect ratio
+  const showLogo   = document.getElementById('exp-logo')?.checked ?? true;
+  const showTitle  = document.getElementById('exp-title')?.checked ?? true;
+  const showSource = document.getElementById('exp-source')?.checked ?? true;
+
+  // 12:5 ratio matching matplotlib figsize=(12, 5)
   const W = 2400, H = 1000;
-  const PAD = 50;
-  const CHART_PAD = 24;
-  const HEADER_H = _exportShowTitle ? 80 : 20;
-  const FOOTER_H = _exportShowSource ? 50 : 20;
+  const PAD = 40;
+  const CHART_PAD = 16;
+  const HEADER_H = showTitle ? 56 : 16;
+  const FOOTER_H = showSource ? 40 : 16;
 
   const EXP_BG    = '#BEC1BF';
   const EXP_FRAME = '#070B09';
   const EXP_TEXT  = '#070B09';
-  const EXP_MUTED = '#3A3D3A';
 
   // Save originals
   const origDPR = chart.options.devicePixelRatio;
@@ -1768,6 +1771,7 @@ document.getElementById('btn-save').addEventListener('click', () => {
       tickColor: scale.ticks?.color,
       tickFontSize: scale.ticks?.font?.size,
       borderColor: scale.border?.color,
+      borderDisplay: scale.border?.display,
       gridColor: scale.grid?.color,
       gridDisplay: scale.grid?.display,
       gridDrawBorder: scale.grid?.drawBorder,
@@ -1777,28 +1781,30 @@ document.getElementById('btn-save').addEventListener('click', () => {
   const origLegendColor = chart.options.plugins?.legend?.labels?.color;
   const origLegendSize = chart.options.plugins?.legend?.labels?.font?.size;
 
-  // Apply export theme — no gridlines, dark text
+  // Apply export theme: no gridlines, dark spines, matching matplotlib labelsize=8 (scaled to canvas)
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
     if (scale.ticks) {
       scale.ticks.color = EXP_FRAME;
       if (!scale.ticks.font) scale.ticks.font = {};
-      scale.ticks.font.size = 16;
+      scale.ticks.font.size = 14;
     }
-    if (scale.border) scale.border.color = EXP_FRAME;
+    if (!scale.border) scale.border = {};
+    scale.border.color = EXP_FRAME;
+    scale.border.display = true;
     if (scale.grid) {
       scale.grid.color = 'rgba(0,0,0,0)';
       scale.grid.display = false;
-      scale.grid.drawBorder = false;
+      scale.grid.drawBorder = true;
     }
     if (scale.title) scale.title.color = EXP_FRAME;
   }
   if (chart.options.plugins?.legend?.labels) {
     chart.options.plugins.legend.labels.color = EXP_TEXT;
     if (!chart.options.plugins.legend.labels.font) chart.options.plugins.legend.labels.font = {};
-    chart.options.plugins.legend.labels.font.size = 15;
+    chart.options.plugins.legend.labels.font.size = 14;
   }
 
-  // Resize chart to export resolution
+  // Resize chart
   const chartAreaW = W - PAD * 2 - CHART_PAD * 2;
   const chartAreaH = H - HEADER_H - FOOTER_H - CHART_PAD * 2;
   chart.options.devicePixelRatio = 1;
@@ -1818,11 +1824,9 @@ document.getElementById('btn-save').addEventListener('click', () => {
   ctx.fillStyle = EXP_BG;
   ctx.fillRect(0, 0, W, H);
 
-  // Panel frame with spines on all 4 sides
+  // Panel frame — spines on all 4 sides, matching matplotlib spine linewidth=0.8 (scaled)
   const fx = PAD, fy = HEADER_H;
   const fw = W - PAD * 2, fh = H - HEADER_H - FOOTER_H;
-  ctx.fillStyle = EXP_BG;
-  ctx.fillRect(fx, fy, fw, fh);
   ctx.strokeStyle = EXP_FRAME;
   ctx.lineWidth = 1.5;
   ctx.strokeRect(fx, fy, fw, fh);
@@ -1830,32 +1834,34 @@ document.getElementById('btn-save').addEventListener('click', () => {
   // Chart inside panel
   ctx.drawImage(chart.canvas, fx + CHART_PAD, fy + CHART_PAD, chartAreaW, chartAreaH);
 
-  // Logo (top-left)
-  if (_exportShowLogo && _exportLogo.naturalWidth) {
-    const logoH = 50;
+  // Logo (top-left, before title)
+  if (showLogo && _exportLogo.naturalWidth) {
+    const logoH = 36;
     const logoW = (logoH / _exportLogo.naturalHeight) * _exportLogo.naturalWidth;
-    try { ctx.drawImage(_exportLogo, PAD, 15, logoW, logoH); } catch(e) {}
+    try { ctx.drawImage(_exportLogo, PAD, 10, logoW, logoH); } catch(e) {}
   }
 
-  // Title (centered)
-  if (_exportShowTitle) {
+  // Title — matplotlib style: fontsize=10, fontweight="normal", pad=10
+  // Scaled to 2400px canvas: ~20px, normal weight
+  if (showTitle) {
     const title = document.getElementById('chart-title')?.textContent || '';
     ctx.fillStyle = EXP_TEXT;
-    ctx.font = '700 36px DM Sans, Helvetica Neue, sans-serif';
+    ctx.font = '400 22px DM Sans, Helvetica Neue, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(title, W / 2, 52);
+    ctx.fillText(title, W / 2, 36);
     ctx.textAlign = 'left';
   }
 
-  // Source (bottom-right)
-  if (_exportShowSource) {
+  // Source — matplotlib style: fontsize=7, ha="right", va="bottom", alpha=0.6
+  // Scaled: ~14px
+  if (showSource) {
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const now = new Date();
     const dateFormatted = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
-    ctx.fillStyle = EXP_MUTED;
-    ctx.font = '400 16px DM Sans, Helvetica Neue, sans-serif';
+    ctx.fillStyle = 'rgba(7,11,9,0.6)';
+    ctx.font = '400 14px DM Sans, Helvetica Neue, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('Source: Wintermute    Data as of: ' + dateFormatted, W - PAD, H - 18);
+    ctx.fillText('Source: Wintermute    Data as of: ' + dateFormatted, W - PAD, H - 12);
     ctx.textAlign = 'left';
   }
 
@@ -1868,7 +1874,7 @@ document.getElementById('btn-save').addEventListener('click', () => {
   a.href = off.toDataURL('image/png');
   a.click();
 
-  // Restore original chart
+  // Restore
   chart.options.devicePixelRatio = origDPR || undefined;
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
     const orig = origScales[id] || {};
@@ -1876,7 +1882,10 @@ document.getElementById('btn-save').addEventListener('click', () => {
       scale.ticks.color = orig.tickColor;
       if (scale.ticks.font) scale.ticks.font.size = orig.tickFontSize;
     }
-    if (scale.border) scale.border.color = orig.borderColor;
+    if (scale.border) {
+      scale.border.color = orig.borderColor;
+      scale.border.display = orig.borderDisplay;
+    }
     if (scale.grid) {
       scale.grid.color = orig.gridColor;
       scale.grid.display = orig.gridDisplay;
