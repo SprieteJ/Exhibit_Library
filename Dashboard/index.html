@@ -1737,8 +1737,13 @@ _exportLogo.src = '/static/logo.png';
 
 document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
+
   const W = 2400, H = 1200;
-  const PAD = 60;
+  const PAD = 80;           // outer padding
+  const CHART_PAD = 20;     // padding inside chart frame
+  const TITLE_H = 60;       // space for title bar
+  const FOOTER_H = 50;      // space for source line
+  const FRAME_W = 1.5;      // border thickness
 
   // Save original chart size
   const origW = chart.canvas.style.width;
@@ -1746,9 +1751,11 @@ document.getElementById('btn-save').addEventListener('click', () => {
   const origCW = chart.canvas.width;
   const origCH = chart.canvas.height;
 
-  // Temporarily resize chart to export resolution (crisp rendering)
-  const chartAreaW = W - PAD * 2;
-  const chartAreaH = H - PAD - 44 - 60;
+  // Chart area dimensions
+  const chartAreaW = W - PAD * 2 - CHART_PAD * 2;
+  const chartAreaH = H - PAD - TITLE_H - FOOTER_H - CHART_PAD * 2;
+
+  // Resize chart to export resolution
   chart.canvas.width = chartAreaW;
   chart.canvas.height = chartAreaH;
   chart.canvas.style.width = chartAreaW + 'px';
@@ -1756,14 +1763,50 @@ document.getElementById('btn-save').addEventListener('click', () => {
   chart.resize();
   chart.update('none');
 
-  // Create offscreen canvas
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const ctx = off.getContext('2d');
 
+  // Colors
+  const bg = darkMode ? '#0F1110' : '#FAFAFA';
+  const panelBg = darkMode ? '#161918' : '#F2F3F2';
+  const frameBorder = darkMode ? '#2A2D2B' : '#D0D2D0';
+  const textColor = darkMode ? '#E8EAE8' : '#323935';
+  const mutedColor = darkMode ? '#606663' : '#888B88';
+
   // Background
-  ctx.fillStyle = darkMode ? '#0F1110' : '#FAFAFA';
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
+
+  // Chart panel frame (rounded rect with border)
+  const frameX = PAD;
+  const frameY = PAD + TITLE_H;
+  const frameW = W - PAD * 2;
+  const frameH = H - PAD - TITLE_H - FOOTER_H;
+  const radius = 6;
+
+  // Panel background
+  ctx.fillStyle = panelBg;
+  ctx.beginPath();
+  ctx.moveTo(frameX + radius, frameY);
+  ctx.lineTo(frameX + frameW - radius, frameY);
+  ctx.quadraticCurveTo(frameX + frameW, frameY, frameX + frameW, frameY + radius);
+  ctx.lineTo(frameX + frameW, frameY + frameH - radius);
+  ctx.quadraticCurveTo(frameX + frameW, frameY + frameH, frameX + frameW - radius, frameY + frameH);
+  ctx.lineTo(frameX + radius, frameY + frameH);
+  ctx.quadraticCurveTo(frameX, frameY + frameH, frameX, frameY + frameH - radius);
+  ctx.lineTo(frameX, frameY + radius);
+  ctx.quadraticCurveTo(frameX, frameY, frameX + radius, frameY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Panel border
+  ctx.strokeStyle = frameBorder;
+  ctx.lineWidth = FRAME_W;
+  ctx.stroke();
+
+  // Draw chart inside the panel
+  ctx.drawImage(chart.canvas, frameX + CHART_PAD, frameY + CHART_PAD, chartAreaW, chartAreaH);
 
   // Logo (top-left)
   const logoH = 28;
@@ -1772,35 +1815,40 @@ document.getElementById('btn-save').addEventListener('click', () => {
 
   // Title (next to logo)
   const title = document.getElementById('chart-title')?.textContent || '';
-  ctx.fillStyle = darkMode ? '#E8EAE8' : '#323935';
-  ctx.font = '600 26px DM Sans, Helvetica Neue, sans-serif';
-  ctx.fillText(title, PAD + logoW + 16, PAD + 20);
+  ctx.fillStyle = textColor;
+  ctx.font = '600 28px DM Sans, Helvetica Neue, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(title, PAD + logoW + 20, PAD + 20);
+
+  // Subtitle (below title, smaller)
+  const sub = document.getElementById('chart-sub')?.textContent || '';
+  if (sub) {
+    ctx.fillStyle = mutedColor;
+    ctx.font = '400 16px DM Sans, Helvetica Neue, sans-serif';
+    ctx.fillText(sub, PAD + logoW + 20, PAD + 44);
+  }
 
   // Date range (top-right)
   const fromEl = document.getElementById('rp-from');
   const toEl = document.getElementById('rp-to');
   const dateStr = (fromEl?.value && toEl?.value) ? fromEl.value + ' \u2014 ' + toEl.value : new Date().toISOString().split('T')[0];
-  ctx.fillStyle = darkMode ? '#888B88' : '#606663';
-  ctx.font = '400 20px DM Mono, Courier New, monospace';
+  ctx.fillStyle = mutedColor;
+  ctx.font = '400 18px DM Mono, Courier New, monospace';
   ctx.textAlign = 'right';
   ctx.fillText(dateStr, W - PAD, PAD + 20);
   ctx.textAlign = 'left';
 
-  // Draw the hi-res chart (1:1 pixel copy, no stretching)
-  const chartTop = PAD + 44;
-  ctx.drawImage(chart.canvas, PAD, chartTop, chartAreaW, chartAreaH);
-
   // Source (bottom-left)
-  ctx.fillStyle = darkMode ? '#606663' : '#888B88';
-  ctx.font = '400 18px DM Mono, Courier New, monospace';
+  ctx.fillStyle = mutedColor;
+  ctx.font = '400 16px DM Mono, Courier New, monospace';
   const srcText = document.getElementById('chart-src')?.textContent || 'Wintermute OTC';
-  ctx.fillText(srcText, PAD, H - 20);
+  ctx.fillText(srcText, PAD, H - 18);
 
   // Watermark (bottom-right)
   ctx.textAlign = 'right';
   ctx.fillStyle = darkMode ? '#2A2D2B' : '#E4E4E2';
-  ctx.font = '500 16px DM Sans, sans-serif';
-  ctx.fillText('wintermute.com', W - PAD, H - 20);
+  ctx.font = '500 15px DM Sans, sans-serif';
+  ctx.fillText('wintermute.com', W - PAD, H - 18);
   ctx.textAlign = 'left';
 
   // Download
