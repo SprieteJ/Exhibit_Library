@@ -31,7 +31,8 @@ from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_
 from api.crypto_market import handle_total_mcap
 from api.control_center import handle_control_center
 from api.ethereum import (handle_eth_ma, handle_eth_ma_gap, handle_eth_200d_dev,
-                           handle_eth_drawdown, handle_eth_mcap, handle_eth_btc_ratio)
+                           handle_eth_drawdown, handle_eth_mcap, handle_eth_btc_ratio,
+                           handle_eth_ma_combined)
 from api.alt_market import (handle_alt_mcap, handle_alt_mcap_gap, handle_alt_mcap_dev,
                              handle_dominance_shares, handle_alt_relative_share,
                              handle_btc_alt_ratio, handle_alt_intracorr)
@@ -147,6 +148,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/eth-drawdown":      self.send_json(handle_eth_drawdown(params))
             elif p == "/api/eth-mcap":          self.send_json(handle_eth_mcap(params))
             elif p == "/api/eth-btc-ratio":     self.send_json(handle_eth_btc_ratio(params))
+            elif p == "/api/eth-ma-combined":  self.send_json(handle_eth_ma_combined(params))
 
             elif p == "/api/alt-mcap-total":    self.send_json(handle_alt_mcap(params))
             elif p == "/api/alt-mcap-gap":      self.send_json(handle_alt_mcap_gap(params))

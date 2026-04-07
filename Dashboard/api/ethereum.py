@@ -211,3 +211,37 @@ def handle_eth_btc_ratio(params):
             dates.append(d)
             values.append(round(float(r['price_usd']) / btc, 6))
     return {"dates": dates, "values": values}
+
+
+def handle_eth_ma_combined(params):
+    """Combined: ETH price + 200-week MA (top panel) and 50d/200d gap (bottom panel)."""
+    date_from = params.get("from", ["2017-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    try:
+        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=1410)).strftime("%Y-%m-%d")
+    except:
+        ext = "2015-01-01"
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    dates, prices = _fetch_eth_prices(cur, ext, date_to)
+    conn.close()
+    if not prices:
+        return {"dates": [], "price": [], "ma200w": [], "ma50": [], "ma200": [], "gap_pct": []}
+
+    ma50   = _sma(prices, 50)
+    ma200  = _sma(prices, 200)
+    ma200w = _sma(prices, 1400)
+    gap_pct = [round((ma50[i] / ma200[i] - 1) * 100, 4) if ma50[i] and ma200[i] and ma200[i] > 0 else None
+               for i in range(len(prices))]
+
+    trimmed = [(d, p, mw, m5, m2, g) for d, p, mw, m5, m2, g
+               in zip(dates, prices, ma200w, ma50, ma200, gap_pct) if d >= date_from]
+    if not trimmed:
+        return {"dates": [], "price": [], "ma200w": [], "ma50": [], "ma200": [], "gap_pct": []}
+
+    td, tp, tw, t5, t2, tg = zip(*trimmed)
+    return {
+        "dates": list(td), "price": list(tp), "ma200w": list(tw),
+        "ma50": list(t5), "ma200": list(t2), "gap_pct": list(tg),
+    }
