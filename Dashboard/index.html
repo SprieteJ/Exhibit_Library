@@ -1734,19 +1734,23 @@ async function fetchCurrent() {
 const _exportLogo = new Image();
 _exportLogo.crossOrigin = 'anonymous';
 _exportLogo.src = '/static/logo.png';
-let _exportShowLogo = true; // toggle via console: _exportShowLogo = false
+
+// Export toggles — change in browser console or via UI
+let _exportShowLogo   = true;
+let _exportShowTitle  = true;
+let _exportShowSource = true;
 
 document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
 
-  const W = 2400, H = 1400;
-  const PAD = 60;
-  const CHART_PAD = 30;
-  const HEADER_H = 100;
-  const FOOTER_H = 60;
+  // 12:5 aspect ratio
+  const W = 2400, H = 1000;
+  const PAD = 50;
+  const CHART_PAD = 24;
+  const HEADER_H = _exportShowTitle ? 80 : 20;
+  const FOOTER_H = _exportShowSource ? 50 : 20;
 
   const EXP_BG    = '#BEC1BF';
-  const EXP_PANEL = '#BEC1BF';
   const EXP_FRAME = '#070B09';
   const EXP_TEXT  = '#070B09';
   const EXP_MUTED = '#3A3D3A';
@@ -1766,13 +1770,14 @@ document.getElementById('btn-save').addEventListener('click', () => {
       borderColor: scale.border?.color,
       gridColor: scale.grid?.color,
       gridDisplay: scale.grid?.display,
+      gridDrawBorder: scale.grid?.drawBorder,
       titleColor: scale.title?.color,
     };
   }
   const origLegendColor = chart.options.plugins?.legend?.labels?.color;
   const origLegendSize = chart.options.plugins?.legend?.labels?.font?.size;
 
-  // Apply export theme
+  // Apply export theme — no gridlines, dark text
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
     if (scale.ticks) {
       scale.ticks.color = EXP_FRAME;
@@ -1780,7 +1785,11 @@ document.getElementById('btn-save').addEventListener('click', () => {
       scale.ticks.font.size = 16;
     }
     if (scale.border) scale.border.color = EXP_FRAME;
-    if (scale.grid) { scale.grid.color = 'rgba(7,11,9,0.1)'; scale.grid.display = true; }
+    if (scale.grid) {
+      scale.grid.color = 'rgba(0,0,0,0)';
+      scale.grid.display = false;
+      scale.grid.drawBorder = false;
+    }
     if (scale.title) scale.title.color = EXP_FRAME;
   }
   if (chart.options.plugins?.legend?.labels) {
@@ -1789,7 +1798,7 @@ document.getElementById('btn-save').addEventListener('click', () => {
     chart.options.plugins.legend.labels.font.size = 15;
   }
 
-  // Resize
+  // Resize chart to export resolution
   const chartAreaW = W - PAD * 2 - CHART_PAD * 2;
   const chartAreaH = H - HEADER_H - FOOTER_H - CHART_PAD * 2;
   chart.options.devicePixelRatio = 1;
@@ -1809,10 +1818,10 @@ document.getElementById('btn-save').addEventListener('click', () => {
   ctx.fillStyle = EXP_BG;
   ctx.fillRect(0, 0, W, H);
 
-  // Panel frame
+  // Panel frame with spines on all 4 sides
   const fx = PAD, fy = HEADER_H;
   const fw = W - PAD * 2, fh = H - HEADER_H - FOOTER_H;
-  ctx.fillStyle = EXP_PANEL;
+  ctx.fillStyle = EXP_BG;
   ctx.fillRect(fx, fy, fw, fh);
   ctx.strokeStyle = EXP_FRAME;
   ctx.lineWidth = 1.5;
@@ -1821,25 +1830,34 @@ document.getElementById('btn-save').addEventListener('click', () => {
   // Chart inside panel
   ctx.drawImage(chart.canvas, fx + CHART_PAD, fy + CHART_PAD, chartAreaW, chartAreaH);
 
-  // Logo (top-left, larger)
+  // Logo (top-left)
   if (_exportShowLogo && _exportLogo.naturalWidth) {
     const logoH = 50;
     const logoW = (logoH / _exportLogo.naturalHeight) * _exportLogo.naturalWidth;
-    try { ctx.drawImage(_exportLogo, PAD, 25, logoW, logoH); } catch(e) {}
+    try { ctx.drawImage(_exportLogo, PAD, 15, logoW, logoH); } catch(e) {}
   }
 
-  // Title (centered, large)
-  const title = document.getElementById('chart-title')?.textContent || '';
-  ctx.fillStyle = EXP_TEXT;
-  ctx.font = '700 36px DM Sans, Helvetica Neue, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(title, W / 2, 55);
-  ctx.textAlign = 'left';
+  // Title (centered)
+  if (_exportShowTitle) {
+    const title = document.getElementById('chart-title')?.textContent || '';
+    ctx.fillStyle = EXP_TEXT;
+    ctx.font = '700 36px DM Sans, Helvetica Neue, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, W / 2, 52);
+    ctx.textAlign = 'left';
+  }
 
-  // Source (bottom-left)
-  ctx.fillStyle = EXP_MUTED;
-  ctx.font = '400 18px DM Mono, Courier New, monospace';
-  ctx.fillText('Wintermute OTC', PAD, H - 20);
+  // Source (bottom-right)
+  if (_exportShowSource) {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const now = new Date();
+    const dateFormatted = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+    ctx.fillStyle = EXP_MUTED;
+    ctx.font = '400 16px DM Sans, Helvetica Neue, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('Source: Wintermute    Data as of: ' + dateFormatted, W - PAD, H - 18);
+    ctx.textAlign = 'left';
+  }
 
   // Download
   const a = document.createElement('a');
@@ -1850,7 +1868,7 @@ document.getElementById('btn-save').addEventListener('click', () => {
   a.href = off.toDataURL('image/png');
   a.click();
 
-  // Restore
+  // Restore original chart
   chart.options.devicePixelRatio = origDPR || undefined;
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
     const orig = origScales[id] || {};
@@ -1859,7 +1877,11 @@ document.getElementById('btn-save').addEventListener('click', () => {
       if (scale.ticks.font) scale.ticks.font.size = orig.tickFontSize;
     }
     if (scale.border) scale.border.color = orig.borderColor;
-    if (scale.grid) { scale.grid.color = orig.gridColor; scale.grid.display = orig.gridDisplay; }
+    if (scale.grid) {
+      scale.grid.color = orig.gridColor;
+      scale.grid.display = orig.gridDisplay;
+      scale.grid.drawBorder = orig.gridDrawBorder;
+    }
     if (scale.title) scale.title.color = orig.titleColor;
   }
   if (chart.options.plugins?.legend?.labels) {
