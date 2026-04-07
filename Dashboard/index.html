@@ -1734,35 +1734,35 @@ async function fetchCurrent() {
 const _exportLogo = new Image();
 _exportLogo.crossOrigin = 'anonymous';
 _exportLogo.src = '/static/logo.png';
+let _exportShowLogo = true; // toggle via console: _exportShowLogo = false
 
 document.getElementById('btn-save').addEventListener('click', () => {
   if (!chart) return;
 
-  const W = 2400, H = 1200;
-  const PAD = 80;
-  const CHART_PAD = 24;
-  const TITLE_H = 65;
-  const FOOTER_H = 50;
+  const W = 2400, H = 1400;
+  const PAD = 60;
+  const CHART_PAD = 30;
+  const HEADER_H = 100;
+  const FOOTER_H = 60;
 
-  // ── Export palette (matplotlib-style) ──
-  const EXP_BG       = '#BEC1BF';   // outer background
-  const EXP_PANEL    = '#BEC1BF';   // chart panel background
-  const EXP_FRAME    = '#070B09';   // spines, ticks
-  const EXP_TEXT     = '#070B09';   // title, labels
-  const EXP_MUTED    = '#3A3D3A';   // subtitle, source
+  const EXP_BG    = '#BEC1BF';
+  const EXP_PANEL = '#BEC1BF';
+  const EXP_FRAME = '#070B09';
+  const EXP_TEXT  = '#070B09';
+  const EXP_MUTED = '#3A3D3A';
 
-  // Save original chart config
+  // Save originals
   const origDPR = chart.options.devicePixelRatio;
   const origW = chart.canvas.style.width;
   const origH = chart.canvas.style.height;
   const origCW = chart.canvas.width;
   const origCH = chart.canvas.height;
 
-  // Deep-save original scale/plugin colors
   const origScales = {};
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
     origScales[id] = {
       tickColor: scale.ticks?.color,
+      tickFontSize: scale.ticks?.font?.size,
       borderColor: scale.border?.color,
       gridColor: scale.grid?.color,
       gridDisplay: scale.grid?.display,
@@ -1770,21 +1770,28 @@ document.getElementById('btn-save').addEventListener('click', () => {
     };
   }
   const origLegendColor = chart.options.plugins?.legend?.labels?.color;
+  const origLegendSize = chart.options.plugins?.legend?.labels?.font?.size;
 
-  // ── Apply export theme to chart ──
+  // Apply export theme
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
-    if (scale.ticks) scale.ticks.color = EXP_FRAME;
+    if (scale.ticks) {
+      scale.ticks.color = EXP_FRAME;
+      if (!scale.ticks.font) scale.ticks.font = {};
+      scale.ticks.font.size = 16;
+    }
     if (scale.border) scale.border.color = EXP_FRAME;
-    if (scale.grid) { scale.grid.color = 'rgba(7,11,9,0.08)'; scale.grid.display = true; }
+    if (scale.grid) { scale.grid.color = 'rgba(7,11,9,0.1)'; scale.grid.display = true; }
     if (scale.title) scale.title.color = EXP_FRAME;
   }
   if (chart.options.plugins?.legend?.labels) {
     chart.options.plugins.legend.labels.color = EXP_TEXT;
+    if (!chart.options.plugins.legend.labels.font) chart.options.plugins.legend.labels.font = {};
+    chart.options.plugins.legend.labels.font.size = 15;
   }
 
-  // Resize and render at export resolution
+  // Resize
   const chartAreaW = W - PAD * 2 - CHART_PAD * 2;
-  const chartAreaH = H - PAD - TITLE_H - FOOTER_H - CHART_PAD * 2;
+  const chartAreaH = H - HEADER_H - FOOTER_H - CHART_PAD * 2;
   chart.options.devicePixelRatio = 1;
   chart.canvas.width = chartAreaW;
   chart.canvas.height = chartAreaH;
@@ -1793,73 +1800,46 @@ document.getElementById('btn-save').addEventListener('click', () => {
   chart.resize(chartAreaW, chartAreaH);
   chart.update();
 
-  // ── Build the export canvas ──
+  // Build export canvas
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const ctx = off.getContext('2d');
 
-  // Outer background
+  // Background
   ctx.fillStyle = EXP_BG;
   ctx.fillRect(0, 0, W, H);
 
-  // Panel frame with visible spines on all 4 sides
-  const fx = PAD;
-  const fy = PAD + TITLE_H;
-  const fw = W - PAD * 2;
-  const fh = H - PAD - TITLE_H - FOOTER_H;
-
+  // Panel frame
+  const fx = PAD, fy = HEADER_H;
+  const fw = W - PAD * 2, fh = H - HEADER_H - FOOTER_H;
   ctx.fillStyle = EXP_PANEL;
   ctx.fillRect(fx, fy, fw, fh);
-
   ctx.strokeStyle = EXP_FRAME;
   ctx.lineWidth = 1.5;
   ctx.strokeRect(fx, fy, fw, fh);
 
-  // Draw chart inside panel
+  // Chart inside panel
   ctx.drawImage(chart.canvas, fx + CHART_PAD, fy + CHART_PAD, chartAreaW, chartAreaH);
 
-  // Logo (top-left)
-  const logoH = 30;
-  const logoW = _exportLogo.naturalWidth ? (logoH / _exportLogo.naturalHeight) * _exportLogo.naturalWidth : 170;
-  try { ctx.drawImage(_exportLogo, PAD, PAD - 6, logoW, logoH); } catch(e) {}
-
-  // Title
-  const title = document.getElementById('chart-title')?.textContent || '';
-  ctx.fillStyle = EXP_TEXT;
-  ctx.font = '600 28px DM Sans, Helvetica Neue, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(title, PAD + logoW + 20, PAD + 20);
-
-  // Subtitle
-  const sub = document.getElementById('chart-sub')?.textContent || '';
-  if (sub) {
-    ctx.fillStyle = EXP_MUTED;
-    ctx.font = '400 16px DM Sans, Helvetica Neue, sans-serif';
-    ctx.fillText(sub, PAD + logoW + 20, PAD + 44);
+  // Logo (top-left, larger)
+  if (_exportShowLogo && _exportLogo.naturalWidth) {
+    const logoH = 50;
+    const logoW = (logoH / _exportLogo.naturalHeight) * _exportLogo.naturalWidth;
+    try { ctx.drawImage(_exportLogo, PAD, 25, logoW, logoH); } catch(e) {}
   }
 
-  // Date range (top-right)
-  const fromEl = document.getElementById('rp-from');
-  const toEl = document.getElementById('rp-to');
-  const dateStr = (fromEl?.value && toEl?.value) ? fromEl.value + ' \u2014 ' + toEl.value : new Date().toISOString().split('T')[0];
-  ctx.fillStyle = EXP_MUTED;
-  ctx.font = '400 18px DM Mono, Courier New, monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText(dateStr, W - PAD, PAD + 20);
+  // Title (centered, large)
+  const title = document.getElementById('chart-title')?.textContent || '';
+  ctx.fillStyle = EXP_TEXT;
+  ctx.font = '700 36px DM Sans, Helvetica Neue, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, W / 2, 55);
   ctx.textAlign = 'left';
 
   // Source (bottom-left)
   ctx.fillStyle = EXP_MUTED;
-  ctx.font = '400 16px DM Mono, Courier New, monospace';
-  const srcText = document.getElementById('chart-src')?.textContent || 'Wintermute OTC';
-  ctx.fillText(srcText, PAD, H - 18);
-
-  // Watermark (bottom-right)
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#8A8D8A';
-  ctx.font = '500 15px DM Sans, sans-serif';
-  ctx.fillText('wintermute.com', W - PAD, H - 18);
-  ctx.textAlign = 'left';
+  ctx.font = '400 18px DM Mono, Courier New, monospace';
+  ctx.fillText('Wintermute OTC', PAD, H - 20);
 
   // Download
   const a = document.createElement('a');
@@ -1870,17 +1850,21 @@ document.getElementById('btn-save').addEventListener('click', () => {
   a.href = off.toDataURL('image/png');
   a.click();
 
-  // ── Restore original chart ──
+  // Restore
   chart.options.devicePixelRatio = origDPR || undefined;
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
     const orig = origScales[id] || {};
-    if (scale.ticks) scale.ticks.color = orig.tickColor;
+    if (scale.ticks) {
+      scale.ticks.color = orig.tickColor;
+      if (scale.ticks.font) scale.ticks.font.size = orig.tickFontSize;
+    }
     if (scale.border) scale.border.color = orig.borderColor;
     if (scale.grid) { scale.grid.color = orig.gridColor; scale.grid.display = orig.gridDisplay; }
     if (scale.title) scale.title.color = orig.titleColor;
   }
   if (chart.options.plugins?.legend?.labels) {
     chart.options.plugins.legend.labels.color = origLegendColor;
+    if (chart.options.plugins.legend.labels.font) chart.options.plugins.legend.labels.font.size = origLegendSize;
   }
   chart.canvas.width = origCW;
   chart.canvas.height = origCH;
