@@ -54,10 +54,21 @@ def handle_macro_price(params):
                 prices.append(v)
             data[sym] = {"dates": master_ts, "prices": prices}
     else:
+        # Forward-fill weekend/holiday gaps for daily data
+        # Use a master date list from the symbol with most data points
+        master_sym = max(price_maps, key=lambda s: len(price_maps[s]))
+        master_ts = sorted(price_maps[master_sym].keys())
         data = {}
         for sym, pmap in price_maps.items():
-            sorted_ts = sorted(pmap.keys())
-            data[sym] = {"dates": sorted_ts, "prices": [pmap[ts] for ts in sorted_ts]}
+            prices, last_val = [], None
+            for ts in master_ts:
+                v = pmap.get(ts)
+                if v is not None:
+                    last_val = v
+                elif last_val is not None:
+                    v = last_val
+                prices.append(v)
+            data[sym] = {"dates": master_ts, "prices": prices}
 
     if align == "common" and len(data) > 1:
         common_start = max(s["dates"][0] for s in data.values() if s["dates"])
