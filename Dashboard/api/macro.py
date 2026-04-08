@@ -357,3 +357,110 @@ def handle_macro_stablecoin(params):
         "dates":  [str(r['date']) for r in rows],
         "values": [float(r['total_mcap']) for r in rows],
     }
+
+
+def handle_macro_sharpe(params):
+    """Rolling Sharpe ratio for BTC, ETH, altcoin mcap, and macro assets.
+    Sharpe = annualised_return / annualised_vol (risk-free = 0).
+    Windows: 30, 90, 180, 365, 730, 1460 days."""
+    date_from = params.get("from", ["2020-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    window    = int(params.get("window", ["180"])[0])
+
+    import math
+    from datetime import timedelta
+
+    try:
+        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
+    except:
+        ext = "2015-01-01"
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Fetch crypto prices
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol IN ('BTC', 'ETH') AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY symbol, timestamp
+    """, (ext, date_to))
+    crypto_rows = cur.fetchall()
+
+    # Fetch macro prices
+    macro_tickers = ['SPY', 'QQQ', 'IWM', 'TLT', 'GLD', 'BNO']
+    cur.execute("""
+        SELECT ticker as symbol, timestamp::date as date, close as price_usd
+        FROM macro_daily
+        WHERE ticker = ANY(%s) AND timestamp >= %s AND timestamp <= %s AND close > 0
+        ORDER BY ticker, timestamp
+    """, (macro_tickers, ext, date_to))
+    macro_rows = cur.fetchall()
+
+    # Fetch alt mcap
+    cur.execute("""
+        SELECT t.timestamp::date as date,
+               t.total_mcap_usd - b.market_cap_usd - e.market_cap_usd as price_usd
+        FROM total_marketcap_daily t
+        JOIN marketcap_daily b ON b.timestamp::date = t.timestamp::date
+        JOIN marketcap_daily e ON e.timestamp::date = t.timestamp::date
+        WHERE b.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+          AND e.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'ETH' LIMIT 1)
+          AND b.market_cap_usd > 0 AND e.market_cap_usd > 0 AND t.total_mcap_usd > 0
+          AND t.timestamp >= %s AND t.timestamp <= %s
+        ORDER BY t.timestamp
+    """, (ext, date_to))
+    alt_rows = [{"symbol": "ALTS", "date": r["date"], "price_usd": float(r["price_usd"])} for r in cur.fetchall()]
+
+    conn.close()
+
+    # Build price maps
+    all_rows = crypto_rows + macro_rows + alt_rows
+    prices = {}
+    for r in all_rows:
+        sym = r["symbol"]
+        if sym not in prices: prices[sym] = {}
+        prices[sym][str(r["date"])] = float(r["price_usd"])
+
+    # Compute rolling Sharpe for each asset
+    labels = {"BTC": "Bitcoin", "ETH": "Ethereum", "ALTS": "Altcoins",
+              "SPY": "S&P 500", "QQQ": "Nasdaq", "IWM": "Russell 2000",
+              "TLT": "US Treasuries", "GLD": "Gold", "BNO": "Brent Oil"}
+
+    result = {}
+    for sym, pmap in prices.items():
+        sorted_dates = sorted(pmap.keys())
+        vals = [pmap[d] for d in sorted_dates]
+
+        # Daily log returns
+        log_rets = [None] + [math.log(vals[i] / vals[i-1]) if vals[i-1] > 0 else None
+                             for i in range(1, len(vals))]
+
+        # Rolling Sharpe
+        sharpe_dates = []
+        sharpe_vals = []
+        for i in range(window, len(log_rets)):
+            wr = [r for r in log_rets[i - window + 1:i + 1] if r is not None]
+            if len(wr) < window // 2:
+                continue
+            d = sorted_dates[i]
+            if d < date_from:
+                continue
+            mean_ret = sum(wr) / len(wr)
+            std_ret = math.sqrt(sum((r - mean_ret)**2 for r in wr) / len(wr))
+            if std_ret > 0:
+                sharpe = (mean_ret / std_ret) * math.sqrt(365)
+            else:
+                sharpe = 0
+            sharpe_dates.append(d)
+            sharpe_vals.append(round(sharpe, 4))
+
+        if sharpe_dates:
+            result[sym] = {
+                "label": labels.get(sym, sym),
+                "dates": sharpe_dates,
+                "sharpe": sharpe_vals,
+                "current": sharpe_vals[-1] if sharpe_vals else None,
+            }
+
+    return {"window": window, "assets": result}

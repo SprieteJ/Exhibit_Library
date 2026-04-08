@@ -667,6 +667,9 @@ const TABS = {
       { label: "Rates", children: [
         { key:"mac-real-yields",  label:"Real yields vs BTC",           sub:"10Y real yield vs BTC.", src:"Yahoo Finance + CoinGecko Pro" },
       ]},
+      { label: "Risk-Adjusted", children: [
+        { key:"mac-sharpe", label:"Rolling Sharpe ratio", sub:"Rolling Sharpe ratio across crypto and macro assets. Toggle assets and windows.", src:"CoinGecko Pro + Yahoo Finance" },
+      ]},
       { label: "Flows", children: [
         { key:"mac-stablecoin",   label:"Stablecoin supply",            sub:"Total market cap of stablecoin-sector assets.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
@@ -914,7 +917,7 @@ async function selectView(tab, key) {
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-    'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+    'mac-sharpe','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
@@ -948,7 +951,7 @@ const NEW_AUTO_KEYS = new Set([
   'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-  'mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+  'mac-sharpe','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
   'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
@@ -1591,6 +1594,7 @@ async function fetchCurrent() {
       case 'alt-beta':       await fetchAltBeta(to); break;
       case 'alt-ath-drawdown': await fetchAltATHDrawdown(); break;
       case 'alt-drawdown-ts':  await fetchAltDrawdownTS(from, to); break;
+      case 'mac-sharpe':     await fetchMacroSharpe(from, to); break;
       case 'mac-matrix':     await fetchMacroMatrix(from, to); break;
       case 'mac-dxy-btc':    await fetchMacroDxyBtc(from, to); break;
       case 'mac-risk':       await fetchMacroRisk(from, to); break;
@@ -4745,6 +4749,74 @@ async function fetchAltFundingHeatmap(symbols, from, to) {
 }
 
 // ── Macro: Correlation Matrix ─────────────────────────────────────────────────
+
+// ── Macro: Rolling Sharpe Ratio ───────────────────────────────────────────────
+async function fetchMacroSharpe(from, to) {
+  spinOn();
+  try {
+    const winEl = document.getElementById('rp-window');
+    const window = winEl?.value || '180';
+    const data = await fetch(`/api/macro-sharpe?from=${from}&to=${to}&window=${window}`).then(r=>r.json());
+    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
+
+    const COLORS = {
+      'BTC': '#F7931A', 'ETH': '#627EEA', 'ALTS': '#00D64A',
+      'SPY': '#7Fb2F1', 'QQQ': '#2471CC', 'IWM': '#AEA9EA',
+      'TLT': '#ED9B9B', 'GLD': '#E1C87E', 'BNO': '#9EA4A0',
+    };
+
+    // Build common date axis
+    let allDates = new Set();
+    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
+    allDates = [...allDates].sort();
+
+    const datasets = [];
+    for (const [sym, a] of Object.entries(data.assets)) {
+      const dateMap = {};
+      a.dates.forEach((d, i) => dateMap[d] = a.sharpe[i]);
+      datasets.push({
+        label: a.label,
+        data: allDates.map(d => dateMap[d] !== undefined ? dateMap[d] : null),
+        borderColor: COLORS[sym] || PAL[datasets.length % PAL.length],
+        backgroundColor: 'transparent',
+        borderWidth: 1.4,
+        pointRadius: 0,
+        tension: 0.1,
+        spanGaps: true,
+      });
+    }
+
+    mkChart('line', { labels: allDates, datasets }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8,
+          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v.toFixed(1) }, grid: YGRID },
+      },
+      plugins: {
+        legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+      },
+    });
+
+    // Summary bar below the chart
+    const summaryDiv = document.getElementById('perf-row');
+    if (summaryDiv) {
+      const sorted = Object.entries(data.assets)
+        .map(([sym, a]) => ({ sym, label: a.label, current: a.current, color: COLORS[sym] || '#888' }))
+        .filter(a => a.current != null)
+        .sort((a, b) => b.current - a.current);
+
+      summaryDiv.innerHTML = sorted.map(a => {
+        const color = a.current > 0 ? '#00D64A' : '#EC5B5B';
+        return `<div class="perf-item"><span style="color:${a.color};font-weight:600">${a.label}</span> <span class="${a.current > 0 ? 'pos' : 'neg'}">${a.current > 0 ? '+' : ''}${a.current.toFixed(2)}</span></div>`;
+      }).join('');
+    }
+
+    const winLabels = {'30': '1M', '90': '3M', '180': '6M', '365': '1Y', '730': '2Y', '1460': '4Y'};
+    setTitle('Rolling Sharpe Ratio (' + (winLabels[window] || window + 'd') + ')', 'Source: CoinGecko + Yahoo Finance · annualised, risk-free = 0');
+  } catch(e) { showErr(e); }
+}
+
+
 async function fetchMacroMatrix(from, to) {
   spinOn();
   try {
