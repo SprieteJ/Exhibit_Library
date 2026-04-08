@@ -55,6 +55,10 @@ def handle_db_status():
         {"key": "long_short_ratio",    "label": "Long/short ratio",         "granularity": "Daily/1h", "source": "Binance/Bybit", "asset_col": "coingecko_id", "ts_col": "timestamp"},
         {"key": "macro_daily",         "label": "Macro assets",             "granularity": "Daily",    "source": "yfinance",      "asset_col": "ticker",       "ts_col": "timestamp"},
         {"key": "macro_hourly",        "label": "Macro assets",             "granularity": "Hourly",   "source": "yfinance",      "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "dvol_daily",          "label": "DVOL (implied vol)",      "granularity": "Daily",    "source": "Deribit",        "asset_col": "currency",     "ts_col": "timestamp"},
+        {"key": "total_marketcap_daily","label": "Total crypto mcap",      "granularity": "Daily",    "source": "CoinGecko",      "asset_col": "source",       "ts_col": "timestamp"},
+        {"key": "alt_intracorr_daily", "label": "Alt intracorrelation",    "granularity": "Daily",    "source": "Computed",        "asset_col": "tier",         "ts_col": "timestamp"},
+        {"key": "onchain_daily",       "label": "On-chain (BTC)",          "granularity": "Daily",    "source": "CoinMetrics",     "asset_col": "asset",        "ts_col": "timestamp"},
         {"key": "asset_registry",      "label": "GMCI asset classification","granularity": "Static",   "source": "Internal",      "asset_col": "symbol",       "ts_col": None},
     ]
 
