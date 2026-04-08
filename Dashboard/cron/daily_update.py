@@ -1100,6 +1100,45 @@ def update_dvol():
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════════
 
+
+def update_onchain():
+    print("
+[OnChain] Updating BTC on-chain data...")
+    CM_BASE = "https://community-api.coinmetrics.io/v4"
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT MAX(timestamp) FROM onchain_daily WHERE asset = 'BTC'")
+    last = cur.fetchone()[0]
+    conn.close()
+    start = (last.date() + timedelta(days=1)).isoformat() if last else "2024-01-01"
+    end = datetime.now(timezone.utc).date().isoformat()
+    if start >= end:
+        print("  Already up to date"); return
+    metrics = ["HashRate", "AdrActCnt"]
+    all_rows = []
+    for metric in metrics:
+        try:
+            resp = requests.get(f"{CM_BASE}/timeseries/asset-metrics",
+                params={"assets": "btc", "metrics": metric, "start_time": start,
+                        "end_time": end, "frequency": "1d", "page_size": 10000}, timeout=30)
+            resp.raise_for_status()
+            rows = resp.json().get("data", [])
+            for r in rows:
+                val = r.get(metric)
+                if val is not None:
+                    all_rows.append({"timestamp": r["time"], "asset": "BTC", "metric": metric,
+                        "value": float(val), "source": "coinmetrics",
+                        "ingested_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
+            print(f"  {metric}: {len(rows)} rows")
+        except Exception as e:
+            print(f"  {metric}: ERROR - {e}")
+    if all_rows:
+        df = pd.DataFrame(all_rows)
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+        n = bulk_upsert("onchain_daily", df, ["timestamp", "asset", "metric"])
+        print(f"  +{n} rows inserted")
+
+
 def main():
     start = time.time()
     print(f"\n{'━' * 70}")
@@ -1114,6 +1153,7 @@ def main():
         update_derivatives()
         update_macro()
         update_dvol()
+        update_onchain()
     elif target in ("prices", "price"):
         update_coingecko_combined()
     elif target in ("derivatives", "derivs"):
@@ -1126,6 +1166,7 @@ def main():
         update_marketcap()
     elif target in ("dvol",):
         update_dvol()
+        update_onchain()
     else:
         print(f"Unknown target: {target}")
         print("Usage: python daily_update.py [all|prices|derivatives|macro|volume|marketcap]")
