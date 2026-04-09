@@ -81,3 +81,32 @@ def handle_etf_flows_by_fund(params):
         funds[t]["cumulative"] = cumulative
 
     return {"asset": asset, "funds": funds}
+
+
+def handle_etf_flows_weekly(params):
+    """Weekly aggregated ETF flows for BTC and ETH."""
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    result = {}
+    for asset in ["BTC", "ETH"]:
+        cur.execute("""
+            SELECT date_trunc('week', timestamp)::date as week, SUM(flow_usd_m) as total_flow
+            FROM etf_flows_daily
+            WHERE asset = %s AND timestamp >= %s AND timestamp <= %s
+            GROUP BY date_trunc('week', timestamp)::date
+            ORDER BY week
+        """, (asset, date_from, date_to))
+        rows = cur.fetchall()
+        if not rows: continue
+
+        result[asset] = {
+            "dates": [str(r["week"]) for r in rows],
+            "flows": [round(float(r["total_flow"]), 2) if r["total_flow"] else 0 for r in rows],
+        }
+
+    conn.close()
+    return {"assets": result}

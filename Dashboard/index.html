@@ -684,7 +684,9 @@ const TABS = {
     label: "ETF",
     groups: [
       { label: "Flows", children: [
-        { key:"etf-net-flows", label:"Spot ETF net flows", sub:"7-day trailing net flows for BTC and ETH spot ETFs (USD millions).", src:"Farside Investors" },
+        { key:"etf-net-flows", label:"Trailing — spot ETF flows", sub:"Trailing net flows for BTC and ETH spot ETFs. Adjustable window: 7/14/30/60/90 days.", src:"Farside Investors" },
+        { key:"etf-daily-bar", label:"Daily net flows", sub:"Daily net inflows/outflows for BTC and ETH spot ETFs. Stacked bar chart.", src:"Farside Investors" },
+        { key:"etf-weekly-bar", label:"Weekly net flows", sub:"Weekly aggregated net flows for BTC and ETH spot ETFs. Stacked bar chart.", src:"Farside Investors" },
       ]},
     ]
   },
@@ -851,7 +853,7 @@ const DEFAULT_SELECTIONS = {
 };
 
 const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev']);
-const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01', 'etf-net-flows': '2025-04-01', 'btc-dom-ma': '2023-04-01'};
+const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01', 'etf-net-flows': '2025-04-01', 'etf-daily-bar': '2025-04-01', 'etf-weekly-bar': '2024-04-01', 'btc-dom-ma': '2023-04-01'};
 
 async function selectView(tab, key) {
   // Always clean up control center matrix when switching views
@@ -932,7 +934,7 @@ async function selectView(tab, key) {
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-    'mac-sharpe','etf-net-flows','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
@@ -966,7 +968,7 @@ const NEW_AUTO_KEYS = new Set([
   'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-  'mac-sharpe','etf-net-flows','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
   'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
@@ -1579,6 +1581,8 @@ async function fetchCurrent() {
       case 'eth-overview': await fetchCategoryOverview('Ethereum'); break;
       case 'alt-overview': await fetchCategoryOverview('Altcoins'); break;
       case 'bas-overview': await fetchCategoryOverview('Baskets'); break;
+      case 'etf-daily-bar':  await fetchEtfDailyBar(from, to); break;
+      case 'etf-weekly-bar': await fetchEtfWeeklyBar(from, to); break;
       case 'etf-net-flows': await fetchEtfNetFlows(from, to); break;
       case 'cc-matrix':       await fetchControlCenter('flagged'); break;
       case 'cc-bitcoin':     await fetchControlCenter('bitcoin'); break;
@@ -4014,6 +4018,126 @@ async function fetchCategoryOverview(category) {
   } catch(e) { showErr(e); }
 }
 
+
+
+
+// ── ETF: Daily Bar Chart ─────────────────────────────────────────────────────
+async function fetchEtfDailyBar(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/etf-flows?from=${from}&to=${to}&window=1`).then(r=>r.json());
+    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
+
+    const COLORS = { 'BTC': { pos: '#F7931A', neg: '#F7931A80' }, 'ETH': { pos: '#627EEA', neg: '#627EEA80' } };
+
+    // Build common date axis
+    let allDates = new Set();
+    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
+    allDates = [...allDates].sort();
+
+    const datasets = [];
+    for (const [asset, a] of Object.entries(data.assets)) {
+      const dateMap = {};
+      a.dates.forEach((d, i) => dateMap[d] = a.daily[i]);
+      const values = allDates.map(d => dateMap[d] !== undefined ? dateMap[d] : null);
+      const bgColors = values.map(v => v != null && v >= 0 ? COLORS[asset]?.pos || '#888' : COLORS[asset]?.neg || '#88880');
+
+      datasets.push({
+        label: asset + ' ETF',
+        data: values,
+        backgroundColor: bgColors,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        stack: 'stack1',
+      });
+    }
+
+    mkChart('bar', { labels: allDates, datasets }, {
+      scales: {
+        x: { stacked: true, type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
+          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { stacked: true, ticks: { ...YTICK, callback: v => (v >= 0 ? '+' : '') + v.toFixed(0) + 'M' }, grid: YGRID },
+      },
+      plugins: {
+        legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+      },
+    });
+
+    // Summary
+    const summaryDiv = document.getElementById('perf-row');
+    if (summaryDiv) {
+      const items = [];
+      for (const [asset, a] of Object.entries(data.assets)) {
+        if (a.current_daily != null) {
+          const clr = a.current_daily >= 0 ? '#00D64A' : '#EC5B5B';
+          items.push(`<div class="perf-item"><span style="color:${asset === 'BTC' ? '#F7931A' : '#627EEA'};font-weight:600">${asset}</span> <span style="color:${clr}">${a.current_daily >= 0 ? '+' : ''}${a.current_daily.toFixed(1)}M</span></div>`);
+        }
+      }
+      summaryDiv.innerHTML = items.join('');
+    }
+
+    setTitle('Daily Spot ETF Net Flows', 'Source: Farside Investors · USD millions · stacked');
+  } catch(e) { showErr(e); }
+}
+
+// ── ETF: Weekly Bar Chart ────────────────────────────────────────────────────
+async function fetchEtfWeeklyBar(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/etf-flows-weekly?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
+
+    const COLORS = { 'BTC': { pos: '#F7931A', neg: '#F7931A80' }, 'ETH': { pos: '#627EEA', neg: '#627EEA80' } };
+
+    let allDates = new Set();
+    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
+    allDates = [...allDates].sort();
+
+    const datasets = [];
+    for (const [asset, a] of Object.entries(data.assets)) {
+      const dateMap = {};
+      a.dates.forEach((d, i) => dateMap[d] = a.flows[i]);
+      const values = allDates.map(d => dateMap[d] !== undefined ? dateMap[d] : null);
+      const bgColors = values.map(v => v != null && v >= 0 ? COLORS[asset]?.pos || '#888' : COLORS[asset]?.neg || '#888');
+
+      datasets.push({
+        label: asset + ' ETF',
+        data: values,
+        backgroundColor: bgColors,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        stack: 'stack1',
+      });
+    }
+
+    mkChart('bar', { labels: allDates, datasets }, {
+      scales: {
+        x: { stacked: true, type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 12,
+          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { stacked: true, ticks: { ...YTICK, callback: v => (v >= 0 ? '+' : '') + v.toFixed(0) + 'M' }, grid: YGRID },
+      },
+      plugins: {
+        legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+      },
+    });
+
+    // Summary
+    const summaryDiv = document.getElementById('perf-row');
+    if (summaryDiv) {
+      const items = [];
+      for (const [asset, a] of Object.entries(data.assets)) {
+        const last = a.flows[a.flows.length - 1];
+        if (last != null) {
+          const clr = last >= 0 ? '#00D64A' : '#EC5B5B';
+          items.push(`<div class="perf-item"><span style="color:${asset === 'BTC' ? '#F7931A' : '#627EEA'};font-weight:600">${asset} this week</span> <span style="color:${clr}">${last >= 0 ? '+' : ''}${last.toFixed(1)}M</span></div>`);
+        }
+      }
+      summaryDiv.innerHTML = items.join('');
+    }
+
+    setTitle('Weekly Spot ETF Net Flows', 'Source: Farside Investors · USD millions · stacked');
+  } catch(e) { showErr(e); }
+}
 
 
 // ── ETF: Spot Net Flows ──────────────────────────────────────────────────────
