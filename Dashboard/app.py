@@ -28,7 +28,8 @@ from api.altcoins import (handle_price, handle_alt_scatter,
                            handle_alt_drawdown_ts)
 from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_dxy_btc,
                            handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin,
-                           handle_macro_sharpe)
+                           handle_macro_sharpe,
+                           handle_macro_btc_corr)
 from api.crypto_market import handle_total_mcap
 from api.control_center import handle_control_center
 from api.ethereum import (handle_eth_ma, handle_eth_ma_gap, handle_eth_200d_dev,
@@ -140,6 +141,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/macro-risk":        self.send_json(handle_macro_risk(params))
             elif p == "/api/macro-real-yields": self.send_json(handle_macro_real_yields(params))
             elif p == "/api/macro-stablecoin":  self.send_json(handle_macro_stablecoin(params))
+            elif p == "/api/macro-btc-corr":   self.send_json(handle_macro_btc_corr(params))
             elif p == "/api/macro-sharpe":      self.send_json(handle_macro_sharpe(params))
             elif p == "/api/total-mcap":        self.send_json(handle_total_mcap(params))
             elif p == "/api/control-center":    self.send_json(handle_control_center(params))

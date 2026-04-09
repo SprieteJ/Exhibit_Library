@@ -464,3 +464,132 @@ def handle_macro_sharpe(params):
             }
 
     return {"window": window, "assets": result}
+
+
+def handle_macro_btc_corr(params):
+    """Rolling correlation of macro assets vs BTC using log-normalized daily returns."""
+    symbols     = [s.strip() for s in params.get("symbols", ["QQQ,GLD"])[0].split(",") if s.strip()]
+    date_from   = params.get("from", ["2023-01-01"])[0]
+    date_to     = params.get("to",   ["2099-01-01"])[0]
+    window      = int(params.get("window", ["30"])[0])
+
+    from datetime import timedelta
+    import math
+
+    try:
+        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 30)).strftime("%Y-%m-%d")
+    except:
+        ext = "2020-01-01"
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Fetch BTC daily prices
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd FROM price_daily
+        WHERE symbol = 'BTC' AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY timestamp
+    """, (ext, date_to))
+    btc_rows = cur.fetchall()
+    btc_prices = {str(r["date"]): float(r["price_usd"]) for r in btc_rows}
+
+    # Fetch macro daily prices
+    cur.execute("""
+        SELECT ticker as symbol, timestamp::date as date, close as price_usd
+        FROM macro_daily
+        WHERE ticker = ANY(%s) AND timestamp >= %s AND timestamp <= %s AND close > 0
+        ORDER BY ticker, timestamp
+    """, (symbols, ext, date_to))
+    macro_rows = cur.fetchall()
+    conn.close()
+
+    # Build price maps
+    macro_prices = {}
+    for r in macro_rows:
+        sym = r["symbol"]
+        if sym not in macro_prices: macro_prices[sym] = {}
+        macro_prices[sym][str(r["date"])] = float(r["price_usd"])
+
+    if not btc_prices or not macro_prices:
+        return {"window": window, "assets": {}}
+
+    # Common date axis (forward-fill weekends for macro)
+    all_dates = sorted(set(btc_prices.keys()))
+
+    # Compute BTC log returns
+    btc_rets = {}
+    prev = None
+    for d in all_dates:
+        p = btc_prices.get(d)
+        if p and prev and prev > 0:
+            btc_rets[d] = math.log(p / prev)
+        prev = p if p else prev
+
+    labels = {"SPY": "S&P 500", "QQQ": "Nasdaq", "IWM": "Russell 2000",
+              "TLT": "US Treasuries", "GLD": "Gold", "BNO": "Brent Oil",
+              "DX-Y.NYB": "US Dollar (DXY)", "^VIX": "VIX", "^TNX": "10Y Yield",
+              "IBIT": "BTC ETF (IBIT)", "MSTR": "MicroStrategy", "COIN": "Coinbase"}
+
+    result = {}
+    for sym, pmap in macro_prices.items():
+        # Forward-fill macro prices across all dates
+        filled = {}
+        last_val = None
+        for d in all_dates:
+            v = pmap.get(d)
+            if v is not None:
+                last_val = v
+            elif last_val is not None:
+                v = last_val
+            if v: filled[d] = v
+
+        # Compute macro log returns
+        macro_rets = {}
+        prev = None
+        for d in all_dates:
+            p = filled.get(d)
+            if p and prev and prev > 0:
+                macro_rets[d] = math.log(p / prev)
+            prev = p if p else prev
+
+        # Rolling correlation
+        corr_dates = []
+        corr_vals = []
+        for i in range(len(all_dates)):
+            d = all_dates[i]
+            if d < date_from: continue
+
+            # Get window of paired returns
+            window_dates = all_dates[max(0, i - window + 1):i + 1]
+            pairs = [(btc_rets[wd], macro_rets[wd])
+                     for wd in window_dates
+                     if wd in btc_rets and wd in macro_rets]
+
+            if len(pairs) < window // 2: continue
+
+            bx = [p[0] for p in pairs]
+            mx = [p[1] for p in pairs]
+            n = len(pairs)
+            bm = sum(bx) / n
+            mm = sum(mx) / n
+            num = sum((b - bm) * (m - mm) for b, m in pairs)
+            d_b = math.sqrt(sum((b - bm)**2 for b in bx))
+            d_m = math.sqrt(sum((m - mm)**2 for m in mx))
+
+            if d_b > 0 and d_m > 0:
+                corr = num / (d_b * d_m)
+            else:
+                corr = 0
+
+            corr_dates.append(d)
+            corr_vals.append(round(corr, 4))
+
+        if corr_dates:
+            result[sym] = {
+                "label": labels.get(sym, sym),
+                "dates": corr_dates,
+                "corr": corr_vals,
+                "current": corr_vals[-1] if corr_vals else None,
+            }
+
+    return {"window": window, "assets": result}
