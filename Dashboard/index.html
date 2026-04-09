@@ -685,8 +685,8 @@ const TABS = {
     groups: [
       { label: "Flows", children: [
         { key:"etf-net-flows", label:"Trailing — spot ETF flows", sub:"Trailing net flows for BTC and ETH spot ETFs. Adjustable window: 7/14/30/60/90 days.", src:"Farside Investors" },
-        { key:"etf-daily-bar", label:"Daily net flows", sub:"Daily net inflows/outflows for BTC and ETH spot ETFs. Stacked bar chart.", src:"Farside Investors" },
-        { key:"etf-weekly-bar", label:"Weekly net flows", sub:"Weekly aggregated net flows for BTC and ETH spot ETFs. Stacked bar chart.", src:"Farside Investors" },
+        { key:"etf-daily-bar", label:"Daily — spot ETF flows", sub:"Daily net inflows/outflows for BTC and ETH spot ETFs. Stacked bar chart.", src:"Farside Investors" },
+        { key:"etf-weekly-bar", label:"Weekly — spot ETF flows", sub:"Weekly aggregated net flows for BTC and ETH spot ETFs. Stacked bar chart.", src:"Farside Investors" },
       ]},
     ]
   },
@@ -4076,7 +4076,7 @@ async function fetchEtfDailyBar(from, to) {
       summaryDiv.innerHTML = items.join('');
     }
 
-    setTitle('Daily Spot ETF Net Flows', 'Source: Farside Investors · USD millions · stacked');
+    setTitle('Daily — Spot ETF Flows', 'Source: Farside Investors · USD millions · stacked');
   } catch(e) { showErr(e); }
 }
 
@@ -4135,7 +4135,7 @@ async function fetchEtfWeeklyBar(from, to) {
       summaryDiv.innerHTML = items.join('');
     }
 
-    setTitle('Weekly Spot ETF Net Flows', 'Source: Farside Investors · USD millions · stacked');
+    setTitle('Weekly — Spot ETF Flows', 'Source: Farside Investors · USD millions · stacked');
   } catch(e) { showErr(e); }
 }
 
