@@ -1040,6 +1040,7 @@ function buildRightPanel(tab, key) {
         <div><label>From</label><input type="date" id="rp-from"></div>
         <div><label>To</label><input type="date" id="rp-to"></div>
       </div>
+      <button class="preset" id="btn-load-dates" onclick="fetchCurrent()" style="width:100%;margin:6px 0;background:var(--graphite);color:#fff;font-weight:600;border:none;padding:6px;border-radius:var(--radius);cursor:pointer">Load custom dates</button>
       <div class="presets" id="rp-presets">
         <button class="preset" data-days="90">3M</button>
         <button class="preset" data-days="180">6M</button>
@@ -1110,6 +1111,7 @@ function buildRightPanel(tab, key) {
         <div><label>From</label><input type="date" id="rp-from"></div>
         <div><label>To</label><input type="date" id="rp-to"></div>
       </div>
+      <button class="preset" id="btn-load-dates" onclick="fetchCurrent()" style="width:100%;margin:6px 0;background:var(--graphite);color:#fff;font-weight:600;border:none;padding:6px;border-radius:var(--radius);cursor:pointer">Load custom dates</button>
       <div class="presets" id="rp-presets">
         <button class="preset" data-days="30">1M</button>
         <button class="preset" data-days="90">3M</button>
@@ -1126,6 +1128,7 @@ function buildRightPanel(tab, key) {
         <div><label>From</label><input type="date" id="rp-from"></div>
         <div><label>To</label><input type="date" id="rp-to"></div>
       </div>
+      <button class="preset" id="btn-load-dates" onclick="fetchCurrent()" style="width:100%;margin:6px 0;background:var(--graphite);color:#fff;font-weight:600;border:none;padding:6px;border-radius:var(--radius);cursor:pointer">Load custom dates</button>
       <div class="presets" id="rp-presets">
         <button class="preset" data-days="7">1W</button>
         <button class="preset" data-days="30">1M</button>
@@ -1222,7 +1225,7 @@ function buildRightPanel(tab, key) {
     const toEl = document.getElementById('rp-rrg-to');
     if (toEl) toEl.value = new Date().toISOString().split('T')[0];
     ['rp-rrg-to','rp-rrg-rs','rp-rrg-mom','rp-rrg-tail','rp-rrg-tail-len'].forEach(id => {
-      document.getElementById(id)?.addEventListener('change', fetchCurrent);
+      // date change handled by Load button
     });
   }
   if (showList) renderRPList();
@@ -1237,7 +1240,7 @@ function buildRightPanel(tab, key) {
   if (logEl) logEl.addEventListener('change', fetchCurrent);
   if (winEl) winEl.addEventListener('change', fetchCurrent);
   ['rp-perf-win','rp-corr-win','rp-smooth-win'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', fetchCurrent);
+    // date change handled by Load button
   });
   document.getElementById('rp-corr-win')?.addEventListener('change', fetchCurrent);
   document.getElementById('rp-smooth-win')?.addEventListener('change', fetchCurrent);
