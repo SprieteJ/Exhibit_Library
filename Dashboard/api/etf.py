@@ -113,7 +113,7 @@ def handle_etf_flows_weekly(params):
 
 
 def handle_etf_aum(params):
-    """Cumulative ETF flows as AUM proxy — stacked area."""
+    """Total AUM per asset from etf_aum_daily — stacked area."""
     date_from = params.get("from", ["2024-01-01"])[0]
     date_to   = params.get("to",   ["2099-01-01"])[0]
 
@@ -123,22 +123,18 @@ def handle_etf_aum(params):
     result = {}
     for asset in ["BTC", "ETH"]:
         cur.execute("""
-            SELECT date, SUM(daily_flow) OVER (ORDER BY date) as cumulative
-            FROM (
-                SELECT timestamp::date as date, SUM(flow_usd_m) as daily_flow
-                FROM etf_flows_daily
-                WHERE asset = %s AND timestamp <= %s
-                GROUP BY timestamp::date
-            ) t
-            WHERE date >= %s
-            ORDER BY date
-        """, (asset, date_to, date_from))
+            SELECT timestamp::date as date, SUM(aum_usd) as total_aum
+            FROM etf_aum_daily
+            WHERE asset = %s AND timestamp >= %s AND timestamp <= %s AND aum_usd > 0
+            GROUP BY timestamp::date
+            ORDER BY timestamp::date
+        """, (asset, date_from, date_to))
         rows = cur.fetchall()
         if not rows: continue
 
         result[asset] = {
             "dates": [str(r["date"]) for r in rows],
-            "cumulative": [round(float(r["cumulative"]), 1) for r in rows],
+            "aum": [round(float(r["total_aum"]) / 1e9, 2) for r in rows],
         }
 
     conn.close()

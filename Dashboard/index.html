@@ -4048,7 +4048,7 @@ async function fetchEtfTotalAum(from, to) {
       const a = data.assets[asset];
       if (!a) continue;
       const dateMap = {};
-      a.dates.forEach((d, i) => dateMap[d] = a.cumulative[i]);
+      a.dates.forEach((d, i) => dateMap[d] = a.aum[i]);
 
       datasets.push({
         label: asset + ' ETF',
@@ -4069,8 +4069,7 @@ async function fetchEtfTotalAum(from, to) {
         x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
           callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
         y: { stacked: true, ticks: { ...YTICK, callback: function(v) {
-          if (Math.abs(v) >= 1000) return (v/1000).toFixed(1) + 'B';
-          return v.toFixed(0) + 'M';
+          return '$' + v.toFixed(0) + 'B';
         }}, grid: YGRID },
       },
       plugins: {
@@ -4087,18 +4086,18 @@ async function fetchEtfTotalAum(from, to) {
       for (const asset of order) {
         const a = data.assets[asset];
         if (!a) continue;
-        const latest = a.cumulative[a.cumulative.length - 1];
+        const latest = a.aum[a.aum.length - 1];
         total += latest;
         const clr = asset === 'BTC' ? '#F7931A' : '#627EEA';
-        const valStr = Math.abs(latest) >= 1000 ? (latest/1000).toFixed(1) + 'B' : latest.toFixed(0) + 'M';
+        const valStr = latest.toFixed(1) + 'B';
         items.push(`<div class="perf-item"><span style="color:${clr};font-weight:600">${asset}</span> <span>$${valStr}</span></div>`);
       }
-      const totalStr = Math.abs(total) >= 1000 ? (total/1000).toFixed(1) + 'B' : total.toFixed(0) + 'M';
+      const totalStr = total.toFixed(1) + 'B';
       items.push(`<div class="perf-item"><span style="font-weight:600">Total</span> <span>$${totalStr}</span></div>`);
       summaryDiv.innerHTML = items.join('');
     }
 
-    setTitle('Total AuM — Cumulative Net Flows', 'Source: Farside Investors · USD · stacked area');
+    setTitle('Total AuM — Spot ETFs', 'Source: Farside Investors · USD · stacked area');
   } catch(e) { showErr(e); }
 }
 
