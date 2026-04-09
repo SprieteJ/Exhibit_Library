@@ -16,7 +16,8 @@ from api.sector   import (handle_sectors, handle_sector_price, handle_intra_corr
                            handle_sector_vol, handle_sector_drawdown, handle_sector_breadth,
                            handle_sector_funding, handle_sector_oi, handle_sector_sharpe,
                            handle_sector_overview)
-from api.bitcoin  import (handle_btc_epochs, handle_btc_cycles, handle_btc_gold, handle_btc_rolling,
+from api.bitcoin  import (handle_btc_dominance_ma,
+                           handle_btc_epochs, handle_btc_cycles, handle_btc_gold, handle_btc_rolling,
                            handle_btc_bull, handle_btc_realvol, handle_btc_drawdown_ath,
                            handle_btc_gold_ratio, handle_btc_dominance, handle_btc_funding, handle_btc_oi,
                            handle_btc_funding_delta, handle_btc_ma,
@@ -126,6 +127,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/btc-ma-gap":        self.send_json(handle_btc_ma_gap(params))
             elif p == "/api/btc-pi-cycle":      self.send_json(handle_btc_pi_cycle(params))
             elif p == "/api/btc-mcap":          self.send_json(handle_btc_mcap(params))
+            elif p == "/api/btc-dominance-ma": self.send_json(handle_btc_dominance_ma(params))
             elif p == "/api/btc-rv-iv":         self.send_json(handle_btc_rv_iv(params))
 
             elif p == "/api/alt-scatter":       self.send_json(handle_alt_scatter(params))

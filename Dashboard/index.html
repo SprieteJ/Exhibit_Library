@@ -520,6 +520,9 @@ const TABS = {
         { key:"btc-mcap",      label:"Total market cap",      sub:"BTC market cap with milestones ($100B, $500B, $1T, $2T).", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-dominance", label:"Market dominance (%)",  sub:"BTC mcap as % of total crypto mcap.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
+      { label: "Bitcoin Dominance", children: [
+        { key:"btc-dom-ma", label:"50-day and 200-day moving average", sub:"BTC dominance (%) with 50d and 200d moving averages overlaid.", src:"CoinGecko Pro" },
+      ]},
       { label: "Volatility", children: [
         { key:"btc-realvol",  label:"Realised volatility",   sub:"30d, 90d, and 180d rolling annualized vol.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"btc-rv-iv",    label:"RV vs IV (DVOL)",       sub:"30d realized vol vs Deribit DVOL.", src:"CoinGecko Pro + Deribit" },
@@ -839,7 +842,7 @@ const DEFAULT_SELECTIONS = {
 };
 
 const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev']);
-const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01'};
+const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01', 'btc-dom-ma': '2023-04-01'};
 
 async function selectView(tab, key) {
   // Always clean up control center matrix when switching views
@@ -918,7 +921,7 @@ async function selectView(tab, key) {
   const AUTO_VIEWS = new Set([
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg',
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
-    'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
+    'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-sharpe','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
@@ -952,7 +955,7 @@ async function selectView(tab, key) {
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
   'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
-  'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-funding','btc-oi','btc-funding-delta',
+  'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-sharpe','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
@@ -1191,7 +1194,7 @@ function buildRightPanel(tab, key) {
 
   if (!isBtcView && !isRRG) {
     // Long-history charts default to All; others default to 6M
-    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-gold-ratio','btc-realvol','btc-drawdown',
+    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-dom-ma','btc-gold-ratio','btc-realvol','btc-drawdown',
       'btc-funding','btc-funding-delta','alt-altseason','mac-stablecoin','sec-dominance']);
     const defaultDays = ALL_HISTORY_KEYS.has(key) ? 0 : 180;
     initDates('rp-from', 'rp-to', defaultDays);
@@ -1556,6 +1559,7 @@ async function fetchCurrent() {
       case 'btc-realvol':    await fetchBtcRealvol(from, to); break;
       case 'btc-drawdown':   await fetchBtcDrawdownATH(from, to); break;
       case 'btc-gold-ratio': await fetchBtcGoldRatio(from, to); break;
+      case 'btc-dom-ma':     await fetchBtcDominanceMa(from, to); break;
       case 'btc-dominance':  await fetchBtcDominance(from, to); break;
       case 'btc-funding':    await fetchBtcFunding(from, to); break;
       case 'btc-oi':            await fetchBtcOI(from, to); break;
@@ -3661,6 +3665,61 @@ async function fetchBtcGoldRatio(from, to) {
 }
 
 // ── BTC: Dominance ────────────────────────────────────────────────────────────
+
+// ── BTC: Dominance with 50d/200d MA ──────────────────────────────────────────
+async function fetchBtcDominanceMa(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/btc-dominance-ma?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.dates?.length) throw new Error('no data');
+
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'BTC Dominance (%)', data: data.dominance, borderColor: '#F7931A',
+          backgroundColor: 'rgba(247,147,26,0.08)', borderWidth: 1.4, pointRadius: 0,
+          tension: 0.1, fill: true },
+        { label: '50d MA', data: data.ma50, borderColor: '#00D64A',
+          backgroundColor: 'transparent', borderWidth: 1.8, pointRadius: 0,
+          tension: 0.1, borderDash: [4, 2] },
+        { label: '200d MA', data: data.ma200, borderColor: '#EC5B5B',
+          backgroundColor: 'transparent', borderWidth: 1.8, pointRadius: 0,
+          tension: 0.1, borderDash: [6, 3] },
+      ]
+    }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
+          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v.toFixed(1) + '%' }, grid: YGRID },
+      },
+      plugins: {
+        legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+      },
+    });
+
+    // Summary bar
+    const summaryDiv = document.getElementById('perf-row');
+    if (summaryDiv) {
+      const dom = data.dominance[data.dominance.length - 1];
+      const m50 = data.ma50.filter(v => v != null).slice(-1)[0];
+      const m200 = data.ma200.filter(v => v != null).slice(-1)[0];
+      const items = [];
+      if (dom != null) items.push(`<div class="perf-item"><span style="color:#F7931A;font-weight:600">Dominance</span> <span>${dom.toFixed(1)}%</span></div>`);
+      if (m50 != null) items.push(`<div class="perf-item"><span style="color:#00D64A;font-weight:600">50d MA</span> <span>${m50.toFixed(1)}%</span></div>`);
+      if (m200 != null) items.push(`<div class="perf-item"><span style="color:#EC5B5B;font-weight:600">200d MA</span> <span>${m200.toFixed(1)}%</span></div>`);
+      if (m50 != null && m200 != null) {
+        const gap = m50 - m200;
+        const clr = gap > 0 ? '#00D64A' : '#EC5B5B';
+        items.push(`<div class="perf-item"><span style="font-weight:600">Gap</span> <span style="color:${clr}">${gap > 0 ? '+' : ''}${gap.toFixed(1)}pp</span></div>`);
+      }
+      summaryDiv.innerHTML = items.join('');
+    }
+
+    setTitle('BTC Dominance — Moving Averages', 'Source: CoinGecko Pro · 50d and 200d MA');
+  } catch(e) { showErr(e); }
+}
+
+
 async function fetchBtcDominance(from, to) {
   spinOn();
   try {

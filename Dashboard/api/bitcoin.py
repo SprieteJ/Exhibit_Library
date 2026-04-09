@@ -1022,3 +1022,49 @@ def handle_btc_rv_iv(params):
             spread_vals.append(round(dv - rv, 2))
 
     return {"dates": dates, "rv30": rv_vals, "dvol": dvol_vals, "spread": spread_vals}
+
+
+def handle_btc_dominance_ma(params):
+    """BTC dominance (%) with 50d and 200d moving averages."""
+    date_from = params.get("from", ["2020-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    from datetime import timedelta
+
+    try:
+        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=210)).strftime("%Y-%m-%d")
+    except:
+        ext = "2018-01-01"
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT b.timestamp::date as date,
+               b.market_cap_usd / t.total_mcap_usd * 100 as dominance
+        FROM marketcap_daily b
+        JOIN total_marketcap_daily t ON b.timestamp::date = t.timestamp::date
+        WHERE b.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+          AND b.market_cap_usd > 0 AND t.total_mcap_usd > 0
+          AND b.timestamp >= %s AND b.timestamp <= %s
+        ORDER BY b.timestamp
+    """, (ext, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        return {"dates": [], "dominance": [], "ma50": [], "ma200": []}
+
+    dates = [str(r["date"]) for r in rows]
+    dom = [round(float(r["dominance"]), 4) for r in rows]
+
+    ma50 = [None if i < 49 else round(sum(dom[i-49:i+1]) / 50, 4) for i in range(len(dom))]
+    ma200 = [None if i < 199 else round(sum(dom[i-199:i+1]) / 200, 4) for i in range(len(dom))]
+
+    # Trim to requested range
+    trimmed = [(d, v, m5, m2) for d, v, m5, m2 in zip(dates, dom, ma50, ma200) if d >= date_from]
+    if not trimmed:
+        return {"dates": [], "dominance": [], "ma50": [], "ma200": []}
+
+    td, tv, t5, t2 = zip(*trimmed)
+    return {"dates": list(td), "dominance": list(tv), "ma50": list(t5), "ma200": list(t2)}
