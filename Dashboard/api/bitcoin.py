@@ -1068,3 +1068,133 @@ def handle_btc_dominance_ma(params):
 
     td, tv, t5, t2 = zip(*trimmed)
     return {"dates": list(td), "dominance": list(tv), "ma50": list(t5), "ma200": list(t2)}
+
+
+def handle_btc_risk_adjusted(params):
+    """Rolling z-score of returns for BTC vs macro assets.
+    Z = (rolling_return - mean) / std over the given window."""
+    date_from   = params.get("from", ["2022-01-01"])[0]
+    date_to     = params.get("to",   ["2099-01-01"])[0]
+    window      = int(params.get("window", ["90"])[0])
+    symbols_raw = params.get("symbols", ["SPY,GLD"])[0]
+    symbols     = [s.strip() for s in symbols_raw.split(",") if s.strip()]
+
+    from datetime import timedelta
+    import math
+
+    try:
+        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 30)).strftime("%Y-%m-%d")
+    except:
+        ext = "2018-01-01"
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Fetch BTC prices
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd FROM price_daily
+        WHERE symbol = 'BTC' AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY timestamp
+    """, (ext, date_to))
+    btc_rows = cur.fetchall()
+    btc_prices = {str(r["date"]): float(r["price_usd"]) for r in btc_rows}
+
+    # Fetch macro prices
+    cur.execute("""
+        SELECT ticker as symbol, timestamp::date as date, close as price_usd
+        FROM macro_daily
+        WHERE ticker = ANY(%s) AND timestamp >= %s AND timestamp <= %s AND close > 0
+        ORDER BY ticker, timestamp
+    """, (symbols, ext, date_to))
+    macro_rows = cur.fetchall()
+    conn.close()
+
+    # Build price maps with forward-fill for weekends
+    macro_prices = {}
+    for r in macro_rows:
+        sym = r["symbol"]
+        if sym not in macro_prices: macro_prices[sym] = {}
+        macro_prices[sym][str(r["date"])] = float(r["price_usd"])
+
+    # Use BTC dates as master
+    all_dates = sorted(btc_prices.keys())
+
+    labels = {"BTC": "Bitcoin", "SPY": "S&P 500", "QQQ": "Nasdaq", "IWM": "Russell 2000",
+              "TLT": "US Treasuries", "GLD": "Gold", "BNO": "Brent Oil",
+              "DX-Y.NYB": "US Dollar (DXY)"}
+
+    colors = {"BTC": "#F7931A", "SPY": "#7Fb2F1", "QQQ": "#2471CC", "IWM": "#AEA9EA",
+              "TLT": "#ED9B9B", "GLD": "#E1C87E", "BNO": "#9EA4A0", "DX-Y.NYB": "#C084FC"}
+
+    # Compute rolling z-scores for each asset
+    def compute_zscore(price_map, dates, win):
+        # Daily log returns
+        rets = {}
+        prev = None
+        for d in dates:
+            p = price_map.get(d)
+            if p and prev and prev > 0:
+                rets[d] = math.log(p / prev)
+            prev = p if p else prev
+
+        # Rolling z-score of cumulative return over window
+        z_dates, z_vals = [], []
+        for i in range(win, len(dates)):
+            d = dates[i]
+            if d < date_from: continue
+
+            # Get window of returns
+            window_dates = dates[i - win + 1:i + 1]
+            window_rets = [rets.get(wd) for wd in window_dates if wd in rets]
+            if len(window_rets) < win // 2: continue
+
+            # Cumulative return over window
+            cum_ret = sum(window_rets)
+
+            # Mean and std of all available rolling cumulative returns up to this point
+            all_cum = []
+            for j in range(win, i + 1):
+                wd = dates[max(0, j - win + 1):j + 1]
+                wr = [rets.get(x) for x in wd if x in rets]
+                if len(wr) >= win // 2:
+                    all_cum.append(sum(wr))
+
+            if len(all_cum) < 20: continue
+            mean_r = sum(all_cum) / len(all_cum)
+            std_r = math.sqrt(sum((r - mean_r)**2 for r in all_cum) / len(all_cum))
+
+            if std_r > 0:
+                z = (cum_ret - mean_r) / std_r
+            else:
+                z = 0
+
+            z_dates.append(d)
+            z_vals.append(round(z, 4))
+
+        return z_dates, z_vals
+
+    result = {}
+
+    # BTC
+    z_dates, z_vals = compute_zscore(btc_prices, all_dates, window)
+    if z_dates:
+        result["BTC"] = {"label": labels["BTC"], "color": colors["BTC"],
+                         "dates": z_dates, "zscore": z_vals, "current": z_vals[-1]}
+
+    # Macro assets
+    for sym in symbols:
+        # Forward-fill
+        filled = {}
+        last_val = None
+        for d in all_dates:
+            v = macro_prices.get(sym, {}).get(d)
+            if v is not None: last_val = v
+            elif last_val is not None: v = last_val
+            if v: filled[d] = v
+
+        z_dates, z_vals = compute_zscore(filled, all_dates, window)
+        if z_dates:
+            result[sym] = {"label": labels.get(sym, sym), "color": colors.get(sym, "#888"),
+                           "dates": z_dates, "zscore": z_vals, "current": z_vals[-1]}
+
+    return {"window": window, "assets": result}
