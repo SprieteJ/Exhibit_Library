@@ -110,3 +110,36 @@ def handle_etf_flows_weekly(params):
 
     conn.close()
     return {"assets": result}
+
+
+def handle_etf_aum(params):
+    """Cumulative ETF flows as AUM proxy — stacked area."""
+    date_from = params.get("from", ["2024-01-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    result = {}
+    for asset in ["BTC", "ETH"]:
+        cur.execute("""
+            SELECT date, SUM(daily_flow) OVER (ORDER BY date) as cumulative
+            FROM (
+                SELECT timestamp::date as date, SUM(flow_usd_m) as daily_flow
+                FROM etf_flows_daily
+                WHERE asset = %s AND timestamp <= %s
+                GROUP BY timestamp::date
+            ) t
+            WHERE date >= %s
+            ORDER BY date
+        """, (asset, date_to, date_from))
+        rows = cur.fetchall()
+        if not rows: continue
+
+        result[asset] = {
+            "dates": [str(r["date"]) for r in rows],
+            "cumulative": [round(float(r["cumulative"]), 1) for r in rows],
+        }
+
+    conn.close()
+    return {"assets": result}

@@ -688,6 +688,9 @@ const TABS = {
         { key:"etf-daily-bar", label:"Daily — spot ETF flows", sub:"Daily net inflows/outflows for BTC and ETH spot ETFs. Stacked bar chart.", src:"Farside Investors" },
         { key:"etf-weekly-bar", label:"Weekly — spot ETF flows", sub:"Weekly aggregated net flows for BTC and ETH spot ETFs. Stacked bar chart.", src:"Farside Investors" },
       ]},
+      { label: "Assets Under Management", children: [
+        { key:"etf-total-aum", label:"Total AuM", sub:"Cumulative net flows into BTC and ETH spot ETFs (USD millions). Stacked area.", src:"Farside Investors" },
+      ]},
     ]
   },
   equity: {
@@ -934,7 +937,7 @@ async function selectView(tab, key) {
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
@@ -968,7 +971,7 @@ const NEW_AUTO_KEYS = new Set([
   'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
   'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
@@ -1583,6 +1586,7 @@ async function fetchCurrent() {
       case 'bas-overview': await fetchCategoryOverview('Baskets'); break;
       case 'etf-daily-bar':  await fetchEtfDailyBar(from, to); break;
       case 'etf-weekly-bar': await fetchEtfWeeklyBar(from, to); break;
+      case 'etf-total-aum': await fetchEtfTotalAum(from, to); break;
       case 'etf-net-flows': await fetchEtfNetFlows(from, to); break;
       case 'cc-matrix':       await fetchControlCenter('flagged'); break;
       case 'cc-bitcoin':     await fetchControlCenter('bitcoin'); break;
@@ -4019,6 +4023,84 @@ async function fetchCategoryOverview(category) {
 }
 
 
+
+
+
+// ── ETF: Total AuM (cumulative flows) ────────────────────────────────────────
+async function fetchEtfTotalAum(from, to) {
+  spinOn();
+  try {
+    const data = await fetch(`/api/etf-aum?from=${from}&to=${to}`).then(r=>r.json());
+    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
+
+    const COLORS = { 'BTC': '#F7931A', 'ETH': '#627EEA' };
+
+    // Build common date axis
+    let allDates = new Set();
+    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
+    allDates = [...allDates].sort();
+
+    // BTC on bottom (larger), ETH stacked on top
+    const order = ['BTC', 'ETH'];
+    const datasets = [];
+
+    for (const asset of order) {
+      const a = data.assets[asset];
+      if (!a) continue;
+      const dateMap = {};
+      a.dates.forEach((d, i) => dateMap[d] = a.cumulative[i]);
+
+      datasets.push({
+        label: asset + ' ETF',
+        data: allDates.map(d => dateMap[d] !== undefined ? dateMap[d] : null),
+        borderColor: COLORS[asset],
+        backgroundColor: COLORS[asset] + '40',
+        borderWidth: 1.4,
+        pointRadius: 0,
+        tension: 0.1,
+        fill: true,
+        spanGaps: true,
+        stack: 'stack1',
+      });
+    }
+
+    mkChart('line', { labels: allDates, datasets }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
+          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { stacked: true, ticks: { ...YTICK, callback: function(v) {
+          if (Math.abs(v) >= 1000) return (v/1000).toFixed(1) + 'B';
+          return v.toFixed(0) + 'M';
+        }}, grid: YGRID },
+      },
+      plugins: {
+        legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+        filler: { propagate: true },
+      },
+    });
+
+    // Summary bar
+    const summaryDiv = document.getElementById('perf-row');
+    if (summaryDiv) {
+      const items = [];
+      let total = 0;
+      for (const asset of order) {
+        const a = data.assets[asset];
+        if (!a) continue;
+        const latest = a.cumulative[a.cumulative.length - 1];
+        total += latest;
+        const clr = asset === 'BTC' ? '#F7931A' : '#627EEA';
+        const valStr = Math.abs(latest) >= 1000 ? (latest/1000).toFixed(1) + 'B' : latest.toFixed(0) + 'M';
+        items.push(`<div class="perf-item"><span style="color:${clr};font-weight:600">${asset}</span> <span>$${valStr}</span></div>`);
+      }
+      const totalStr = Math.abs(total) >= 1000 ? (total/1000).toFixed(1) + 'B' : total.toFixed(0) + 'M';
+      items.push(`<div class="perf-item"><span style="font-weight:600">Total</span> <span>$${totalStr}</span></div>`);
+      summaryDiv.innerHTML = items.join('');
+    }
+
+    setTitle('Total AuM — Cumulative Net Flows', 'Source: Farside Investors · USD · stacked area');
+  } catch(e) { showErr(e); }
+}
 
 
 // ── ETF: Daily Bar Chart ─────────────────────────────────────────────────────
