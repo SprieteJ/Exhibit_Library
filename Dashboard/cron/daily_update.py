@@ -1139,6 +1139,57 @@ def update_onchain():
         print(f"  +{n} rows inserted")
 
 
+
+def update_options():
+    print("
+[Options] Updating options daily snapshot...")
+    import requests
+    from collections import defaultdict
+    DERIBIT_BASE = "https://www.deribit.com/api/v2/public"
+    now = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("""CREATE TABLE IF NOT EXISTS options_daily (
+        timestamp TIMESTAMPTZ NOT NULL, currency TEXT NOT NULL,
+        total_oi_contracts DOUBLE PRECISION, total_oi_usd DOUBLE PRECISION,
+        total_volume_usd DOUBLE PRECISION, put_oi DOUBLE PRECISION, call_oi DOUBLE PRECISION,
+        pc_ratio_oi DOUBLE PRECISION, put_volume DOUBLE PRECISION, call_volume DOUBLE PRECISION,
+        pc_ratio_volume DOUBLE PRECISION, max_pain_nearest DOUBLE PRECISION, avg_iv_atm DOUBLE PRECISION,
+        source TEXT, ingested_at TIMESTAMPTZ, UNIQUE (timestamp, currency))""")
+    conn.commit()
+    for currency in ["BTC", "ETH"]:
+        try:
+            resp = requests.get(f"{DERIBIT_BASE}/get_book_summary_by_currency", params={"currency": currency, "kind": "option"}, timeout=30)
+            resp.raise_for_status()
+            data = resp.json().get("result", [])
+            presp = requests.get(f"{DERIBIT_BASE}/get_index_price", params={"index_name": f"{currency.lower()}_usd"}, timeout=15)
+            price = presp.json()["result"]["index_price"]
+            tot_oi = put_oi = call_oi = vol_usd = put_vol = call_vol = iv_sum = 0
+            iv_n = 0
+            for item in data:
+                parts = item["instrument_name"].split("-")
+                if len(parts) != 4: continue
+                oi = float(item.get("open_interest") or 0)
+                vu = float(item.get("volume_usd") or 0)
+                miv = item.get("mark_iv")
+                strike = float(parts[2])
+                is_put = parts[3] == "P"
+                tot_oi += oi; vol_usd += vu
+                if is_put: put_oi += oi; put_vol += vu
+                else: call_oi += oi; call_vol += vu
+                if miv and miv > 0 and abs(strike - price)/price < 0.05: iv_sum += miv; iv_n += 1
+            pcr_oi = round(put_oi/call_oi, 4) if call_oi > 0 else None
+            pcr_vol = round(put_vol/call_vol, 4) if call_vol > 0 else None
+            avg_iv = round(iv_sum/iv_n, 2) if iv_n > 0 else None
+            cur.execute("""INSERT INTO options_daily (timestamp,currency,total_oi_contracts,total_oi_usd,total_volume_usd,put_oi,call_oi,pc_ratio_oi,put_volume,call_volume,pc_ratio_volume,max_pain_nearest,avg_iv_atm,source,ingested_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (timestamp,currency) DO UPDATE SET total_oi_contracts=EXCLUDED.total_oi_contracts,total_oi_usd=EXCLUDED.total_oi_usd,total_volume_usd=EXCLUDED.total_volume_usd,put_oi=EXCLUDED.put_oi,call_oi=EXCLUDED.call_oi,pc_ratio_oi=EXCLUDED.pc_ratio_oi,put_volume=EXCLUDED.put_volume,call_volume=EXCLUDED.call_volume,pc_ratio_volume=EXCLUDED.pc_ratio_volume,avg_iv_atm=EXCLUDED.avg_iv_atm,source=EXCLUDED.source,ingested_at=EXCLUDED.ingested_at""",
+                (today, currency, round(tot_oi,4), round(tot_oi*price,2), round(vol_usd,2), round(put_oi,4), round(call_oi,4), pcr_oi, round(put_vol,2), round(call_vol,2), pcr_vol, None, avg_iv, "deribit", now.strftime("%Y-%m-%dT%H:%M:%SZ")))
+            conn.commit()
+            print(f"  {currency}: OI={tot_oi:.0f}, P/C={pcr_oi}, IV={avg_iv}")
+        except Exception as e:
+            print(f"  {currency}: ERROR - {e}")
+    conn.close()
+
+
 def main():
     start = time.time()
     print(f"\n{'━' * 70}")
