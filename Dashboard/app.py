@@ -15,6 +15,7 @@ from api.sector   import (handle_sectors, handle_sector_price, handle_intra_corr
                            handle_sector_dominance, handle_sector_xheatmap, handle_sector_cumulative,
                            handle_sector_vol, handle_sector_drawdown, handle_sector_breadth,
                            handle_sector_funding, handle_sector_oi, handle_sector_sharpe,
+                           handle_sector_analysis_rebase,
                            handle_sector_overview)
 from api.bitcoin  import (handle_btc_risk_adjusted, handle_btc_dominance_ma,
                            handle_btc_epochs, handle_btc_cycles, handle_btc_gold, handle_btc_rolling,
@@ -106,6 +107,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/sector-breadth":    self.send_json(handle_sector_breadth(params))
             elif p == "/api/sector-funding":    self.send_json(handle_sector_funding(params))
             elif p == "/api/sector-oi":         self.send_json(handle_sector_oi(params))
+            elif p == "/api/sector-analysis-rebase": self.send_json(handle_sector_analysis_rebase(params))
             elif p == "/api/sector-sharpe":     self.send_json(handle_sector_sharpe(params))
             elif p == "/api/sector-overview":   self.send_json(handle_sector_overview(params))
             elif p == "/api/sector-overview":   self.send_json(handle_sector_overview(params))

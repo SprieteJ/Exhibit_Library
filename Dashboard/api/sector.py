@@ -1017,3 +1017,115 @@ def handle_sector_overview(params):
     # Sort by total mcap descending
     results.sort(key=lambda x: x['total_mcap'] or 0, reverse=True)
     return {"sectors": results}
+
+
+def handle_sector_analysis_rebase(params):
+    """Rebased performance of all constituents in a sector + sector index + benchmarks."""
+    sector_name = params.get("sector", ["Layer 2"])[0]
+    date_from   = params.get("from", ["2024-04-01"])[0]
+    date_to     = params.get("to",   ["2099-01-01"])[0]
+
+    from datetime import timedelta
+
+    if sector_name not in SECTORS:
+        return {"error": f"Unknown sector: {sector_name}"}
+
+    cg_ids = SECTORS[sector_name]
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Fetch constituent prices
+    cur.execute("""
+        SELECT ar.symbol, ar.coingecko_id, p.timestamp::date as date, p.price_usd
+        FROM price_daily p
+        JOIN asset_registry ar ON ar.coingecko_id = p.coingecko_id
+        WHERE p.coingecko_id = ANY(%s) AND p.timestamp >= %s AND p.timestamp <= %s AND p.price_usd > 0
+        ORDER BY ar.symbol, p.timestamp
+    """, (cg_ids, date_from, date_to))
+    rows = cur.fetchall()
+
+    # Build per-symbol price maps
+    symbols = {}
+    for r in rows:
+        sym = r["symbol"]
+        if sym not in symbols:
+            symbols[sym] = {"dates": [], "prices": []}
+        symbols[sym]["dates"].append(str(r["date"]))
+        symbols[sym]["prices"].append(float(r["price_usd"]))
+
+    # Rebase each to 100
+    result = {}
+    for sym, data in symbols.items():
+        if not data["prices"]: continue
+        first = data["prices"][0]
+        if first <= 0: continue
+        rebased = [round(p / first * 100, 4) for p in data["prices"]]
+        result[sym] = {
+            "dates": data["dates"],
+            "rebased": rebased,
+            "color": None,  # frontend will assign
+        }
+
+    # Fetch sector EW index (rebased)
+    index, index_dates = fetch_sector_index(cur, cg_ids, date_from, date_to, "equal", "daily")
+    if index_dates:
+        vals = [index[d] for d in index_dates]
+        first = next((v for v in vals if v and v > 0), None)
+        if first:
+            result["_INDEX"] = {
+                "dates": index_dates,
+                "rebased": [round(v / first * 100, 4) if v else None for v in vals],
+                "color": SECTOR_COLORS.get(sector_name, "#888888"),
+                "label": sector_name + " (EW index)",
+            }
+
+    # Fetch ETH as benchmark
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd FROM price_daily
+        WHERE symbol = 'ETH' AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY timestamp
+    """, (date_from, date_to))
+    eth_rows = cur.fetchall()
+    if eth_rows:
+        eth_prices = [float(r["price_usd"]) for r in eth_rows]
+        eth_first = eth_prices[0]
+        if eth_first > 0:
+            result["_ETH"] = {
+                "dates": [str(r["date"]) for r in eth_rows],
+                "rebased": [round(p / eth_first * 100, 4) for p in eth_prices],
+                "color": "#627EEA",
+                "label": "Ethereum",
+            }
+
+    # Fetch total alt mcap as benchmark
+    cur.execute("""
+        SELECT t.timestamp::date as date,
+               t.total_mcap_usd - b.market_cap_usd - e.market_cap_usd as alt_mcap
+        FROM total_marketcap_daily t
+        JOIN marketcap_daily b ON b.timestamp::date = t.timestamp::date
+        JOIN marketcap_daily e ON e.timestamp::date = t.timestamp::date
+        WHERE b.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+          AND e.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'ETH' LIMIT 1)
+          AND b.market_cap_usd > 0 AND e.market_cap_usd > 0 AND t.total_mcap_usd > 0
+          AND t.timestamp >= %s AND t.timestamp <= %s
+        ORDER BY t.timestamp
+    """, (date_from, date_to))
+    alt_rows = cur.fetchall()
+    if alt_rows:
+        alt_vals = [float(r["alt_mcap"]) for r in alt_rows]
+        alt_first = alt_vals[0]
+        if alt_first > 0:
+            result["_ALTS"] = {
+                "dates": [str(r["date"]) for r in alt_rows],
+                "rebased": [round(v / alt_first * 100, 4) for v in alt_vals],
+                "color": "#888888",
+                "label": "Altcoins",
+            }
+
+    conn.close()
+
+    return {
+        "sector": sector_name,
+        "color": SECTOR_COLORS.get(sector_name, "#888888"),
+        "assets": result,
+    }
