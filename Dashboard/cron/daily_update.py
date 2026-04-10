@@ -1100,10 +1100,10 @@ def update_dvol():
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════════
 
+    print("\n[OnChain] Updating BTC on-chain data...")
 
-def update_onchain():
-    print("
-[OnChain] Updating BTC on-chain data...")
+
+    print("\n[OnChain] Updating BTC on-chain data...")
     CM_BASE = "https://community-api.coinmetrics.io/v4"
     conn = get_conn()
     cur = conn.cursor()
@@ -1141,8 +1141,7 @@ def update_onchain():
 
 
 def update_options():
-    print("
-[Options] Updating options daily snapshot...")
+    print("\n[Options] Updating options daily snapshot...")
     import requests
     from collections import defaultdict
     DERIBIT_BASE = "https://www.deribit.com/api/v2/public"
@@ -1192,8 +1191,7 @@ def update_options():
 
 
 def update_options_instruments():
-    print("
-[Options Instruments] Pulling per-instrument snapshot...")
+    print("\n[Options Instruments] Pulling per-instrument snapshot...")
     import requests
     DERIBIT_BASE = "https://www.deribit.com/api/v2/public"
     now = datetime.now(timezone.utc)
