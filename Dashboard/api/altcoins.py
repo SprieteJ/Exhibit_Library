@@ -615,3 +615,153 @@ def handle_alt_drawdown_ts(params):
         all_dates.update(dates)
 
     return {"dates": sorted(all_dates), "series": series}
+
+
+def handle_alt_rebase(params):
+    """Rebased performance of selected tokens to 100."""
+    symbols_raw = params.get("symbols", [""])[0]
+    symbols = [s.strip() for s in symbols_raw.split(",") if s.strip()]
+    date_from = params.get("from", ["2024-04-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    if not symbols: return {"error": "no symbols"}
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = ANY(%s) AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY symbol, timestamp
+    """, (symbols, date_from, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    result = {}
+    for r in rows:
+        sym = r["symbol"]
+        if sym not in result: result[sym] = {"dates": [], "prices": []}
+        result[sym]["dates"].append(str(r["date"]))
+        result[sym]["prices"].append(float(r["price_usd"]))
+
+    # Rebase each to 100
+    for sym in result:
+        prices = result[sym]["prices"]
+        first = next((p for p in prices if p > 0), None)
+        if first:
+            result[sym]["rebased"] = [round(p / first * 100, 4) for p in prices]
+        else:
+            result[sym]["rebased"] = prices
+        del result[sym]["prices"]
+
+    return {"assets": result}
+
+
+def handle_alt_zscore_momentum(params):
+    """Z-scored momentum: 14d return / 14d vol, z-scored over 90d rolling window."""
+    symbols_raw = params.get("symbols", [""])[0]
+    symbols = [s.strip() for s in symbols_raw.split(",") if s.strip()]
+    date_from = params.get("from", ["2024-04-01"])[0]
+    date_to   = params.get("to",   ["2099-01-01"])[0]
+    if not symbols: return {"error": "no symbols"}
+
+    import math
+    from datetime import timedelta
+
+    try:
+        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=120)).strftime("%Y-%m-%d")
+    except:
+        ext = "2023-01-01"
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT symbol, timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = ANY(%s) AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY symbol, timestamp
+    """, (symbols, ext, date_to))
+    rows = cur.fetchall()
+    conn.close()
+
+    # Build per-symbol price arrays
+    price_maps = {}
+    for r in rows:
+        sym = r["symbol"]
+        if sym not in price_maps: price_maps[sym] = {}
+        price_maps[sym][str(r["date"])] = float(r["price_usd"])
+
+    RET_WINDOW = 14
+    VOL_WINDOW = 14
+    Z_WINDOW = 90
+
+    result = {}
+    for sym, pmap in price_maps.items():
+        sorted_dates = sorted(pmap.keys())
+        prices = [pmap[d] for d in sorted_dates]
+
+        # Daily log returns
+        log_rets = [None]
+        for i in range(1, len(prices)):
+            if prices[i] > 0 and prices[i-1] > 0:
+                log_rets.append(math.log(prices[i] / prices[i-1]))
+            else:
+                log_rets.append(None)
+
+        # 14d return and 14d vol
+        momentum = []
+        for i in range(len(prices)):
+            if i < RET_WINDOW:
+                momentum.append(None)
+                continue
+            # 14d return
+            if prices[i] > 0 and prices[i - RET_WINDOW] > 0:
+                ret14 = math.log(prices[i] / prices[i - RET_WINDOW])
+            else:
+                momentum.append(None)
+                continue
+
+            # 14d vol
+            rets = [r for r in log_rets[i - VOL_WINDOW + 1:i + 1] if r is not None]
+            if len(rets) < VOL_WINDOW // 2:
+                momentum.append(None)
+                continue
+            mean_r = sum(rets) / len(rets)
+            vol = math.sqrt(sum((r - mean_r)**2 for r in rets) / len(rets))
+
+            if vol > 0:
+                momentum.append(ret14 / vol)
+            else:
+                momentum.append(None)
+
+        # Z-score over 90d rolling
+        z_dates = []
+        z_vals = []
+        for i in range(Z_WINDOW, len(momentum)):
+            if momentum[i] is None: continue
+            d = sorted_dates[i]
+            if d < date_from: continue
+
+            window = [m for m in momentum[i - Z_WINDOW + 1:i + 1] if m is not None]
+            if len(window) < Z_WINDOW // 2: continue
+
+            mean_m = sum(window) / len(window)
+            std_m = math.sqrt(sum((m - mean_m)**2 for m in window) / len(window))
+
+            if std_m > 0:
+                z = (momentum[i] - mean_m) / std_m
+            else:
+                z = 0
+
+            z_dates.append(d)
+            z_vals.append(round(z, 4))
+
+        if z_dates:
+            result[sym] = {
+                "dates": z_dates,
+                "zscore": z_vals,
+                "current": z_vals[-1],
+            }
+
+    return {"assets": result}

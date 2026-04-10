@@ -24,7 +24,7 @@ from api.bitcoin  import (handle_btc_risk_adjusted, handle_btc_dominance_ma,
                            handle_btc_funding_delta, handle_btc_ma,
                            handle_btc_200w_floor, handle_btc_200d_deviation,
                            handle_btc_ma_gap, handle_btc_pi_cycle, handle_btc_mcap, handle_btc_rv_iv)
-from api.altcoins import (handle_price, handle_alt_scatter,
+from api.altcoins import (handle_alt_rebase, handle_alt_zscore_momentum, handle_price, handle_alt_scatter,
                            handle_alt_altseason, handle_alt_beta, handle_alt_heatmap,
                            handle_alt_ath_drawdown, handle_alt_funding_heatmap,
                            handle_alt_drawdown_ts)
@@ -140,6 +140,8 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/alt-heatmap":       self.send_json(handle_alt_heatmap(params))
             elif p == "/api/alt-ath-drawdown":  self.send_json(handle_alt_ath_drawdown(params))
             elif p == "/api/alt-funding-heatmap": self.send_json(handle_alt_funding_heatmap(params))
+            elif p == "/api/alt-rebase":        self.send_json(handle_alt_rebase(params))
+            elif p == "/api/alt-zscore-mom":    self.send_json(handle_alt_zscore_momentum(params))
             elif p == "/api/alt-drawdown-ts":    self.send_json(handle_alt_drawdown_ts(params))
 
             elif p == "/api/macro-matrix":      self.send_json(handle_macro_matrix(params))
