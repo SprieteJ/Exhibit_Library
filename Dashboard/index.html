@@ -706,6 +706,8 @@ const TABS = {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let chart      = null;
+let _navAbort  = null;  // AbortController for in-flight fetches
+let _navVersion = 0;    // increments on every navigation
 let allItems   = [];
 let allSectors = [];
 let selected   = [];
@@ -860,6 +862,9 @@ const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200
 const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01', 'etf-net-flows': '2025-04-01', 'etf-daily-bar': '2025-04-01', 'etf-weekly-bar': '2024-04-01', 'btc-dom-ma': '2023-04-01', 'btc-risk-adj': '2023-04-01'};
 
 async function selectView(tab, key) {
+  if (_navAbort) try { _navAbort.abort(); } catch(e) {}
+  _navAbort = new AbortController();
+  _navVersion++;
   // Always clean up control center matrix when switching views
   const _ccEl = document.getElementById('cc-matrix-container');
   if (_ccEl) _ccEl.remove();
@@ -1506,6 +1511,9 @@ function updatePerf(data, keys, isCorr = false, isMom = false, isZscore = false,
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchCurrent() {
+  if (_navAbort) try { _navAbort.abort(); } catch(e) {}
+  _navAbort = new AbortController();
+  _navVersion++;
   // Hide equity placeholder if visible
   const ph = document.getElementById('equity-ph');
   if (ph) ph.style.display = 'none';
@@ -3504,7 +3512,7 @@ function fmtBig(v) {
 async function fetchSectorDominance(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/sector-dominance?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/sector-dominance?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (data.error) throw new Error(data.error);
     const sectors = Object.keys(data);
     if (!sectors.length) throw new Error('no data');
@@ -3523,25 +3531,25 @@ async function fetchSectorDominance(from, to) {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('Sector Market Cap Dominance (%)', 'Source: CoinGecko · mcap weighted');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Sector: Cross-Heatmap ─────────────────────────────────────────────────────
 async function fetchSectorXHeatmap(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/sector-xheatmap?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/sector-xheatmap?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (data.error) throw new Error(data.error);
     drawHeatmapCanvas(data.sectors, data.sectors, data.matrix, heatCorr);
     setTitle('Cross-Sector Correlation Heatmap', 'Source: CoinGecko · 30d rolling Pearson');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Sector: Cumulative Return ─────────────────────────────────────────────────
 async function fetchSectorCumulative(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/sector-cumulative?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/sector-cumulative?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (data.error) throw new Error(data.error);
     const entries = Object.entries(data).sort((a, b) => b[1].value - a[1].value);
     mkChart('bar', {
@@ -3557,14 +3565,14 @@ async function fetchSectorCumulative(from, to) {
       plugins: { legend: { display: false } }
     });
     setTitle('Sector Cumulative Returns', 'Source: CoinGecko · equal-weighted');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Sector: Sharpe / Risk-Return ──────────────────────────────────────────────
 async function fetchSectorSharpe(to) {
   spinOn();
   try {
-    const data = await fetch(`/api/sector-sharpe?to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/sector-sharpe?to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (data.error) throw new Error(data.error);
     const pts = Object.entries(data).map(([s, v]) => ({ label: s, x: v.x, y: v.y, color: v.color }));
     mkChart('scatter', {
@@ -3589,14 +3597,14 @@ async function fetchSectorSharpe(to) {
       }
     }]);
     setTitle('Sector Risk vs Return (30d)', 'Source: CoinGecko · equal-weighted');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Bull Cycles ──────────────────────────────────────────────────────────
 async function fetchBtcBull() {
   spinOn();
   try {
-    const data = await fetch('/api/btc-bull?days=1000').then(r=>r.json());
+    const data = await fetch('/api/btc-bull?days=1000', {signal: _navAbort?.signal}).then(r=>r.json());
     if (data.error) throw new Error(data.error);
     const labels = Object.keys(data);
     if (!labels.length) throw new Error('no data');
@@ -3616,14 +3624,14 @@ async function fetchBtcBull() {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('BTC Bull Cycles — Indexed to Trough', 'Source: CoinGecko · log scale');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Realized Volatility ──────────────────────────────────────────────────
 async function fetchBtcRealvol(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-realvol?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-realvol?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -3640,7 +3648,7 @@ async function fetchBtcRealvol(from, to) {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('BTC Realized Volatility (Annualized)', 'Source: CoinGecko · log-return std dev');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Drawdown from ATH ────────────────────────────────────────────────────
@@ -3728,14 +3736,14 @@ async function fetchBtcRiskAdj(from, to) {
 
     const winLabels = {'30': '30d', '60': '60d', '90': '90d', '180': '6M', '365': '1Y'};
     setTitle('Risk-Adjusted Performance (' + (winLabels[window] || window + 'd') + ' z-score)', 'Source: CoinGecko + Yahoo Finance · rolling z-score of log returns · click legend to toggle');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
 async function fetchBtcDrawdownATH(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-drawdown?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-drawdown?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -3750,14 +3758,14 @@ async function fetchBtcDrawdownATH(from, to) {
       plugins: { legend: { display: false } }
     });
     setTitle('BTC Drawdown from All-Time High', 'Source: CoinGecko · running ATH');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Gold Ratio ───────────────────────────────────────────────────────────
 async function fetchBtcGoldRatio(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-gold-ratio?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-gold-ratio?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -3772,7 +3780,7 @@ async function fetchBtcGoldRatio(from, to) {
       plugins: { legend: { display: false } }
     });
     setTitle('BTC / Gold Ratio', 'Source: CoinGecko + GLD ETF');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Dominance ────────────────────────────────────────────────────────────
@@ -3781,7 +3789,7 @@ async function fetchBtcGoldRatio(from, to) {
 async function fetchBtcDominanceMa(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-dominance-ma?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-dominance-ma?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
 
     mkChart('line', {
@@ -3827,14 +3835,14 @@ async function fetchBtcDominanceMa(from, to) {
     }
 
     setTitle('BTC Dominance — Moving Averages', 'Source: CoinGecko Pro · 50d and 200d MA');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
 async function fetchBtcDominance(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-dominance?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-dominance?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -3849,14 +3857,14 @@ async function fetchBtcDominance(from, to) {
       plugins: { legend: { display: false } }
     });
     setTitle('BTC Market Cap Dominance', 'Source: CoinGecko · mcap ratio');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Funding Rate ─────────────────────────────────────────────────────────
 async function fetchBtcFunding(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-funding?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-funding?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('bar', {
       labels: data.dates,
@@ -3876,14 +3884,14 @@ async function fetchBtcFunding(from, to) {
       plugins: { legend: { display: false } }
     });
     setTitle('BTC Perpetual Funding Rate', 'Source: Binance · 8h avg per day');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Open Interest ────────────────────────────────────────────────────────
 async function fetchBtcOI(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-oi?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-oi?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -3904,14 +3912,14 @@ async function fetchBtcOI(from, to) {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('BTC Open Interest', 'Source: Binance · USD notional');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Funding Rate Delta ───────────────────────────────────────────────────
 async function fetchBtcFundingDelta(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-funding-delta?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-funding-delta?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data — check derivatives feed');
     mkChart('line', {
       labels: data.dates,
@@ -3939,14 +3947,14 @@ async function fetchBtcFundingDelta(from, to) {
     });
     setTitle(`BTC Funding Rate Delta vs Price Return (${data.window||30}d rolling)`,
              'Source: Binance · 8h funding avg · CoinGecko price');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Alt: Altseason Index ──────────────────────────────────────────────────────
 async function fetchAltAltseason(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/alt-altseason?from=${from}&to=${to}&window=30`).then(r=>r.json());
+    const data = await fetch(`/api/alt-altseason?from=${from}&to=${to}&window=30`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error(`no data [${data.reason||'empty_result'} from=${from} to=${to}]`);
     mkChart('line', {
       labels: data.dates,
@@ -3967,14 +3975,14 @@ async function fetchAltAltseason(from, to) {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('Altseason Index — Alts vs BTC (90d window)', 'Source: CoinGecko · top 50 ex-BTC');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Alt: Beta vs BTC ──────────────────────────────────────────────────────────
 async function fetchAltBeta(to) {
   spinOn();
   try {
-    const data = await fetch(`/api/alt-beta?to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/alt-beta?to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.points?.length) throw new Error('no data');
     const pts = data.points;
     mkChart('scatter', {
@@ -3990,7 +3998,7 @@ async function fetchAltBeta(to) {
         tooltip: { callbacks: { label: ctx => `${ctx.raw.label}  β=${ctx.raw.x.toFixed(2)}  α=${ctx.raw.y.toFixed(1)}%` } } }
     });
     setTitle('Alt Beta & Alpha vs BTC (60d)', 'Source: CoinGecko · OLS regression');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -4000,11 +4008,13 @@ async function fetchAltBeta(to) {
 let _ccDataCache = null;
 
 async function fetchCategoryOverview(category) {
+  const _v = _navVersion;
   spinOn();
   try {
     if (!_ccDataCache) {
-      _ccDataCache = await fetch('/api/control-center').then(r=>r.json());
+      _ccDataCache = await fetch('/api/control-center', {signal: _navAbort?.signal}).then(r=>r.json());
     }
+    if (_v !== _navVersion) return;
     const data = _ccDataCache;
     if (!data.charts?.length) throw new Error('no data');
 
@@ -4112,7 +4122,7 @@ async function fetchCategoryOverview(category) {
     canvas.parentElement.appendChild(container);
     setTitle(category + ' — Signal Overview', 'Control center rules for ' + category);
     document.getElementById('chart-spin').classList.remove('on');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -4123,7 +4133,7 @@ async function fetchCategoryOverview(category) {
 async function fetchEtfTotalAum(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/etf-aum?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/etf-aum?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
 
     const COLORS = { 'BTC': '#F7931A', 'ETH': '#627EEA' };
@@ -4191,7 +4201,7 @@ async function fetchEtfTotalAum(from, to) {
     }
 
     setTitle('Total AuM — Spot ETFs', 'Source: Farside Investors · USD · stacked area');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -4199,7 +4209,7 @@ async function fetchEtfTotalAum(from, to) {
 async function fetchEtfDailyBar(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/etf-flows?from=${from}&to=${to}&window=1`).then(r=>r.json());
+    const data = await fetch(`/api/etf-flows?from=${from}&to=${to}&window=1`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
 
     const COLORS = { 'BTC': { pos: '#F7931A', neg: '#F7931A80' }, 'ETH': { pos: '#627EEA', neg: '#627EEA80' } };
@@ -4251,14 +4261,14 @@ async function fetchEtfDailyBar(from, to) {
     }
 
     setTitle('Daily — Spot ETF Flows', 'Source: Farside Investors · USD millions · stacked');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── ETF: Weekly Bar Chart ────────────────────────────────────────────────────
 async function fetchEtfWeeklyBar(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/etf-flows-weekly?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/etf-flows-weekly?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
 
     const COLORS = { 'BTC': { pos: '#F7931A', neg: '#F7931A80' }, 'ETH': { pos: '#627EEA', neg: '#627EEA80' } };
@@ -4310,7 +4320,7 @@ async function fetchEtfWeeklyBar(from, to) {
     }
 
     setTitle('Weekly — Spot ETF Flows', 'Source: Farside Investors · USD millions · stacked');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -4320,7 +4330,7 @@ async function fetchEtfNetFlows(from, to) {
   try {
     const winEl = document.getElementById('rp-window');
     const window = winEl?.value || '7';
-    const data = await fetch(`/api/etf-flows?from=${from}&to=${to}&window=${window}`).then(r=>r.json());
+    const data = await fetch(`/api/etf-flows?from=${from}&to=${to}&window=${window}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
 
     const COLORS = { 'BTC': '#F7931A', 'ETH': '#627EEA' };
@@ -4394,14 +4404,16 @@ async function fetchEtfNetFlows(from, to) {
 
     const winLabels = {'1': 'daily', '7': '7d trailing', '14': '14d trailing', '30': '30d trailing'};
     setTitle('Spot ETF Net Flows (' + (winLabels[window] || window + 'd trailing') + ')', 'Source: Farside Investors · USD millions');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
 async function fetchControlCenter(mode) {
+  const _v = _navVersion;
   spinOn();
   try {
-    const data = await fetch('/api/control-center').then(r=>r.json());
+    const data = await fetch('/api/control-center', {signal: _navAbort?.signal}).then(r=>r.json());
+    if (_v !== _navVersion) return; // navigated away
     if (!data.charts?.length) throw new Error('no data');
 
     if (chart) { chart.destroy(); chart = null; }
@@ -4491,7 +4503,7 @@ async function fetchControlCenter(mode) {
     canvas.parentElement.appendChild(container);
     setTitle(title, subtitle);
     document.getElementById('chart-spin').classList.remove('on');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -4508,7 +4520,7 @@ const _origSelectView = selectView;
 async function fetchEthMACombined(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/eth-ma-combined?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/eth-ma-combined?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
 
     // Destroy existing chart
@@ -4614,7 +4626,7 @@ async function fetchEthMACombined(from, to) {
 
     setTitle('ETH Moving Averages — Combined', 'Source: CoinGecko · 200-week MA + 50d/200d gap');
     document.getElementById('chart-spin').classList.remove('on');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -4622,7 +4634,7 @@ async function fetchEthMACombined(from, to) {
 async function fetchEthMA(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/eth-ma?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/eth-ma?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [
       { label: 'ETH Price', data: data.price, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.1 },
@@ -4633,75 +4645,75 @@ async function fetchEthMA(from, to) {
       y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$'+(v>=1000?(v/1000).toFixed(0)+'k':v.toFixed(0)) }, grid: YGRID } },
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
     setTitle('ETH — 50-day and 200-day Moving Average', 'Source: CoinGecko · log scale');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchEthMAGap(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/eth-ma-gap?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/eth-ma-gap?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [{ label: '50d/200d Gap (%)', data: data.gap, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.08)',below:'rgba(236,91,91,0.08)'} }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
     setTitle('ETH — 50d and 200d Gap', 'Source: CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchEth200dDev(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/eth-200d-dev?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/eth-200d-dev?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [{ label: '% Deviation', data: data.deviation, borderColor: '#746BE6', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.06)',below:'rgba(236,91,91,0.06)'} }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
     setTitle('ETH — 200-Week MA Deviation', 'Source: CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchEthDrawdown(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/eth-drawdown?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/eth-drawdown?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [{ label: 'Drawdown %', data: data.values, borderColor: '#EC5B5B', backgroundColor: 'rgba(236,91,91,0.06)', borderWidth: 1.4, pointRadius: 0, fill: true }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { max: 0, ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
     setTitle('ETH Drawdown from ATH', 'Source: CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchEthMcap(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/eth-mcap?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/eth-mcap?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     const fmtT = v => { if(v>=1e12) return '$'+(v/1e12).toFixed(1)+'T'; if(v>=1e9) return '$'+(v/1e9).toFixed(0)+'B'; return '$'+(v/1e6).toFixed(0)+'M'; };
     mkChart('line', { labels: data.dates, datasets: [{ label: 'ETH Mcap', data: data.mcap, borderColor: '#746BE6', backgroundColor: 'rgba(116,107,230,0.06)', borderWidth: 1.6, pointRadius: 0, fill: true }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: { ...YTICK, callback: v => fmtT(v) }, grid: YGRID } }, plugins: { legend: { display: false } } });
     setTitle('ETH Market Cap', 'Source: CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchEthBtcRatio(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/eth-btc-ratio?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/eth-btc-ratio?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [{ label: 'ETH/BTC', data: data.values, borderColor: '#746BE6', backgroundColor: 'rgba(116,107,230,0.06)', borderWidth: 1.6, pointRadius: 0, fill: true }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: { ...YTICK, callback: v => v.toFixed(4) }, grid: YGRID } }, plugins: { legend: { display: false } } });
     setTitle('ETH/BTC Ratio', 'Source: CoinGecko · falling = BTC dominance, rising = alt appetite');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Alt Market charts ─────────────────────────────────────────────────────────
 async function fetchAltMcap(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/alt-mcap-total?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/alt-mcap-total?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     const fmtT = v => { if(v>=1e12) return '$'+(v/1e12).toFixed(2)+'T'; if(v>=1e9) return '$'+(v/1e9).toFixed(0)+'B'; return '$'+(v/1e6).toFixed(0)+'M'; };
     mkChart('line', { labels: data.dates, datasets: [
@@ -4712,37 +4724,37 @@ async function fetchAltMcap(from, to) {
       y: { ticks: { ...YTICK, callback: v => fmtT(v) }, grid: YGRID } },
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
     setTitle('Altcoin Market Cap (ex-BTC, ex-ETH)', 'Source: CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchAltMcapGap(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/alt-mcap-gap?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/alt-mcap-gap?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [{ label: '50d/200d Gap (%)', data: data.gap, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.08)',below:'rgba(236,91,91,0.08)'} }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
     setTitle('Altcoin Mcap — 50d/200d MA Gap', 'Source: CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchAltMcapDev(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/alt-mcap-dev?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/alt-mcap-dev?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [{ label: '% Deviation', data: data.deviation, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, fill: {target:'origin',above:'rgba(0,214,74,0.06)',below:'rgba(236,91,91,0.06)'} }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } }, plugins: { legend: { display: false } } });
     setTitle('Altcoin Mcap — Deviation from 200d MA', 'Source: CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchDominanceShares(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/dominance-shares?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/dominance-shares?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [
       { label: 'BTC', data: data.btc_pct, borderColor: '#F7931A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0 },
@@ -4752,13 +4764,13 @@ async function fetchDominanceShares(from, to) {
       y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } },
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
     setTitle('Dominance — BTC / ETH / Altcoins', 'Source: CoinGecko · share of total crypto mcap');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchAltRelShare(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/alt-rel-share?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/alt-rel-share?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [
       { label: 'vs Total Mcap', data: data.vs_total, borderColor: '#00D64A', backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0 },
@@ -4768,25 +4780,25 @@ async function fetchAltRelShare(from, to) {
       y: { ticks: { ...YTICK, callback: v => v+'%' }, grid: YGRID } },
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
     setTitle('Altcoin Relative Share', 'Source: CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchBtcAltRatio(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-alt-ratio?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-alt-ratio?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', { labels: data.dates, datasets: [{ label: 'BTC/Alt Ratio', data: data.ratio, borderColor: '#F7931A', backgroundColor: 'rgba(247,147,26,0.06)', borderWidth: 1.6, pointRadius: 0, fill: true }] },
     { scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: function(v) { return this.getLabelForValue(v)?.slice(0,7)||''; } }, grid: XGRID },
       y: { ticks: YTICK, grid: YGRID } }, plugins: { legend: { display: false } } });
     setTitle('BTC / Altcoin Mcap Ratio', 'Source: CoinGecko · rising = BTC dominance');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function fetchAltIntracorr(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/alt-intracorr?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/alt-intracorr?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     const ds = [];
     const tiers = [['top10','Top 10','#F7931A'],['top25','Top 25','#2471CC'],['top50','Top 50','#746BE6'],['top100','Top 100','#00D64A'],['top250','Top 250','#888']];
@@ -4798,7 +4810,7 @@ async function fetchAltIntracorr(from, to) {
       y: { min: -0.2, max: 1, ticks: { ...YTICK, callback: v => v.toFixed(1) }, grid: YGRID } },
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } });
     setTitle('Altcoin Intracorrelation', 'Source: CoinGecko · avg pairwise 30d Pearson · high = everything moves together');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -4806,7 +4818,7 @@ async function fetchAltIntracorr(from, to) {
 async function fetchBtcMAGap(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-ma-gap?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-ma-gap?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -4824,14 +4836,14 @@ async function fetchBtcMAGap(from, to) {
       plugins: { legend: { display: false }, annotation: {} },
     });
     setTitle('50d / 200d MA Gap', 'Source: CoinGecko · positive = golden cross territory');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: 200-Week MA Floor ────────────────────────────────────────────────────
 async function fetchBtc200wFloor(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-200w-floor?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-200w-floor?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -4847,14 +4859,14 @@ async function fetchBtc200wFloor(from, to) {
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
     });
     setTitle('BTC Price vs 200-Week MA', 'Source: CoinGecko · log scale · the macro floor');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: 200d MA Deviation ────────────────────────────────────────────────────
 async function fetchBtc200dDev(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-200d-dev?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-200d-dev?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -4873,14 +4885,14 @@ async function fetchBtc200dDev(from, to) {
       plugins: { legend: { display: false } },
     });
     setTitle('BTC Deviation from 200d MA', 'Source: CoinGecko · >50% = blow-off · <-30% = capitulation');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Pi Cycle Top ─────────────────────────────────────────────────────────
 async function fetchBtcPiCycle(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-pi-cycle?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-pi-cycle?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -4897,14 +4909,14 @@ async function fetchBtcPiCycle(from, to) {
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
     });
     setTitle('BTC — Pi Cycle Top', 'Source: CoinGecko · 111d MA crossing 2×350d MA = cycle top');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Market Cap with Milestones ───────────────────────────────────────────
 async function fetchBtcMcap(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-mcap?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-mcap?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     const fmtT = v => { if (v >= 1e12) return '$' + (v/1e12).toFixed(1) + 'T'; if (v >= 1e9) return '$' + (v/1e9).toFixed(0) + 'B'; return '$' + (v/1e6).toFixed(0) + 'M'; };
     mkChart('line', {
@@ -4922,14 +4934,14 @@ async function fetchBtcMcap(from, to) {
       plugins: { legend: { display: false } },
     });
     setTitle('BTC Market Cap', 'Source: CoinGecko · $100B / $500B / $1T / $2T milestones');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── BTC: Realized Vol vs Implied Vol (DVOL) ───────────────────────────────────
 async function fetchBtcRvIv(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/btc-rv-iv?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/btc-rv-iv?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -4947,16 +4959,18 @@ async function fetchBtcRvIv(from, to) {
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
     });
     setTitle('Realized Vol vs Implied Vol (DVOL)', 'Source: CoinGecko + Deribit · positive spread = market pricing risk');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
 
 // ── Themes: Sector Overview Matrix ────────────────────────────────────────────
 async function fetchSectorOverview() {
+  const _v = _navVersion;
   spinOn();
   try {
-    const data = await fetch('/api/sector-overview').then(r=>r.json());
+    const data = await fetch('/api/sector-overview', {signal: _navAbort?.signal}).then(r=>r.json());
+    if (_v !== _navVersion) return;
     if (!data.sectors?.length) throw new Error('no data');
 
     // Destroy chart, show table
@@ -5014,7 +5028,7 @@ async function fetchSectorOverview() {
     canvas.parentElement.appendChild(container);
     setTitle('Sector Overview', 'Source: CoinGecko Pro — Wintermute OTC');
     document.getElementById('chart-spin').classList.remove('on');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -5028,7 +5042,7 @@ async function fetchBtcMA(from, to) {
     const custom = customEl?.value || '';
     let url = `/api/btc-ma?from=${from}&to=${to}`;
     if (custom && parseInt(custom) >= 2) url += `&custom=${custom}`;
-    const data = await fetch(url).then(r=>r.json());
+    const data = await fetch(url, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     const datasets = [
       { label: 'BTC Price', data: data.price, borderColor: '#F7931A', backgroundColor: 'transparent',
@@ -5053,7 +5067,7 @@ async function fetchBtcMA(from, to) {
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
     });
     setTitle('BTC Price — Moving Averages', 'Source: CoinGecko · 50d, 200d' + (data.custom_window ? `, ${data.custom_window}d` : ''));
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Crypto Market: Total Market Cap ───────────────────────────────────────────
@@ -5064,7 +5078,7 @@ async function fetchTotalMcap(from, to) {
     const custom = customEl?.value || '';
     let url = `/api/total-mcap?from=${from}&to=${to}`;
     if (custom && parseInt(custom) >= 2) url += `&custom=${custom}`;
-    const data = await fetch(url).then(r=>r.json());
+    const data = await fetch(url, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     const fmtT = v => {
       if (v >= 1e12) return '$' + (v/1e12).toFixed(2) + 'T';
@@ -5094,12 +5108,12 @@ async function fetchTotalMcap(from, to) {
       plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
     });
     setTitle('Total Crypto Market Cap', 'Source: CoinGecko Global · 50d, 200d' + (data.custom_window ? `, ${data.custom_window}d` : ''));
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 async function fetchAltATHDrawdown() {
   spinOn();
   try {
-    const data = await fetch('/api/alt-ath-drawdown').then(r=>r.json());
+    const data = await fetch('/api/alt-ath-drawdown', {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.points?.length) throw new Error('no data');
     const pts = data.points.slice(0, 30);
     mkChart('bar', {
@@ -5115,7 +5129,7 @@ async function fetchAltATHDrawdown() {
       plugins: { legend: { display: false } }
     });
     setTitle('Altcoin Drawdown from ATH (Top 30)', 'Source: CoinGecko · all-time high');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -5124,7 +5138,7 @@ async function fetchAltDrawdownTS(from, to) {
   spinOn();
   try {
     const topN = parseInt(document.getElementById('rp-topn')?.value || '10');
-    const data = await fetch(`/api/alt-drawdown-ts?from=${from}&to=${to}&topn=${topN}`).then(r=>r.json());
+    const data = await fetch(`/api/alt-drawdown-ts?from=${from}&to=${to}&topn=${topN}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.series || !Object.keys(data.series).length) throw new Error('no data');
 
     const syms = Object.keys(data.series).slice(0, 10);
@@ -5174,7 +5188,7 @@ async function fetchAltDrawdownTS(from, to) {
       },
     });
     setTitle(`Altcoin Drawdown from Running ATH (Top ${syms.length})`, 'Source: CoinGecko · running all-time high');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Alt: Correlation Heatmap ──────────────────────────────────────────────────
@@ -5186,7 +5200,7 @@ async function fetchAltHeatmap(symbols, from, to) {
     if (data.error) throw new Error(data.error);
     drawHeatmapCanvas(data.symbols, data.symbols, data.matrix, heatCorr);
     setTitle('Altcoin Correlation Heatmap (30d)', 'Source: CoinGecko · Pearson');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Alt: Funding Heatmap ──────────────────────────────────────────────────────
@@ -5201,7 +5215,7 @@ async function fetchAltFundingHeatmap(symbols, from, to) {
     const matrix = data.symbols.map(s => data.matrix[s] || []);
     drawHeatmapCanvas(data.symbols, data.dates, matrix, (v) => heatFunding(v, maxAbs));
     setTitle('Altcoin Funding Rate Heatmap', 'Source: Binance/Bybit · 8h avg');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Macro: Correlation Matrix ─────────────────────────────────────────────────
@@ -5212,7 +5226,7 @@ async function fetchMacroSharpe(from, to) {
   try {
     const winEl = document.getElementById('rp-window');
     const window = winEl?.value || '180';
-    const data = await fetch(`/api/macro-sharpe?from=${from}&to=${to}&window=${window}`).then(r=>r.json());
+    const data = await fetch(`/api/macro-sharpe?from=${from}&to=${to}&window=${window}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
 
     const COLORS = {
@@ -5269,7 +5283,7 @@ async function fetchMacroSharpe(from, to) {
 
     const winLabels = {'30': '1M', '90': '3M', '180': '6M', '365': '1Y', '730': '2Y', '1460': '4Y'};
     setTitle('Rolling Sharpe Ratio (' + (winLabels[window] || window + 'd') + ')', 'Source: CoinGecko + Yahoo Finance · annualised, risk-free = 0');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
@@ -5363,25 +5377,25 @@ async function fetchMacroBtcCorr(from, to) {
 
     const winLabels = {'14': '14d', '30': '30d', '60': '60d', '90': '90d', '180': '180d', '365': '1Y'};
     setTitle('Rolling ' + (winLabels[window] || window + 'd') + ' Correlation vs BTC', 'Source: CoinGecko + Yahoo Finance · log daily returns · click legend to toggle assets');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 
 async function fetchMacroMatrix(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/macro-matrix?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/macro-matrix?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (data.error) throw new Error(data.error);
     drawHeatmapCanvas(data.macro_tickers, data.crypto_sectors, data.matrix, heatCorr);
     setTitle('Macro vs Crypto Sector Correlation', 'Source: CoinGecko + Yahoo Finance · 30d');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Macro: DXY vs BTC ─────────────────────────────────────────────────────────
 async function fetchMacroDxyBtc(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/macro-dxy-btc?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/macro-dxy-btc?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -5407,14 +5421,14 @@ async function fetchMacroDxyBtc(from, to) {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('DXY vs BTC + 30d Rolling Correlation', 'Source: Yahoo Finance + CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Macro: Risk-On/Off Score ──────────────────────────────────────────────────
 async function fetchMacroRisk(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/macro-risk?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/macro-risk?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -5435,14 +5449,14 @@ async function fetchMacroRisk(from, to) {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('Macro Risk-On/Off Score', 'Source: Yahoo Finance · VIX + DXY + HYG/LQD');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Macro: Real Yields ────────────────────────────────────────────────────────
 async function fetchMacroRealYields(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/macro-real-yields?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/macro-real-yields?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -5463,14 +5477,14 @@ async function fetchMacroRealYields(from, to) {
       plugins: { legend: { display: true, labels: { color: '#aaa', font: { family: 'monospace', size: 11 } } } }
     });
     setTitle('US 10Y Yield vs BTC Price', 'Source: Yahoo Finance (^TNX) + CoinGecko');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 // ── Macro: Stablecoin Supply ──────────────────────────────────────────────────
 async function fetchMacroStablecoin(from, to) {
   spinOn();
   try {
-    const data = await fetch(`/api/macro-stablecoin?from=${from}&to=${to}`).then(r=>r.json());
+    const data = await fetch(`/api/macro-stablecoin?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
     if (!data.dates?.length) throw new Error('no data');
     mkChart('line', {
       labels: data.dates,
@@ -5485,7 +5499,7 @@ async function fetchMacroStablecoin(from, to) {
       plugins: { legend: { display: false } }
     });
     setTitle('Stablecoin Total Market Cap', 'Source: CoinGecko · USDT+USDC+DAI+…');
-  } catch(e) { showErr(e); }
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
 async function boot() {
