@@ -61,6 +61,7 @@ def handle_db_status():
         {"key": "onchain_daily",       "label": "On-chain (BTC)",          "granularity": "Daily",    "source": "CoinMetrics",     "asset_col": "asset",        "ts_col": "timestamp"},
         {"key": "options_instruments_daily", "label": "Options instruments",   "granularity": "Daily",    "source": "Deribit",        "asset_col": "currency",     "ts_col": "timestamp"},
         {"key": "options_daily",       "label": "Options (BTC/ETH)",       "granularity": "Daily",    "source": "Deribit",        "asset_col": "currency",     "ts_col": "timestamp"},
+        {"key": "etf_aum_daily",      "label": "ETF AUM",                "granularity": "Daily",    "source": "yfinance",       "asset_col": "ticker",       "ts_col": "timestamp"},
         {"key": "etf_flows_daily",    "label": "ETF flows",              "granularity": "Daily",    "source": "Farside",        "asset_col": "ticker",       "ts_col": "timestamp"},
         {"key": "asset_registry",      "label": "GMCI asset classification","granularity": "Static",   "source": "Internal",      "asset_col": "symbol",       "ts_col": None},
     ]
