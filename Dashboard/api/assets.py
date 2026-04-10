@@ -59,6 +59,7 @@ def handle_db_status():
         {"key": "total_marketcap_daily","label": "Total crypto mcap",      "granularity": "Daily",    "source": "CoinGecko",      "asset_col": "source",       "ts_col": "timestamp"},
         {"key": "alt_intracorr_daily", "label": "Alt intracorrelation",    "granularity": "Daily",    "source": "Computed",        "asset_col": "tier",         "ts_col": "timestamp"},
         {"key": "onchain_daily",       "label": "On-chain (BTC)",          "granularity": "Daily",    "source": "CoinMetrics",     "asset_col": "asset",        "ts_col": "timestamp"},
+        {"key": "options_instruments_daily", "label": "Options instruments",   "granularity": "Daily",    "source": "Deribit",        "asset_col": "currency",     "ts_col": "timestamp"},
         {"key": "options_daily",       "label": "Options (BTC/ETH)",       "granularity": "Daily",    "source": "Deribit",        "asset_col": "currency",     "ts_col": "timestamp"},
         {"key": "etf_flows_daily",    "label": "ETF flows",              "granularity": "Daily",    "source": "Farside",        "asset_col": "ticker",       "ts_col": "timestamp"},
         {"key": "asset_registry",      "label": "GMCI asset classification","granularity": "Static",   "source": "Internal",      "asset_col": "symbol",       "ts_col": None},

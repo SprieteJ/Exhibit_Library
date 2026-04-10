@@ -1190,6 +1190,42 @@ def update_options():
     conn.close()
 
 
+
+def update_options_instruments():
+    print("
+[Options Instruments] Pulling per-instrument snapshot...")
+    import requests
+    DERIBIT_BASE = "https://www.deribit.com/api/v2/public"
+    now = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    ingested = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    conn = get_conn(); cur = conn.cursor()
+    total = 0
+    for currency in ["BTC", "ETH"]:
+        try:
+            resp = requests.get(f"{DERIBIT_BASE}/get_book_summary_by_currency", params={"currency": currency, "kind": "option"}, timeout=30)
+            resp.raise_for_status()
+            data = resp.json().get("result", [])
+            presp = requests.get(f"{DERIBIT_BASE}/get_index_price", params={"index_name": f"{currency.lower()}_usd"}, timeout=15)
+            price = presp.json()["result"]["index_price"]
+            for item in data:
+                parts = item["instrument_name"].split("-")
+                if len(parts) != 4: continue
+                cur.execute("""INSERT INTO options_instruments_daily (timestamp,currency,instrument_name,expiry_date,strike,option_type,open_interest,volume,volume_usd,mark_iv,mark_price,bid_price,ask_price,underlying_price,source,ingested_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (timestamp,instrument_name) DO UPDATE SET open_interest=EXCLUDED.open_interest,volume=EXCLUDED.volume,volume_usd=EXCLUDED.volume_usd,mark_iv=EXCLUDED.mark_iv,mark_price=EXCLUDED.mark_price,bid_price=EXCLUDED.bid_price,ask_price=EXCLUDED.ask_price,underlying_price=EXCLUDED.underlying_price,ingested_at=EXCLUDED.ingested_at""",
+                    (today, currency, item["instrument_name"], parts[1], float(parts[2]), "put" if parts[3]=="P" else "call",
+                     float(item.get("open_interest") or 0), float(item.get("volume") or 0), float(item.get("volume_usd") or 0),
+                     float(item["mark_iv"]) if item.get("mark_iv") else None, float(item["mark_price"]) if item.get("mark_price") else None,
+                     float(item["bid_price"]) if item.get("bid_price") else None, float(item["ask_price"]) if item.get("ask_price") else None,
+                     price, "deribit", ingested))
+                total += 1
+            conn.commit()
+            print(f"  {currency}: {len(data)} instruments")
+        except Exception as e:
+            print(f"  {currency}: ERROR - {e}")
+    conn.close()
+    print(f"  Total: {total} rows")
+
+
 def main():
     start = time.time()
     print(f"\n{'━' * 70}")
