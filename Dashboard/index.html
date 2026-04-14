@@ -4225,67 +4225,7 @@ async function fetchCategoryOverview(category) {
     });
 
     const thStyle = 'text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px';
-    // ── Chart of the Day ──
-    let cotdHTML = '';
-    if (mode === 'flagged' || !mode) {
-      // Score each chart: major active = 3, minor active = 1
-      let scored = [];
-      for (const c of data.charts) {
-        let score = 0;
-        let activeRules = [];
-        for (const r of c.rules) {
-          if (r.active) {
-            const pts = (r.weight === 'major') ? 3 : 1;
-            score += pts;
-            activeRules.push(r.name);
-          }
-        }
-        if (score > 0) {
-          scored.push({ chart: c, score, activeRules });
-        }
-      }
-      scored.sort((a, b) => b.score - a.score);
-
-      if (scored.length > 0) {
-        const top = scored[0];
-        const c = top.chart;
-        const ruleList = top.activeRules.slice(0, 3).join(' · ');
-        const dotCount = top.activeRules.length;
-
-        // Build detailed context for each active rule
-        const ruleDetails = top.activeRules.map(rName => {
-          for (const r of top.chart.rules) {
-            if (r.name === rName && r.active) return r;
-          }
-          return null;
-        }).filter(Boolean);
-
-        const contextRows = ruleDetails.map(r => {
-          const wt = r.weight === 'major' ? '<span style="font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(0,214,74,0.15);color:#059669">MAJOR</span>' : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)') + ';color:var(--muted)">minor</span>';
-          return '<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)') + '">' +
-            '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00D64A;margin-top:5px;flex-shrink:0"></span>' +
-            '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--graphite)">' + r.name + ' ' + wt + '</div>' +
-            '<div style="font-size:11px;font-family:var(--mono);color:' + (darkMode ? '#B0B3B0' : '#555') + ';margin-top:2px">' + r.detail + '</div>' +
-            (r.context ? '<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:2px">' + r.context + '</div>' : '') +
-            '</div></div>';
-        }).join('');
-
-        cotdHTML = `
-          <div style="margin-bottom:20px;padding:20px 24px;border-radius:8px;background:${darkMode ? 'rgba(0,214,74,0.04)' : 'rgba(0,180,60,0.04)'};border:1px solid ${darkMode ? 'rgba(0,214,74,0.12)' : 'rgba(0,180,60,0.12)'}">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-              <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${darkMode ? '#00D64A' : '#059669'}">Chart of the Day</span>
-              <span style="font-size:10px;color:var(--muted)">${dotCount} signal${dotCount > 1 ? 's' : ''} active · score ${top.score}</span>
-            </div>
-            <div style="margin-bottom:14px">
-              <a href="#" onclick="selectView('${c.chart_tab}','${c.chart_key}');return false;" style="font-size:18px;font-weight:600;color:var(--graphite);text-decoration:none;border-bottom:2px solid ${darkMode ? 'rgba(0,214,74,0.3)' : 'rgba(0,180,60,0.3)'}">${c.chart_name} →</a>
-              <div style="margin-top:4px;font-size:12px;color:var(--muted)">${c.category}</div>
-            </div>
-            <div style="margin-top:8px">${contextRows}</div>
-          </div>`;
-      }
-    }
-
-    let tableHTML = cotdHTML + '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
+    let tableHTML = '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
     tableHTML += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
     tableHTML += '<thead><tr style="border-bottom:1px solid var(--border)">';
     tableHTML += '<th style="' + thStyle + ';width:18%">Chart</th>';
