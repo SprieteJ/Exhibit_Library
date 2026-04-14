@@ -764,6 +764,78 @@ document.getElementById('btn-log')?.addEventListener('click', () => {
   }
 });
 
+
+// ── Chart Search ──────────────────────────────────────────────────────────────
+(function() {
+  const searchEl = document.getElementById('chart-search');
+  if (!searchEl) return;
+
+  searchEl.addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    let dropdown = document.getElementById('search-results');
+
+    if (!q) {
+      if (dropdown) dropdown.remove();
+      return;
+    }
+
+    const matches = [];
+    for (const [tabKey, tabDef] of Object.entries(TABS)) {
+      for (const group of (tabDef.groups || [])) {
+        for (const view of (group.children || [])) {
+          const haystack = (view.label + ' ' + (view.sub || '') + ' ' + tabDef.label + ' ' + group.label).toLowerCase();
+          if (haystack.includes(q)) {
+            matches.push({ tab: tabKey, tabLabel: tabDef.label, group: group.label, key: view.key, label: view.label });
+          }
+        }
+      }
+    }
+
+    if (!dropdown) {
+      dropdown = document.createElement('div');
+      dropdown.id = 'search-results';
+      dropdown.style.cssText = 'position:absolute;top:100%;left:0;right:0;max-height:400px;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:999;margin-top:4px;min-width:280px';
+      this.parentElement.appendChild(dropdown);
+    }
+
+    if (!matches.length) {
+      dropdown.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--muted)">No charts found</div>';
+      return;
+    }
+
+    dropdown.innerHTML = '';
+    matches.slice(0, 15).forEach(function(m) {
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:8px 12px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background 0.1s';
+      row.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--graphite)">' + m.label + '</div><div style="font-size:10px;color:var(--muted)">' + m.tabLabel + ' &rsaquo; ' + m.group + '</div>';
+      row.addEventListener('mouseenter', function() { this.style.background = 'var(--hover)'; });
+      row.addEventListener('mouseleave', function() { this.style.background = ''; });
+      row.addEventListener('click', function() {
+        selectView(m.tab, m.key);
+        searchEl.value = '';
+        var dd = document.getElementById('search-results');
+        if (dd) dd.remove();
+      });
+      dropdown.appendChild(row);
+    });
+  });
+
+  searchEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      this.value = '';
+      var dd = document.getElementById('search-results');
+      if (dd) dd.remove();
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#chart-search') && !e.target.closest('#search-results')) {
+      var dd = document.getElementById('search-results');
+      if (dd) dd.remove();
+    }
+  });
+})();
+
 // ── Granularity ───────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-gran]').forEach(btn => {
   btn.addEventListener('click', () => {
