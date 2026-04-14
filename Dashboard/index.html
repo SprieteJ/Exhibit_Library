@@ -490,7 +490,6 @@ const TABS = {
     label: "Control Center",
     groups: [
       { label: "Overview", children: [
-        { key:"cc-cotm",      label:"Chart of the month", sub:"The most active chart right now based on signal scoring.", src:"Wintermute OTC" },
         { key:"cc-matrix",    label:"Flagged signals",    sub:"Only the indicators that need attention right now.", src:"Wintermute OTC — Multi-source" },
       ]},
       { label: "Deep Dive", children: [
@@ -1027,8 +1026,8 @@ async function selectView(tab, key) {
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   const AUTO_VIEWS = new Set([
-    'btc-overview','eth-overview','alt-overview','bas-overview','cc-cotm','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','sec-analysis-rebase',
-    'btc-overview','eth-overview','alt-overview','bas-overview','cc-cotm','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','sec-analysis-rebase',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1062,7 +1061,7 @@ async function selectView(tab, key) {
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
-  'btc-overview','eth-overview','alt-overview','bas-overview','cc-cotm','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1688,7 +1687,6 @@ async function fetchCurrent() {
       case 'etf-weekly-bar': await fetchEtfWeeklyBar(from, to); break;
       case 'etf-total-aum': await fetchEtfTotalAum(from, to); break;
       case 'etf-net-flows': await fetchEtfNetFlows(from, to); break;
-      case 'cc-cotm':       await fetchChartOfMonth(); break;
       case 'cc-matrix':       await fetchControlCenter('flagged'); break;
       case 'cc-bitcoin':     await fetchControlCenter('bitcoin'); break;
       case 'cc-themes':      await fetchControlCenter('themes'); break;
@@ -4254,21 +4252,35 @@ async function fetchCategoryOverview(category) {
         const ruleList = top.activeRules.slice(0, 3).join(' · ');
         const dotCount = top.activeRules.length;
 
+        // Build detailed context for each active rule
+        const ruleDetails = top.activeRules.map(rName => {
+          for (const r of top.chart.rules) {
+            if (r.name === rName && r.active) return r;
+          }
+          return null;
+        }).filter(Boolean);
+
+        const contextRows = ruleDetails.map(r => {
+          const wt = r.weight === 'major' ? '<span style="font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(0,214,74,0.15);color:#059669">MAJOR</span>' : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)') + ';color:var(--muted)">minor</span>';
+          return '<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)') + '">' +
+            '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00D64A;margin-top:5px;flex-shrink:0"></span>' +
+            '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--graphite)">' + r.name + ' ' + wt + '</div>' +
+            '<div style="font-size:11px;font-family:var(--mono);color:' + (darkMode ? '#B0B3B0' : '#555') + ';margin-top:2px">' + r.detail + '</div>' +
+            (r.context ? '<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:2px">' + r.context + '</div>' : '') +
+            '</div></div>';
+        }).join('');
+
         cotdHTML = `
           <div style="margin-bottom:20px;padding:20px 24px;border-radius:8px;background:${darkMode ? 'rgba(0,214,74,0.04)' : 'rgba(0,180,60,0.04)'};border:1px solid ${darkMode ? 'rgba(0,214,74,0.12)' : 'rgba(0,180,60,0.12)'}">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
               <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${darkMode ? '#00D64A' : '#059669'}">Chart of the Day</span>
-              <span style="font-size:10px;color:var(--muted)">${dotCount} signal${dotCount > 1 ? 's' : ''} active</span>
+              <span style="font-size:10px;color:var(--muted)">${dotCount} signal${dotCount > 1 ? 's' : ''} active · score ${top.score}</span>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
-              <div>
-                <a href="#" onclick="selectView('${c.chart_tab}','${c.chart_key}');return false;" style="font-size:18px;font-weight:600;color:var(--graphite);text-decoration:none;border-bottom:2px solid ${darkMode ? 'rgba(0,214,74,0.3)' : 'rgba(0,180,60,0.3)'}">${c.chart_name} →</a>
-                <div style="margin-top:6px;font-size:12px;color:var(--muted)">${c.category} · ${ruleList}</div>
-              </div>
-              <div style="display:flex;gap:4px">
-                ${top.activeRules.map(() => '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00D64A"></span>').join('')}
-              </div>
+            <div style="margin-bottom:14px">
+              <a href="#" onclick="selectView('${c.chart_tab}','${c.chart_key}');return false;" style="font-size:18px;font-weight:600;color:var(--graphite);text-decoration:none;border-bottom:2px solid ${darkMode ? 'rgba(0,214,74,0.3)' : 'rgba(0,180,60,0.3)'}">${c.chart_name} →</a>
+              <div style="margin-top:4px;font-size:12px;color:var(--muted)">${c.category}</div>
             </div>
+            <div style="margin-top:8px">${contextRows}</div>
           </div>`;
       }
     }
@@ -4793,21 +4805,35 @@ async function fetchControlCenter(mode) {
         const ruleList = top.activeRules.slice(0, 3).join(' · ');
         const dotCount = top.activeRules.length;
 
+        // Build detailed context for each active rule
+        const ruleDetails = top.activeRules.map(rName => {
+          for (const r of top.chart.rules) {
+            if (r.name === rName && r.active) return r;
+          }
+          return null;
+        }).filter(Boolean);
+
+        const contextRows = ruleDetails.map(r => {
+          const wt = r.weight === 'major' ? '<span style="font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(0,214,74,0.15);color:#059669">MAJOR</span>' : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)') + ';color:var(--muted)">minor</span>';
+          return '<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)') + '">' +
+            '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00D64A;margin-top:5px;flex-shrink:0"></span>' +
+            '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--graphite)">' + r.name + ' ' + wt + '</div>' +
+            '<div style="font-size:11px;font-family:var(--mono);color:' + (darkMode ? '#B0B3B0' : '#555') + ';margin-top:2px">' + r.detail + '</div>' +
+            (r.context ? '<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:2px">' + r.context + '</div>' : '') +
+            '</div></div>';
+        }).join('');
+
         cotdHTML = `
           <div style="margin-bottom:20px;padding:20px 24px;border-radius:8px;background:${darkMode ? 'rgba(0,214,74,0.04)' : 'rgba(0,180,60,0.04)'};border:1px solid ${darkMode ? 'rgba(0,214,74,0.12)' : 'rgba(0,180,60,0.12)'}">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
               <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${darkMode ? '#00D64A' : '#059669'}">Chart of the Day</span>
-              <span style="font-size:10px;color:var(--muted)">${dotCount} signal${dotCount > 1 ? 's' : ''} active</span>
+              <span style="font-size:10px;color:var(--muted)">${dotCount} signal${dotCount > 1 ? 's' : ''} active · score ${top.score}</span>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
-              <div>
-                <a href="#" onclick="selectView('${c.chart_tab}','${c.chart_key}');return false;" style="font-size:18px;font-weight:600;color:var(--graphite);text-decoration:none;border-bottom:2px solid ${darkMode ? 'rgba(0,214,74,0.3)' : 'rgba(0,180,60,0.3)'}">${c.chart_name} →</a>
-                <div style="margin-top:6px;font-size:12px;color:var(--muted)">${c.category} · ${ruleList}</div>
-              </div>
-              <div style="display:flex;gap:4px">
-                ${top.activeRules.map(() => '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00D64A"></span>').join('')}
-              </div>
+            <div style="margin-bottom:14px">
+              <a href="#" onclick="selectView('${c.chart_tab}','${c.chart_key}');return false;" style="font-size:18px;font-weight:600;color:var(--graphite);text-decoration:none;border-bottom:2px solid ${darkMode ? 'rgba(0,214,74,0.3)' : 'rgba(0,180,60,0.3)'}">${c.chart_name} →</a>
+              <div style="margin-top:4px;font-size:12px;color:var(--muted)">${c.category}</div>
             </div>
+            <div style="margin-top:8px">${contextRows}</div>
           </div>`;
       }
     }
