@@ -1837,7 +1837,7 @@ function exportCombinedChart(topChart, botChart) {
   // Apply export theme to both charts
   [topChart, botChart].forEach(c => {
     for (const [id, scale] of Object.entries(c.options.scales || {})) {
-      if (scale.ticks) { scale.ticks.color = EXP_FRAME; if (!scale.ticks.font) scale.ticks.font = {}; scale.ticks.font.size = 14; }
+      if (scale.ticks) { scale.ticks.color = EXP_FRAME; if (!scale.ticks.font) scale.ticks.font = {}; scale.ticks.font.size = 18; }
       if (!scale.border) scale.border = {}; scale.border.color = EXP_FRAME; scale.border.display = true;
       if (scale.grid) { scale.grid.color = 'rgba(0,0,0,0)'; scale.grid.display = false; }
     }
@@ -1990,7 +1990,7 @@ document.getElementById('btn-save').addEventListener('click', () => {
     if (scale.ticks) {
       scale.ticks.color = EXP_FRAME;
       if (!scale.ticks.font) scale.ticks.font = {};
-      scale.ticks.font.size = 14;
+      scale.ticks.font.size = 18;
     }
     if (!scale.border) scale.border = {};
     scale.border.color = EXP_FRAME;
@@ -2016,6 +2016,9 @@ document.getElementById('btn-save').addEventListener('click', () => {
   chart.canvas.height = chartAreaH;
   chart.canvas.style.width = chartAreaW + 'px';
   chart.canvas.style.height = chartAreaH + 'px';
+  // Thicken lines for export
+  const _origWidths = chart.data.datasets.map(d => d.borderWidth);
+  chart.data.datasets.forEach(d => { if (d.borderWidth) d.borderWidth = Math.max(d.borderWidth * 2, 3); });
   chart.resize(chartAreaW, chartAreaH);
   chart.update();
 
