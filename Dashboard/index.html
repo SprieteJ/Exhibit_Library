@@ -946,7 +946,7 @@ const DEFAULT_SELECTIONS = {
 };
 
 const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev']);
-const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01', 'etf-net-flows': '2025-04-01', 'alt-rebase': '2025-04-01', 'alt-zscore-mom': '2025-01-01', 'etf-daily-bar': '2025-04-01', 'etf-weekly-bar': '2024-04-01', 'btc-dom-ma': '2023-04-01', };
+const CUSTOM_START_DATE = {'alt-rebase': '2025-04-01', 'alt-zscore-mom': '2025-01-01', 'btc-200d-dev': '2023-04-15', 'btc-200w-floor': '2023-04-15', 'btc-dom-ma': '2023-04-15', 'btc-dominance': '2023-04-15', 'btc-gold': '2024-04-14', 'btc-ma': '2023-04-15', 'btc-realvol': '2025-04-14', 'btc-rolling': '2025-04-14', 'btc-rv-iv': '2024-04-14', 'etf-daily-bar': '2025-04-01', 'etf-net-flows': '2025-04-01', 'etf-weekly-bar': '2024-04-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01'};
 
 async function selectView(tab, key) {
   if (_navAbort) try { _navAbort.abort(); } catch(e) {}
