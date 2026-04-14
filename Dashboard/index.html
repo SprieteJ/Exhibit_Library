@@ -4225,7 +4225,53 @@ async function fetchCategoryOverview(category) {
     });
 
     const thStyle = 'text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px';
-    let tableHTML = '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
+    // ── Chart of the Day ──
+    let cotdHTML = '';
+    if (mode === 'flagged' || !mode) {
+      // Score each chart: major active = 3, minor active = 1
+      let scored = [];
+      for (const c of data.charts) {
+        let score = 0;
+        let activeRules = [];
+        for (const r of c.rules) {
+          if (r.active) {
+            const pts = (r.weight === 'major') ? 3 : 1;
+            score += pts;
+            activeRules.push(r.name);
+          }
+        }
+        if (score > 0) {
+          scored.push({ chart: c, score, activeRules });
+        }
+      }
+      scored.sort((a, b) => b.score - a.score);
+
+      if (scored.length > 0) {
+        const top = scored[0];
+        const c = top.chart;
+        const ruleList = top.activeRules.slice(0, 3).join(' · ');
+        const dotCount = top.activeRules.length;
+
+        cotdHTML = `
+          <div style="margin-bottom:20px;padding:20px 24px;border-radius:8px;background:${darkMode ? 'rgba(0,214,74,0.04)' : 'rgba(0,180,60,0.04)'};border:1px solid ${darkMode ? 'rgba(0,214,74,0.12)' : 'rgba(0,180,60,0.12)'}">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${darkMode ? '#00D64A' : '#059669'}">Chart of the Day</span>
+              <span style="font-size:10px;color:var(--muted)">${dotCount} signal${dotCount > 1 ? 's' : ''} active</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+              <div>
+                <a href="#" onclick="selectView('${c.chart_tab}','${c.chart_key}');return false;" style="font-size:18px;font-weight:600;color:var(--graphite);text-decoration:none;border-bottom:2px solid ${darkMode ? 'rgba(0,214,74,0.3)' : 'rgba(0,180,60,0.3)'}">${c.chart_name} →</a>
+                <div style="margin-top:6px;font-size:12px;color:var(--muted)">${c.category} · ${ruleList}</div>
+              </div>
+              <div style="display:flex;gap:4px">
+                ${top.activeRules.map(() => '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00D64A"></span>').join('')}
+              </div>
+            </div>
+          </div>`;
+      }
+    }
+
+    let tableHTML = cotdHTML + '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
     tableHTML += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
     tableHTML += '<thead><tr style="border-bottom:1px solid var(--border)">';
     tableHTML += '<th style="' + thStyle + ';width:18%">Chart</th>';
@@ -4614,7 +4660,53 @@ async function fetchControlCenter(mode) {
       return;
     }
 
-    let tableHTML = '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
+    // ── Chart of the Day ──
+    let cotdHTML = '';
+    if (mode === 'flagged' || !mode) {
+      // Score each chart: major active = 3, minor active = 1
+      let scored = [];
+      for (const c of data.charts) {
+        let score = 0;
+        let activeRules = [];
+        for (const r of c.rules) {
+          if (r.active) {
+            const pts = (r.weight === 'major') ? 3 : 1;
+            score += pts;
+            activeRules.push(r.name);
+          }
+        }
+        if (score > 0) {
+          scored.push({ chart: c, score, activeRules });
+        }
+      }
+      scored.sort((a, b) => b.score - a.score);
+
+      if (scored.length > 0) {
+        const top = scored[0];
+        const c = top.chart;
+        const ruleList = top.activeRules.slice(0, 3).join(' · ');
+        const dotCount = top.activeRules.length;
+
+        cotdHTML = `
+          <div style="margin-bottom:20px;padding:20px 24px;border-radius:8px;background:${darkMode ? 'rgba(0,214,74,0.04)' : 'rgba(0,180,60,0.04)'};border:1px solid ${darkMode ? 'rgba(0,214,74,0.12)' : 'rgba(0,180,60,0.12)'}">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${darkMode ? '#00D64A' : '#059669'}">Chart of the Day</span>
+              <span style="font-size:10px;color:var(--muted)">${dotCount} signal${dotCount > 1 ? 's' : ''} active</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+              <div>
+                <a href="#" onclick="selectView('${c.chart_tab}','${c.chart_key}');return false;" style="font-size:18px;font-weight:600;color:var(--graphite);text-decoration:none;border-bottom:2px solid ${darkMode ? 'rgba(0,214,74,0.3)' : 'rgba(0,180,60,0.3)'}">${c.chart_name} →</a>
+                <div style="margin-top:6px;font-size:12px;color:var(--muted)">${c.category} · ${ruleList}</div>
+              </div>
+              <div style="display:flex;gap:4px">
+                ${top.activeRules.map(() => '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00D64A"></span>').join('')}
+              </div>
+            </div>
+          </div>`;
+      }
+    }
+
+    let tableHTML = cotdHTML + '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
     tableHTML += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
     tableHTML += '<thead><tr style="border-bottom:1px solid var(--border)">';
     tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Chart</th>';
