@@ -836,6 +836,17 @@ document.getElementById('btn-log')?.addEventListener('click', () => {
   });
 })();
 
+// ── Window presets (for risk-adj, sharpe, correlation views)
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('win-preset')) {
+    const win = e.target.dataset.win;
+    document.querySelectorAll('.win-preset').forEach(b => b.classList.toggle('active', b.dataset.win === win));
+    const winInput = document.getElementById('rp-window');
+    if (winInput) winInput.value = win;
+    fetchCurrent();
+  }
+});
+
 // ── Granularity ───────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-gran]').forEach(btn => {
   btn.addEventListener('click', () => {
