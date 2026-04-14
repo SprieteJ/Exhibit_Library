@@ -508,7 +508,6 @@ const TABS = {
       ]},
       { label: "Price Performance", children: [
         { key:"btc-rolling",  label:"Rolling return",        sub:"BTC N-day rolling return (%).", src:"CoinGecko Pro — Wintermute OTC" },
-        { key:"btc-risk-adj", label:"Risk-adjusted performance", sub:"Rolling z-score of returns: BTC vs macro assets. Adjustable window.", src:"CoinGecko Pro + Yahoo Finance" },
         { key:"btc-drawdown", label:"Drawdown from ATH",     sub:"Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Moving Averages", children: [
@@ -864,7 +863,7 @@ const DEFAULT_SELECTIONS = {
 };
 
 const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev']);
-const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01', 'etf-net-flows': '2025-04-01', 'alt-rebase': '2025-04-01', 'alt-zscore-mom': '2025-01-01', 'etf-daily-bar': '2025-04-01', 'etf-weekly-bar': '2024-04-01', 'btc-dom-ma': '2023-04-01', 'btc-risk-adj': '2023-04-01'};
+const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01', 'etf-net-flows': '2025-04-01', 'alt-rebase': '2025-04-01', 'alt-zscore-mom': '2025-01-01', 'etf-daily-bar': '2025-04-01', 'etf-weekly-bar': '2024-04-01', 'btc-dom-ma': '2023-04-01', };
 
 async function selectView(tab, key) {
   if (_navAbort) try { _navAbort.abort(); } catch(e) {}
@@ -946,7 +945,7 @@ async function selectView(tab, key) {
   const AUTO_VIEWS = new Set([
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','sec-analysis-rebase',
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
-    'btc-bull','btc-realvol','btc-risk-adj','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
+    'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
@@ -980,7 +979,7 @@ async function selectView(tab, key) {
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
   'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
-  'btc-bull','btc-realvol','btc-risk-adj','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
+  'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
@@ -1222,7 +1221,7 @@ function buildRightPanel(tab, key) {
 
   if (!isBtcView && !isRRG) {
     // Long-history charts default to All; others default to 6M
-    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-dom-ma','btc-gold-ratio','btc-realvol','btc-risk-adj','btc-drawdown',
+    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-dom-ma','btc-gold-ratio','btc-realvol','btc-drawdown',
       'btc-funding','btc-funding-delta','alt-altseason','mac-stablecoin','sec-dominance']);
     const defaultDays = ALL_HISTORY_KEYS.has(key) ? 0 : 180;
     initDates('rp-from', 'rp-to', defaultDays);
@@ -1588,7 +1587,6 @@ async function fetchCurrent() {
       case 'sec-sharpe':     await fetchSectorSharpe(to); break;
       case 'btc-bull':       await fetchBtcBull(); break;
       case 'btc-realvol':    await fetchBtcRealvol(from, to); break;
-      case 'btc-risk-adj':   await fetchBtcRiskAdj(from, to); break;
       case 'btc-drawdown':   await fetchBtcDrawdownATH(from, to); break;
       case 'btc-gold-ratio': await fetchBtcGoldRatio(from, to); break;
       case 'btc-dom-ma':     await fetchBtcDominanceMa(from, to); break;
@@ -3669,92 +3667,6 @@ async function fetchBtcRealvol(from, to) {
 }
 
 // ── BTC: Drawdown from ATH ────────────────────────────────────────────────────
-
-// ── BTC: Risk-Adjusted Performance (z-score) ─────────────────────────────────
-async function fetchBtcRiskAdj(from, to) {
-  spinOn();
-  try {
-    const winEl = document.getElementById('rp-window');
-    const window = winEl?.value || '90';
-    const ALL_ASSETS = ['SPY','QQQ','IWM','TLT','GLD','BNO'];
-    const DEFAULT_VISIBLE = ['SPY', 'GLD'];
-
-    const data = await fetch(`/api/btc-risk-adjusted?from=${from}&to=${to}&window=${window}&symbols=${ALL_ASSETS.join(',')}`).then(r=>r.json());
-    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
-
-    // Common date axis
-    let allDates = new Set();
-    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
-    allDates = [...allDates].sort();
-
-    const datasets = [];
-
-    // BTC always first and visible
-    if (data.assets['BTC']) {
-      const a = data.assets['BTC'];
-      const dateMap = {};
-      a.dates.forEach((d, i) => dateMap[d] = a.zscore[i]);
-      datasets.push({
-        label: a.label, data: allDates.map(d => dateMap[d] ?? null),
-        borderColor: a.color, backgroundColor: 'transparent',
-        borderWidth: 2, pointRadius: 0, tension: 0.1, spanGaps: true, hidden: false,
-      });
-    }
-
-    // Macro assets
-    for (const [sym, a] of Object.entries(data.assets)) {
-      if (sym === 'BTC') continue;
-      const dateMap = {};
-      a.dates.forEach((d, i) => dateMap[d] = a.zscore[i]);
-      datasets.push({
-        label: a.label, data: allDates.map(d => dateMap[d] ?? null),
-        borderColor: a.color, backgroundColor: 'transparent',
-        borderWidth: 1.4, pointRadius: 0, tension: 0.1, spanGaps: true,
-        hidden: !DEFAULT_VISIBLE.includes(sym),
-      });
-    }
-
-    // Zero line
-    datasets.push({
-      label: 'Mean', data: allDates.map(() => 0),
-      borderColor: darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
-      borderWidth: 1, pointRadius: 0, borderDash: [4, 4],
-    });
-
-    mkChart('line', { labels: allDates, datasets }, {
-      scales: {
-        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
-          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
-        y: { ticks: { ...YTICK, callback: v => v.toFixed(1) + 'σ' }, grid: YGRID },
-      },
-      plugins: {
-        legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 },
-          onClick: function(e, legendItem, legend) {
-            if (legend.chart.data.datasets[legendItem.datasetIndex].label === 'Mean') return;
-            Chart.defaults.plugins.legend.onClick.call(this, e, legendItem, legend);
-          }
-        },
-      },
-    });
-
-    // Summary bar
-    const summaryDiv = document.getElementById('perf-row');
-    if (summaryDiv) {
-      const sorted = Object.entries(data.assets)
-        .map(([sym, a]) => ({ sym, label: a.label, current: a.current, color: a.color }))
-        .filter(a => a.current != null)
-        .sort((a, b) => b.current - a.current);
-
-      summaryDiv.innerHTML = sorted.map(a => {
-        const clr = a.current > 1 ? '#00D64A' : (a.current < -1 ? '#EC5B5B' : '#888');
-        return `<div class="perf-item"><span style="color:${a.color};font-weight:600">${a.label}</span> <span style="color:${clr}">${a.current > 0 ? '+' : ''}${a.current.toFixed(2)}σ</span></div>`;
-      }).join('');
-    }
-
-    const winLabels = {'30': '30d', '60': '60d', '90': '90d', '180': '6M', '365': '1Y'};
-    setTitle('Risk-Adjusted Performance (' + (winLabels[window] || window + 'd') + ' z-score)', 'Source: CoinGecko + Yahoo Finance · rolling z-score of log returns · click legend to toggle');
-  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
-}
 
 
 async function fetchBtcDrawdownATH(from, to) {
