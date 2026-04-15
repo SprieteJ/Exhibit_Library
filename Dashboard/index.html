@@ -848,6 +848,166 @@ document.addEventListener('click', function(e) {
   }
 });
 
+
+// ── Rule Zone Overlay System ──────────────────────────────────────────────────
+const RULE_HISTORY_CHARTS = ['btc-dom-ma','btc-funding','eth-btc-ratio','am-intracorr'];
+let _ruleHistoryData = null;
+let _ruleToggles = {};  // {ruleName: true/false}
+
+async function loadRuleOverlay(chartKey, from, to) {
+  // Check if this chart has rule history
+  if (!RULE_HISTORY_CHARTS.includes(chartKey)) {
+    document.getElementById('rule-toggles')?.remove();
+    return;
+  }
+
+  try {
+    const data = await fetch(`/api/rule-history?chart_key=${chartKey}&from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
+    if (!data?.rules?.length) return;
+    _ruleHistoryData = data;
+
+    // Initialize toggles (all on by default)
+    _ruleToggles = {};
+    for (const r of data.rules) {
+      _ruleToggles[r.name] = true;
+    }
+
+    // Build toggle buttons
+    renderRuleToggles(data.rules);
+
+    // Apply overlay to current chart
+    applyRuleZones();
+  } catch(e) {
+    if (e.name === 'AbortError') return;
+  }
+}
+
+function renderRuleToggles(rules) {
+  let container = document.getElementById('rule-toggles');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'rule-toggles';
+    container.style.cssText = 'padding:8px 0;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;border-top:0.5px solid var(--border)';
+    // Insert after the chart container
+    const chartWrap = document.getElementById('main-chart')?.parentElement;
+    if (chartWrap) chartWrap.appendChild(container);
+  }
+
+  container.innerHTML = '<span style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:4px 0;margin-right:4px">Rules</span>';
+
+  for (const r of rules) {
+    const isOn = _ruleToggles[r.name];
+    const wt = r.weight === 'major' ? '600' : '400';
+    const btn = document.createElement('button');
+    btn.style.cssText = `font-size:11px;font-weight:${wt};padding:3px 10px;border-radius:12px;border:1px solid ${isOn ? (darkMode ? 'rgba(0,214,74,0.4)' : 'rgba(0,180,60,0.4)') : 'var(--border)'};background:${isOn ? (darkMode ? 'rgba(0,214,74,0.08)' : 'rgba(0,180,60,0.06)') : 'transparent'};color:${isOn ? (darkMode ? '#5DCAA5' : '#059669') : 'var(--muted)'};cursor:pointer;transition:all 0.15s`;
+    btn.textContent = r.name;
+    btn.addEventListener('click', function() {
+      _ruleToggles[r.name] = !_ruleToggles[r.name];
+      renderRuleToggles(rules);
+      applyRuleZones();
+    });
+    container.appendChild(btn);
+  }
+
+  // Add "majority" mode button
+  const majBtn = document.createElement('button');
+  const allOn = Object.values(_ruleToggles).every(v => v);
+  majBtn.style.cssText = `font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid ${allOn ? (darkMode ? 'rgba(127,178,241,0.4)' : 'rgba(37,107,204,0.4)') : 'var(--border)'};background:${allOn ? (darkMode ? 'rgba(127,178,241,0.08)' : 'rgba(37,107,204,0.06)') : 'transparent'};color:${allOn ? (darkMode ? '#7Fb2F1' : '#2471CC') : 'var(--muted)'};cursor:pointer;margin-left:auto`;
+  majBtn.textContent = allOn ? '● majority' : '○ majority';
+  majBtn.addEventListener('click', function() {
+    const newState = !allOn;
+    for (const key of Object.keys(_ruleToggles)) _ruleToggles[key] = newState;
+    renderRuleToggles(rules);
+    applyRuleZones();
+  });
+  container.appendChild(majBtn);
+}
+
+function applyRuleZones() {
+  if (!chart || !_ruleHistoryData?.rules?.length) return;
+
+  // Remove existing zone annotations
+  if (chart.options.plugins.annotation) {
+    chart.options.plugins.annotation.annotations = {};
+  }
+
+  const rules = _ruleHistoryData.rules;
+  const activeRules = rules.filter(r => _ruleToggles[r.name]);
+  if (!activeRules.length) { chart.update('none'); return; }
+
+  // Get chart labels (dates)
+  const chartLabels = chart.data.labels || [];
+  if (!chartLabels.length) return;
+
+  // Determine green zones: majority of active (toggled-on) rules agree
+  // Build a date->score map
+  const dateScores = {};
+  const threshold = activeRules.length <= 2 ? 1 : Math.ceil(activeRules.length / 2);
+
+  for (const rule of activeRules) {
+    const dateMap = {};
+    rule.dates.forEach((d, i) => dateMap[d] = rule.active[i]);
+    for (const d of chartLabels) {
+      if (!(d in dateScores)) dateScores[d] = 0;
+      if (dateMap[d]) dateScores[d]++;
+    }
+  }
+
+  // Find contiguous green zones
+  const zones = [];
+  let zoneStart = null;
+  for (let i = 0; i < chartLabels.length; i++) {
+    const d = chartLabels[i];
+    const isGreen = (dateScores[d] || 0) >= threshold;
+    if (isGreen && zoneStart === null) {
+      zoneStart = i;
+    } else if (!isGreen && zoneStart !== null) {
+      zones.push([zoneStart, i - 1]);
+      zoneStart = null;
+    }
+  }
+  if (zoneStart !== null) zones.push([zoneStart, chartLabels.length - 1]);
+
+  // Apply as background color segments using the Chart.js dataset approach
+  // We'll use a custom plugin for background rectangles
+  const greenColor = darkMode ? 'rgba(0,214,74,0.06)' : 'rgba(0,180,60,0.06)';
+
+  // Store zones on chart for the plugin to read
+  chart._ruleZones = zones;
+  chart._ruleZoneColor = greenColor;
+
+  chart.update('none');
+}
+
+// Chart.js plugin to draw rule zone backgrounds
+const ruleZonePlugin = {
+  id: 'ruleZones',
+  beforeDraw(chart) {
+    if (!chart._ruleZones?.length) return;
+    const ctx = chart.ctx;
+    const xScale = chart.scales.x;
+    const yScale = chart.scales.y;
+    if (!xScale || !yScale) return;
+
+    ctx.save();
+    ctx.fillStyle = chart._ruleZoneColor || 'rgba(0,214,74,0.06)';
+
+    for (const [startIdx, endIdx] of chart._ruleZones) {
+      const x1 = xScale.getPixelForValue(startIdx);
+      const x2 = xScale.getPixelForValue(endIdx);
+      const y1 = yScale.top;
+      const y2 = yScale.bottom;
+      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+    }
+
+    ctx.restore();
+  }
+};
+
+// Register the plugin globally
+// Plugin registered after Chart.js loads below
+
+
 // ── Granularity ───────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-gran]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1867,6 +2027,13 @@ async function fetchCurrent() {
     drawChart(data, chartKeys, isCorr, isMom, isZscore, isMcap);
     updatePerf(data, chartKeys, isCorr, isMom, isZscore, isMcap);
     document.getElementById('chart-title').textContent = selected.join(' · ');
+    // Load rule overlay if applicable
+    const _ruleKey = activeView?.key;
+    if (_ruleKey && typeof RULE_HISTORY_CHARTS !== 'undefined' && RULE_HISTORY_CHARTS.includes(_ruleKey)) {
+      const _rf = document.getElementById('rp-from')?.value || '2022-01-01';
+      const _rt = document.getElementById('rp-to')?.value || new Date().toISOString().split('T')[0];
+      loadRuleOverlay(_ruleKey, _rf, _rt);
+    }
   } catch(e) {
     console.error(e);
     document.getElementById('chart-empty').style.display = 'flex';
