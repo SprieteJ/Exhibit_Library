@@ -5022,7 +5022,17 @@ async function fetchRegimePanel() {
     h += '</div>';
 
     container.innerHTML = h;
-    canvas.parentElement.appendChild(container);
+    // Force append to chart area and ensure visibility
+    const chartArea = document.getElementById('chart-area') || canvas.parentElement;
+    chartArea.appendChild(container);
+    container.style.display = 'block';
+    container.style.zIndex = '10';
+    // Also hide any chart-empty placeholder
+    const emptyEl = document.getElementById('chart-empty');
+    if (emptyEl) emptyEl.style.display = 'none';
+    // Hide perf row
+    const perfRow = document.getElementById('perf-row');
+    if (perfRow) perfRow.innerHTML = '';
     setTitle('Market Regime & Cycle Position', 'Live scoring from ' + (ccData?.charts?.length || 0) + ' indicators · green = active · grey = wired but inactive · red = not yet wired');
     document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
