@@ -4950,7 +4950,7 @@ async function fetchRegimePanel() {
       // Check each indicator
       const indRows = reg.indicators.map(ind => {
         let isLive = false;
-        let detail = ind.fallbackDesc;
+        let detail = ind.fallbackDesc || '';
 
         if (ind.chartKey && ind.ruleMatch) {
           const rule = isRuleActive(ind.chartKey, ind.ruleMatch);
