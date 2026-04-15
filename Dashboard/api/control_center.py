@@ -781,6 +781,236 @@ def handle_control_center(params):
     if alt_mcaps:
         charts.extend(_rules_ma_gap(alt_mcaps, "Altcoins", "altcoins", "Alt"))
     charts.extend(_rules_alt_share(cur))
+    charts.extend(_rules_altseason(cur))
+    charts.extend(_rules_intracorrelation(cur))
 
     conn.close()
     return {"updated": datetime.now().strftime("%Y-%m-%d %H:%M UTC"), "charts": charts}
+
+
+def _compute_zscore_series(values, lookback=30, z_window=365):
+    """Compute rolling z-score series for a list of values.
+    Returns list of z-scores aligned with input."""
+    changes = [None] * lookback
+    for i in range(lookback, len(values)):
+        changes.append(values[i] - values[i - lookback])
+
+    z_scores = [None] * len(values)
+    for i in range(z_window + lookback, len(values)):
+        window = [c for c in changes[i - z_window + 1:i + 1] if c is not None]
+        if len(window) < 180: continue
+        mean_c = sum(window) / len(window)
+        std_c = (sum((c - mean_c)**2 for c in window) / len(window)) ** 0.5
+        z_scores[i] = (changes[i] - mean_c) / std_c if std_c > 0 else 0
+    return z_scores
+
+
+def handle_rule_history(params):
+    """Return historical active/inactive time series for rules on a given chart.
+    Used by frontend to overlay green zones on charts."""
+    chart_key = params.get("chart_key", [""])[0]
+    date_from = params.get("from", ["2023-01-01"])[0]
+    date_to   = params.get("to", ["2099-01-01"])[0]
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    result = {"chart_key": chart_key, "rules": []}
+
+    if chart_key == "btc-dom-ma":
+        # ── BTC Dominance rules history ──
+        cur.execute("""
+            SELECT b.timestamp::date as dt,
+                   b.market_cap_usd / t.total_mcap_usd * 100 as dom
+            FROM marketcap_daily b
+            JOIN total_marketcap_daily t ON b.timestamp::date = t.timestamp::date
+            WHERE b.coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1)
+              AND b.market_cap_usd > 0 AND t.total_mcap_usd > 0
+            ORDER BY b.timestamp
+        """)
+        rows = cur.fetchall()
+        dates = [str(r['dt']) for r in rows]
+        doms = [float(r['dom']) for r in rows]
+        z_scores = _compute_zscore_series(doms, lookback=30, z_window=365)
+
+        # Filter to date range
+        filtered = [(d, z, dom) for d, z, dom in zip(dates, z_scores, doms) if d >= date_from and d <= date_to and z is not None]
+
+        result["rules"] = [
+            {"name": "Dominance falling (z < -1.0)", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[1] < -1.0 for f in filtered],
+             "values": [round(f[1], 3) for f in filtered]},
+            {"name": "Strong rotation (z < -1.5)", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[1] < -1.5 for f in filtered],
+             "values": [round(f[1], 3) for f in filtered]},
+            {"name": "Dominance rising (z > +1.0)", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[1] > 1.0 for f in filtered],
+             "values": [round(f[1], 3) for f in filtered]},
+            {"name": "Dominance extreme level", "weight": "minor",
+             "dates": [f[0] for f in filtered],
+             "active": [f[2] > 65 or f[2] < 40 for f in filtered],
+             "values": [round(f[2], 1) for f in filtered]},
+        ]
+
+    elif chart_key == "btc-funding":
+        # ── Funding rate rules history ──
+        cur.execute("""
+            SELECT timestamp::date as dt, AVG(funding_rate) as avg_rate
+            FROM funding_8h WHERE symbol = 'BTC' AND exchange = 'binance'
+            GROUP BY timestamp::date ORDER BY timestamp::date
+        """)
+        rows = cur.fetchall()
+        dates = [str(r['dt']) for r in rows]
+        rates = [float(r['avg_rate']) if r['avg_rate'] else 0 for r in rows]
+
+        # 7d rolling avg
+        fr_7d = [None] * 6
+        for i in range(6, len(rates)):
+            fr_7d.append(sum(rates[i-6:i+1]) / 7)
+
+        # Z-score of 7d avg
+        fr_z = [None] * len(rates)
+        for i in range(365 + 6, len(fr_7d)):
+            if fr_7d[i] is None: continue
+            window = [f for f in fr_7d[i-364:i+1] if f is not None]
+            if len(window) < 180: continue
+            mean_f = sum(window) / len(window)
+            std_f = (sum((f - mean_f)**2 for f in window) / len(window)) ** 0.5
+            fr_z[i] = (fr_7d[i] - mean_f) / std_f if std_f > 0 else 0
+
+        # Negative streak
+        neg_streaks = [0] * len(rates)
+        for i in range(len(rates)):
+            if rates[i] < 0:
+                neg_streaks[i] = (neg_streaks[i-1] + 1) if i > 0 else 1
+
+        # Filter
+        filtered = []
+        for i, d in enumerate(dates):
+            if d < date_from or d > date_to: continue
+            if fr_7d[i] is None: continue
+            filtered.append((d, fr_7d[i], fr_z[i], neg_streaks[i]))
+
+        result["rules"] = [
+            {"name": "Funding positive (> 0.01%)", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[1] > 0.0001 for f in filtered],
+             "values": [round(f[1] * 100, 5) for f in filtered]},
+            {"name": "Funding elevated (> 0.015%)", "weight": "minor",
+             "dates": [f[0] for f in filtered],
+             "active": [f[1] > 0.00015 for f in filtered],
+             "values": [round(f[1] * 100, 5) for f in filtered]},
+            {"name": "Funding z > 1.0", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[2] is not None and f[2] > 1.0 for f in filtered],
+             "values": [round(f[2], 3) if f[2] is not None else None for f in filtered]},
+            {"name": "Negative streak (5+ days)", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[3] >= 5 for f in filtered],
+             "values": [f[3] for f in filtered]},
+        ]
+
+    elif chart_key == "eth-btc-ratio":
+        # ── ETH/BTC rules history ──
+        cur.execute("""
+            SELECT e.timestamp::date as dt, e.price_usd / b.price_usd as ratio
+            FROM price_daily e
+            JOIN price_daily b ON e.timestamp::date = b.timestamp::date
+            WHERE e.symbol = 'ETH' AND b.symbol = 'BTC'
+              AND e.price_usd > 0 AND b.price_usd > 0
+            ORDER BY e.timestamp
+        """)
+        rows = cur.fetchall()
+        dates = [str(r['dt']) for r in rows]
+        ratios = [float(r['ratio']) for r in rows]
+
+        # 30d returns
+        ret_30d = [None] * 30
+        for i in range(30, len(ratios)):
+            ret_30d.append((ratios[i] / ratios[i-30] - 1) * 100 if ratios[i-30] > 0 else None)
+
+        # Z-score of 30d return
+        z_scores = [None] * len(ratios)
+        for i in range(395, len(ret_30d)):
+            if ret_30d[i] is None: continue
+            window = [r for r in ret_30d[i-364:i+1] if r is not None]
+            if len(window) < 180: continue
+            mean_r = sum(window) / len(window)
+            std_r = (sum((r - mean_r)**2 for r in window) / len(window)) ** 0.5
+            z_scores[i] = ((ret_30d[i] / 100) - (mean_r / 100)) / (std_r / 100) if std_r > 0 else 0
+
+        # Percentile
+        pctls = [None] * len(ratios)
+        for i in range(365, len(ratios)):
+            trail = sorted(ratios[i-364:i+1])
+            pctls[i] = sum(1 for r in trail if r <= ratios[i]) / len(trail) * 100
+
+        filtered = []
+        for i, d in enumerate(dates):
+            if d < date_from or d > date_to: continue
+            if ret_30d[i] is None: continue
+            filtered.append((d, ret_30d[i], z_scores[i], pctls[i]))
+
+        result["rules"] = [
+            {"name": "ETH/BTC rising (30d > +5%)", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[1] > 5 for f in filtered],
+             "values": [round(f[1], 2) for f in filtered]},
+            {"name": "ETH/BTC z > 0.5", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[2] is not None and f[2] > 0.5 for f in filtered],
+             "values": [round(f[2], 3) if f[2] is not None else None for f in filtered]},
+            {"name": "ETH/BTC falling (30d < -10%)", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[1] < -10 for f in filtered],
+             "values": [round(f[1], 2) for f in filtered]},
+            {"name": "ETH/BTC depressed", "weight": "minor",
+             "dates": [f[0] for f in filtered],
+             "active": [f[3] is not None and f[3] < 15 for f in filtered],
+             "values": [round(f[3], 1) if f[3] is not None else None for f in filtered]},
+        ]
+
+    elif chart_key == "alt-altseason":
+        # ── Altseason history ── (precomputed from asset registry)
+        # This is expensive so we return a simplified version
+        result["rules"] = [{"name": "Altseason (computed live)", "weight": "major",
+                           "dates": [], "active": [], "values": [],
+                           "note": "Altseason history requires heavy computation. Use CC for current state."}]
+
+    elif chart_key == "am-intracorr":
+        # ── Intracorrelation history ──
+        cur.execute("""
+            SELECT timestamp::date as dt, AVG(avg_corr) as corr
+            FROM alt_intracorr_daily WHERE avg_corr IS NOT NULL
+            GROUP BY timestamp::date ORDER BY timestamp::date
+        """)
+        rows = cur.fetchall()
+        dates = [str(r['dt']) for r in rows]
+        corrs = [float(r['corr']) for r in rows]
+
+        # 30d change
+        changes = [None] * 30
+        for i in range(30, len(corrs)):
+            changes.append(corrs[i] - corrs[i-30])
+
+        filtered = []
+        for i, d in enumerate(dates):
+            if d < date_from or d > date_to: continue
+            filtered.append((d, corrs[i], changes[i]))
+
+        result["rules"] = [
+            {"name": "Correlation rising (+0.10)", "weight": "major",
+             "dates": [f[0] for f in filtered],
+             "active": [f[2] is not None and f[2] > 0.10 for f in filtered],
+             "values": [round(f[2], 4) if f[2] is not None else None for f in filtered]},
+            {"name": "Extreme correlation (> 0.6)", "weight": "minor",
+             "dates": [f[0] for f in filtered],
+             "active": [f[1] > 0.6 for f in filtered],
+             "values": [round(f[1], 4) for f in filtered]},
+        ]
+
+    conn.close()
+    return result

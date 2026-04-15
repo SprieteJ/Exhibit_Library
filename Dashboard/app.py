@@ -34,7 +34,7 @@ from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_
                            handle_macro_btc_corr)
 from api.crypto_market import handle_total_mcap
 from api.etf      import (handle_etf_flows, handle_etf_flows_by_fund, handle_etf_flows_weekly, handle_etf_aum)
-from api.control_center import handle_control_center
+from api.control_center import handle_control_center, handle_rule_history
 from api.ethereum import (handle_eth_ma, handle_eth_ma_gap, handle_eth_200d_dev,
                            handle_eth_drawdown, handle_eth_mcap, handle_eth_btc_ratio,
                            handle_eth_ma_combined)
@@ -156,6 +156,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/etf-aum":          self.send_json(handle_etf_aum(params))
             elif p == "/api/etf-flows-weekly": self.send_json(handle_etf_flows_weekly(params))
             elif p == "/api/etf-flows-fund":   self.send_json(handle_etf_flows_by_fund(params))
+            elif p == "/api/rule-history":    self.send_json(handle_rule_history(params))
             elif p == "/api/control-center":    self.send_json(handle_control_center(params))
 
             elif p == "/api/eth-ma":            self.send_json(handle_eth_ma(params))
