@@ -490,6 +490,7 @@ const TABS = {
     label: "Control Center",
     groups: [
       { label: "Overview", children: [
+        { key:"cc-regime",    label:"Regime & cycle", sub:"Current market regime + cycle position tracker.", src:"Wintermute OTC" },
         { key:"cc-matrix",    label:"Flagged signals",    sub:"Only the indicators that need attention right now.", src:"Wintermute OTC — Multi-source" },
       ]},
       { label: "Deep Dive", children: [
@@ -1026,8 +1027,8 @@ async function selectView(tab, key) {
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   const AUTO_VIEWS = new Set([
-    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','sec-analysis-rebase',
-    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','sec-analysis-rebase',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1061,7 +1062,7 @@ async function selectView(tab, key) {
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
-  'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1687,6 +1688,7 @@ async function fetchCurrent() {
       case 'etf-weekly-bar': await fetchEtfWeeklyBar(from, to); break;
       case 'etf-total-aum': await fetchEtfTotalAum(from, to); break;
       case 'etf-net-flows': await fetchEtfNetFlows(from, to); break;
+      case 'cc-regime':     await fetchRegimePanel(); break;
       case 'cc-matrix':       await fetchControlCenter('flagged'); break;
       case 'cc-bitcoin':     await fetchControlCenter('bitcoin'); break;
       case 'cc-themes':      await fetchControlCenter('themes'); break;
@@ -4666,6 +4668,146 @@ async function fetchChartOfMonth() {
       selectView(c.chart_tab, c.chart_key);
     }
 
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
+}
+
+
+
+// ── Control Center: Regime & Cycle Panel ──────────────────────────────────────
+async function fetchRegimePanel() {
+  spinOn();
+  try {
+    if (chart) { chart.destroy(); chart = null; }
+    const canvas = document.getElementById('main-chart');
+    canvas.style.display = 'none';
+
+    let existing = document.getElementById('cc-matrix-container');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'cc-matrix-container';
+    container.style.cssText = 'position:absolute;inset:0;overflow-y:auto;padding:20px 24px;';
+
+    const red = darkMode ? '#F09595' : '#A32D2D';
+    const green = darkMode ? '#5DCAA5' : '#0F6E56';
+    const redBg = darkMode ? 'rgba(240,149,149,0.06)' : 'rgba(163,45,45,0.04)';
+    const greenBg = darkMode ? 'rgba(93,202,165,0.06)' : 'rgba(15,110,86,0.04)';
+    const mutedText = darkMode ? '#888' : '#888';
+    const borderCol = 'var(--border)';
+
+    // Status: false = red (not wired), true = green (live)
+    const regimes = [
+      { name: 'Risk-on expansion', tag: 'bullish alts', color: '#3B6D11', bgColor: '#EAF3DE', live: false,
+        indicators: [
+          { name: 'BTC dominance falling', desc: '30d change < -2pp', live: false },
+          { name: 'Altseason indicator > 60%', desc: '% alts outperforming BTC', live: false },
+          { name: 'Funding rate positive', desc: '> 0.01% avg', live: false },
+          { name: 'ETH/BTC ratio rising', desc: '30d > +5%', live: false },
+          { name: 'Alt intracorrelation rising', desc: 'Alts moving together up', live: false },
+        ]},
+      { name: 'BTC flight-to-quality', tag: 'btc dominance', color: '#185FA5', bgColor: '#E6F1FB', live: false,
+        indicators: [
+          { name: 'BTC dominance rising', desc: '30d change > +2pp', live: false },
+          { name: 'ETH/BTC ratio falling', desc: '30d < -5%', live: false },
+          { name: 'Alt share declining', desc: 'Alt mcap vs total', live: false },
+          { name: 'BTC ETF inflows, ETH flat', desc: 'ETF flow divergence', live: false },
+          { name: 'Alt intracorrelation high', desc: '> 0.5 — everything falling together', live: false },
+        ]},
+      { name: 'Deleveraging', tag: 'crisis', color: '#A32D2D', bgColor: '#FCEBEB', live: false,
+        indicators: [
+          { name: 'Funding flips negative', desc: '< -0.01%', live: false },
+          { name: 'Open interest dropping', desc: '> 15% drop in 7 days', live: false },
+          { name: 'Realized vol spiking', desc: '> 80% annualized', live: false },
+          { name: 'BTC-SPY correlation spiking', desc: '> 0.6', live: false },
+          { name: 'BTC drawdown velocity', desc: '> 10% drop in 7 days', live: false },
+        ]},
+      { name: 'Consolidation', tag: 'sideways', color: '#5F5E5A', bgColor: '#F1EFE8', live: false,
+        indicators: [
+          { name: 'Realized vol low', desc: '< 35% annualized', live: false },
+          { name: 'BTC drawdown mild', desc: 'Between -5% and -20%', live: false },
+          { name: 'Funding near zero', desc: '< 0.005%', live: false },
+          { name: 'Stablecoin supply growing', desc: 'Or stable', live: false },
+          { name: 'DVOL low', desc: '< 50', live: false },
+        ]},
+      { name: 'Macro risk-off', tag: 'external shock', color: '#854F0B', bgColor: '#FAEEDA', live: false,
+        indicators: [
+          { name: 'SPY/QQQ falling', desc: '30d return < -5%', live: false },
+          { name: 'DXY strengthening', desc: 'Rising trend', live: false },
+          { name: 'BTC-SPY correlation high', desc: '> 0.5 sustained', live: false },
+          { name: 'ETF outflows', desc: 'Net negative', live: false },
+          { name: 'VIX elevated', desc: '> 25', live: false },
+        ]},
+    ];
+
+    const cycleSteps = [
+      { step: 1, name: 'Liquidity conditions improve', desc: 'Monetary policy, fiscal policy, or both easing. DXY weakening, real yields falling.', live: false },
+      { step: 2, name: 'VCs raise capital', desc: 'New fund raises, deployment into crypto startups accelerates.', live: false },
+      { step: 3, name: 'Speculation demand increases', desc: 'DEX activity rising, DeFi loan demand growing, stablecoin supply expanding.', live: false },
+      { step: 4, name: 'Media covers crypto', desc: 'Mainstream financial media running crypto stories regularly.', live: false },
+      { step: 5, name: 'FOMO builds', desc: 'Media pulls in new speculators. More builders. More VC capital. More DeFi demand.', live: false },
+      { step: 6, name: 'DeFi boosts yields', desc: 'Projects compete for TVL by boosting yields. Attracts more speculation + arb.', live: false },
+      { step: 7, name: 'Rotation into alts & new projects', desc: 'Asset prices rise, investors chase beta. Drives more media and FOMO.', live: false },
+      { step: 8, name: 'New products & capital markets', desc: 'ETFs, IPOs, ICOs, VC investments, M&A activity surges.', live: false },
+      { step: 9, name: 'Leverage builds, complacency sets in', desc: 'Funding elevated, OI/mcap high, vol compressed. Everyone is long.', live: false },
+      { step: 10, name: 'Liquidity rolls over', desc: 'Markets sell off. DXY reverses. Next crypto winter begins.', live: false },
+    ];
+
+    let h = '';
+
+    // ── REGIME SECTION ──
+    h += '<div style="margin-bottom:32px">';
+    h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Market regime</div>';
+    h += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Each regime confirmed when 3 of 5 indicators align. All indicators below are <span style="color:' + red + ';font-weight:600">not yet wired</span> — they turn <span style="color:' + green + ';font-weight:600">green</span> as we plug them in.</div>';
+
+    for (const r of regimes) {
+      h += '<div style="margin-bottom:16px;border:0.5px solid ' + borderCol + ';border-radius:8px;overflow:hidden">';
+      // Header
+      h += '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:' + (darkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)') + '">';
+      h += '<span style="font-size:13px;font-weight:600;color:var(--graphite)">' + r.name + '</span>';
+      h += '<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:' + r.bgColor + ';color:' + r.color + '">' + r.tag + '</span>';
+      const liveCount = r.indicators.filter(i => i.live).length;
+      h += '<span style="margin-left:auto;font-size:11px;color:' + (liveCount >= 3 ? green : red) + '">' + liveCount + '/5</span>';
+      h += '</div>';
+      // Indicators
+      h += '<div style="padding:8px 16px 12px">';
+      for (const ind of r.indicators) {
+        const ic = ind.live ? green : red;
+        const ibg = ind.live ? greenBg : redBg;
+        const dot = ind.live ? '&#10003;' : '&#10007;';
+        h += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">';
+        h += '<span style="font-size:12px;color:' + ic + ';width:16px;text-align:center">' + dot + '</span>';
+        h += '<span style="font-size:12px;color:' + ic + ';font-weight:500">' + ind.name + '</span>';
+        h += '<span style="font-size:11px;color:var(--muted);margin-left:auto">' + ind.desc + '</span>';
+        h += '</div>';
+      }
+      h += '</div></div>';
+    }
+    h += '</div>';
+
+    // ── CYCLE BLUEPRINT ──
+    h += '<div>';
+    h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Crypto cycle blueprint</div>';
+    h += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">The 10 steps of a crypto cycle. Track where we are in the arc.</div>';
+
+    for (const s of cycleSteps) {
+      const ic = s.live ? green : red;
+      const dot = s.live ? '&#10003;' : '&#10007;';
+      const numBg = s.live ? greenBg : redBg;
+      h += '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid ' + borderCol + '">';
+      h += '<div style="width:28px;height:28px;border-radius:50%;background:' + numBg + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:' + ic + ';flex-shrink:0">' + s.step + '</div>';
+      h += '<div style="flex:1">';
+      h += '<div style="font-size:13px;font-weight:500;color:' + ic + '">' + s.name + '</div>';
+      h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + s.desc + '</div>';
+      h += '</div>';
+      h += '<span style="font-size:12px;color:' + ic + ';margin-top:4px">' + dot + '</span>';
+      h += '</div>';
+    }
+    h += '</div>';
+
+    container.innerHTML = h;
+    canvas.parentElement.appendChild(container);
+    setTitle('Market Regime & Cycle Position', 'All indicators red = not yet wired. Green = live and scoring.');
+    document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
 
