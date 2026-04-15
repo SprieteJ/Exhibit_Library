@@ -4677,10 +4677,12 @@ async function fetchChartOfMonth() {
 async function fetchRegimePanel() {
   spinOn();
   try {
+    // Fetch live CC data
+    const ccData = await fetch('/api/control-center', {signal: _navAbort?.signal}).then(r=>r.json());
+
     if (chart) { chart.destroy(); chart = null; }
     const canvas = document.getElementById('main-chart');
     canvas.style.display = 'none';
-
     let existing = document.getElementById('cc-matrix-container');
     if (existing) existing.remove();
 
@@ -4692,53 +4694,137 @@ async function fetchRegimePanel() {
     const green = darkMode ? '#5DCAA5' : '#0F6E56';
     const redBg = darkMode ? 'rgba(240,149,149,0.06)' : 'rgba(163,45,45,0.04)';
     const greenBg = darkMode ? 'rgba(93,202,165,0.06)' : 'rgba(15,110,86,0.04)';
-    const mutedText = darkMode ? '#888' : '#888';
     const borderCol = 'var(--border)';
 
-    // Status: false = red (not wired), true = green (live)
+    // Build a lookup from CC data: chart_key -> active rule names + details
+    const ccLookup = {};
+    if (ccData?.charts) {
+      for (const c of ccData.charts) {
+        if (!ccLookup[c.chart_key]) ccLookup[c.chart_key] = [];
+        for (const r of c.rules) {
+          ccLookup[c.chart_key].push({
+            name: r.name, active: r.active, detail: r.detail,
+            context: r.context, weight: r.weight, type: r.type
+          });
+        }
+      }
+    }
+
+    // Helper: check if a specific rule name is active in a chart
+    function isRuleActive(chartKey, ruleSubstring) {
+      const rules = ccLookup[chartKey] || [];
+      for (const r of rules) {
+        if (r.name.toLowerCase().includes(ruleSubstring.toLowerCase()) && r.active) return r;
+      }
+      return null;
+    }
+
+    // Helper: get detail for a rule
+    function getRuleDetail(chartKey, ruleSubstring) {
+      const rules = ccLookup[chartKey] || [];
+      for (const r of rules) {
+        if (r.name.toLowerCase().includes(ruleSubstring.toLowerCase())) return r;
+      }
+      return null;
+    }
+
+    // ── REGIME DEFINITIONS with mappings to CC rules ──
     const regimes = [
-      { name: 'Risk-on expansion', tag: 'bullish alts', color: '#3B6D11', bgColor: '#EAF3DE', live: false,
+      { name: 'Risk-on expansion', tag: 'bullish alts', color: '#3B6D11', bgColor: '#EAF3DE',
         indicators: [
-          { name: 'BTC dominance falling', desc: '30d change < -2pp', live: false },
-          { name: 'Altseason indicator > 60%', desc: '% alts outperforming BTC', live: false },
-          { name: 'Funding rate positive', desc: '> 0.01% avg', live: false },
-          { name: 'ETH/BTC ratio rising', desc: '30d > +5%', live: false },
-          { name: 'Alt intracorrelation rising', desc: 'Alts moving together up', live: false },
+          { label: 'BTC dominance falling', chartKey: 'btc-dom-ma', ruleMatch: 'dominance falling', fallbackDesc: '30d z < -1.0' },
+          { label: 'Altseason indicator > 60%', chartKey: null, ruleMatch: null, fallbackDesc: '% alts outperforming BTC' },
+          { label: 'Funding rate positive', chartKey: 'btc-funding', ruleMatch: 'funding positive', fallbackDesc: '> 0.01% avg' },
+          { label: 'ETH/BTC ratio rising', chartKey: 'eth-btc-ratio', ruleMatch: 'eth/btc rising', fallbackDesc: '30d > +5%' },
+          { label: 'Alt intracorrelation rising', chartKey: null, ruleMatch: null, fallbackDesc: 'Alts moving together up' },
         ]},
-      { name: 'BTC flight-to-quality', tag: 'btc dominance', color: '#185FA5', bgColor: '#E6F1FB', live: false,
+      { name: 'BTC flight-to-quality', tag: 'btc dominance', color: '#185FA5', bgColor: '#E6F1FB',
         indicators: [
-          { name: 'BTC dominance rising', desc: '30d change > +2pp', live: false },
-          { name: 'ETH/BTC ratio falling', desc: '30d < -5%', live: false },
-          { name: 'Alt share declining', desc: 'Alt mcap vs total', live: false },
-          { name: 'BTC ETF inflows, ETH flat', desc: 'ETF flow divergence', live: false },
-          { name: 'Alt intracorrelation high', desc: '> 0.5 — everything falling together', live: false },
+          { label: 'BTC dominance rising', chartKey: 'btc-dom-ma', ruleMatch: 'dominance rising', fallbackDesc: 'z > +1.0' },
+          { label: 'ETH/BTC ratio falling', chartKey: 'eth-btc-ratio', ruleMatch: 'falling sharply', fallbackDesc: '30d < -10%' },
+          { label: 'Alt share declining', chartKey: 'am-dominance', ruleMatch: 'alt share', fallbackDesc: 'Alt mcap vs total' },
+          { label: 'BTC ETF inflows, ETH flat', chartKey: null, ruleMatch: null, fallbackDesc: 'ETF flow divergence' },
+          { label: 'Alt intracorrelation high', chartKey: null, ruleMatch: null, fallbackDesc: '> 0.5 — everything falling together' },
         ]},
-      { name: 'Deleveraging', tag: 'crisis', color: '#A32D2D', bgColor: '#FCEBEB', live: false,
+      { name: 'Deleveraging', tag: 'crisis', color: '#A32D2D', bgColor: '#FCEBEB',
         indicators: [
-          { name: 'Funding flips negative', desc: '< -0.01%', live: false },
-          { name: 'Open interest dropping', desc: '> 15% drop in 7 days', live: false },
-          { name: 'Realized vol spiking', desc: '> 80% annualized', live: false },
-          { name: 'BTC-SPY correlation spiking', desc: '> 0.6', live: false },
-          { name: 'BTC drawdown velocity', desc: '> 10% drop in 7 days', live: false },
+          { label: 'Funding flips negative', chartKey: 'btc-funding', ruleMatch: 'negative streak', fallbackDesc: '5+ consecutive negative days' },
+          { label: 'Open interest dropping', chartKey: null, ruleMatch: null, fallbackDesc: '> 15% drop in 7 days' },
+          { label: 'Realized vol spiking', chartKey: null, ruleMatch: null, fallbackDesc: '> 80% annualized' },
+          { label: 'BTC-SPY correlation spiking', chartKey: null, ruleMatch: null, fallbackDesc: '> 0.6' },
+          { label: 'BTC drawdown velocity', chartKey: null, ruleMatch: null, fallbackDesc: '> 10% drop in 7 days' },
         ]},
-      { name: 'Consolidation', tag: 'sideways', color: '#5F5E5A', bgColor: '#F1EFE8', live: false,
+      { name: 'Consolidation', tag: 'sideways', color: '#5F5E5A', bgColor: '#F1EFE8',
         indicators: [
-          { name: 'Realized vol low', desc: '< 35% annualized', live: false },
-          { name: 'BTC drawdown mild', desc: 'Between -5% and -20%', live: false },
-          { name: 'Funding near zero', desc: '< 0.005%', live: false },
-          { name: 'Stablecoin supply growing', desc: 'Or stable', live: false },
-          { name: 'DVOL low', desc: '< 50', live: false },
+          { label: 'Realized vol low', chartKey: null, ruleMatch: null, fallbackDesc: '< 35% annualized' },
+          { label: 'BTC drawdown mild', chartKey: null, ruleMatch: null, fallbackDesc: 'Between -5% and -20%' },
+          { label: 'Funding near zero', chartKey: 'btc-funding', ruleMatch: null, fallbackDesc: '< 0.005%' },
+          { label: 'Stablecoin supply growing', chartKey: null, ruleMatch: null, fallbackDesc: 'Or stable' },
+          { label: 'DVOL low', chartKey: null, ruleMatch: null, fallbackDesc: '< 50' },
         ]},
-      { name: 'Macro risk-off', tag: 'external shock', color: '#854F0B', bgColor: '#FAEEDA', live: false,
+      { name: 'Macro risk-off', tag: 'external shock', color: '#854F0B', bgColor: '#FAEEDA',
         indicators: [
-          { name: 'SPY/QQQ falling', desc: '30d return < -5%', live: false },
-          { name: 'DXY strengthening', desc: 'Rising trend', live: false },
-          { name: 'BTC-SPY correlation high', desc: '> 0.5 sustained', live: false },
-          { name: 'ETF outflows', desc: 'Net negative', live: false },
-          { name: 'VIX elevated', desc: '> 25', live: false },
+          { label: 'SPY/QQQ falling', chartKey: null, ruleMatch: null, fallbackDesc: '30d return < -5%' },
+          { label: 'DXY strengthening', chartKey: null, ruleMatch: null, fallbackDesc: 'Rising trend' },
+          { label: 'BTC-SPY correlation high', chartKey: null, ruleMatch: null, fallbackDesc: '> 0.5 sustained' },
+          { label: 'ETF outflows', chartKey: null, ruleMatch: null, fallbackDesc: 'Net negative' },
+          { label: 'VIX elevated', chartKey: null, ruleMatch: null, fallbackDesc: '> 25' },
         ]},
     ];
 
+    let h = '';
+    h += '<div style="margin-bottom:32px">';
+    h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Market regime</div>';
+    h += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Each regime confirmed when 3 of 5 indicators align. Indicators turn <span style="color:' + green + ';font-weight:600">green</span> when live and active. <span style="color:' + red + ';font-weight:600">Red</span> = not yet wired or not currently active.</div>';
+
+    for (const reg of regimes) {
+      let liveCount = 0;
+
+      // Check each indicator
+      const indRows = reg.indicators.map(ind => {
+        let isLive = false;
+        let detail = ind.fallbackDesc;
+
+        if (ind.chartKey && ind.ruleMatch) {
+          const rule = isRuleActive(ind.chartKey, ind.ruleMatch);
+          if (rule) {
+            isLive = true;
+            detail = rule.detail;
+            liveCount++;
+          } else {
+            // Rule exists but not active — show current reading
+            const ruleData = getRuleDetail(ind.chartKey, ind.ruleMatch);
+            if (ruleData) detail = ruleData.detail;
+          }
+        }
+        return { label: ind.label, live: isLive, detail, wired: !!(ind.chartKey && ind.ruleMatch) };
+      });
+
+      const confirmed = liveCount >= 3;
+
+      h += '<div style="margin-bottom:16px;border:0.5px solid ' + borderCol + ';border-radius:8px;overflow:hidden' + (confirmed ? ';border-color:' + green : '') + '">';
+      h += '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:' + (confirmed ? greenBg : (darkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)')) + '">';
+      h += '<span style="font-size:13px;font-weight:600;color:var(--graphite)">' + reg.name + '</span>';
+      h += '<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:' + reg.bgColor + ';color:' + reg.color + '">' + reg.tag + '</span>';
+      h += '<span style="margin-left:auto;font-size:11px;font-weight:600;color:' + (liveCount >= 3 ? green : (liveCount > 0 ? '#E1C87E' : red)) + '">' + liveCount + '/5</span>';
+      if (confirmed) h += '<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:' + greenBg + ';color:' + green + ';font-weight:600">CONFIRMED</span>';
+      h += '</div>';
+
+      h += '<div style="padding:8px 16px 12px">';
+      for (const ind of indRows) {
+        const ic = ind.live ? green : (ind.wired ? '#888' : red);
+        const dot = ind.live ? '&#10003;' : (ind.wired ? '&#9679;' : '&#10007;');
+        h += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">';
+        h += '<span style="font-size:12px;color:' + ic + ';width:16px;text-align:center">' + dot + '</span>';
+        h += '<span style="font-size:12px;color:' + (ind.live ? green : 'var(--graphite)') + ';font-weight:' + (ind.live ? '600' : '400') + '">' + ind.label + '</span>';
+        h += '<span style="font-size:11px;font-family:var(--mono);color:var(--muted);margin-left:auto;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + detail + '</span>';
+        h += '</div>';
+      }
+      h += '</div></div>';
+    }
+    h += '</div>';
+
+    // ── CYCLE BLUEPRINT (stays manual for now) ──
     const cycleSteps = [
       { step: 1, name: 'Liquidity conditions improve', desc: 'Monetary policy, fiscal policy, or both easing. DXY weakening, real yields falling.', live: false },
       { step: 2, name: 'VCs raise capital', desc: 'New fund raises, deployment into crypto startups accelerates.', live: false },
@@ -4752,39 +4838,6 @@ async function fetchRegimePanel() {
       { step: 10, name: 'Liquidity rolls over', desc: 'Markets sell off. DXY reverses. Next crypto winter begins.', live: false },
     ];
 
-    let h = '';
-
-    // ── REGIME SECTION ──
-    h += '<div style="margin-bottom:32px">';
-    h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Market regime</div>';
-    h += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Each regime confirmed when 3 of 5 indicators align. All indicators below are <span style="color:' + red + ';font-weight:600">not yet wired</span> — they turn <span style="color:' + green + ';font-weight:600">green</span> as we plug them in.</div>';
-
-    for (const r of regimes) {
-      h += '<div style="margin-bottom:16px;border:0.5px solid ' + borderCol + ';border-radius:8px;overflow:hidden">';
-      // Header
-      h += '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:' + (darkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)') + '">';
-      h += '<span style="font-size:13px;font-weight:600;color:var(--graphite)">' + r.name + '</span>';
-      h += '<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:' + r.bgColor + ';color:' + r.color + '">' + r.tag + '</span>';
-      const liveCount = r.indicators.filter(i => i.live).length;
-      h += '<span style="margin-left:auto;font-size:11px;color:' + (liveCount >= 3 ? green : red) + '">' + liveCount + '/5</span>';
-      h += '</div>';
-      // Indicators
-      h += '<div style="padding:8px 16px 12px">';
-      for (const ind of r.indicators) {
-        const ic = ind.live ? green : red;
-        const ibg = ind.live ? greenBg : redBg;
-        const dot = ind.live ? '&#10003;' : '&#10007;';
-        h += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">';
-        h += '<span style="font-size:12px;color:' + ic + ';width:16px;text-align:center">' + dot + '</span>';
-        h += '<span style="font-size:12px;color:' + ic + ';font-weight:500">' + ind.name + '</span>';
-        h += '<span style="font-size:11px;color:var(--muted);margin-left:auto">' + ind.desc + '</span>';
-        h += '</div>';
-      }
-      h += '</div></div>';
-    }
-    h += '</div>';
-
-    // ── CYCLE BLUEPRINT ──
     h += '<div>';
     h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Crypto cycle blueprint</div>';
     h += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">The 10 steps of a crypto cycle. Track where we are in the arc.</div>';
@@ -4795,10 +4848,7 @@ async function fetchRegimePanel() {
       const numBg = s.live ? greenBg : redBg;
       h += '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid ' + borderCol + '">';
       h += '<div style="width:28px;height:28px;border-radius:50%;background:' + numBg + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:' + ic + ';flex-shrink:0">' + s.step + '</div>';
-      h += '<div style="flex:1">';
-      h += '<div style="font-size:13px;font-weight:500;color:' + ic + '">' + s.name + '</div>';
-      h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + s.desc + '</div>';
-      h += '</div>';
+      h += '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:' + ic + '">' + s.name + '</div><div style="font-size:11px;color:var(--muted);margin-top:2px">' + s.desc + '</div></div>';
       h += '<span style="font-size:12px;color:' + ic + ';margin-top:4px">' + dot + '</span>';
       h += '</div>';
     }
@@ -4806,11 +4856,10 @@ async function fetchRegimePanel() {
 
     container.innerHTML = h;
     canvas.parentElement.appendChild(container);
-    setTitle('Market Regime & Cycle Position', 'All indicators red = not yet wired. Green = live and scoring.');
+    setTitle('Market Regime & Cycle Position', 'Live scoring from ' + (ccData?.charts?.length || 0) + ' indicators · green = active · grey = wired but inactive · red = not yet wired');
     document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
-
 
 async function fetchControlCenter(mode) {
   const _v = _navVersion;
