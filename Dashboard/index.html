@@ -1187,8 +1187,8 @@ async function selectView(tab, key) {
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   const AUTO_VIEWS = new Set([
-    'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','sec-analysis-rebase',
-    'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','sec-analysis-rebase',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
     'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
@@ -1222,7 +1222,7 @@ async function selectView(tab, key) {
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
-  'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
+  'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
   'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
