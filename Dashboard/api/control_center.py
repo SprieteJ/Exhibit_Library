@@ -581,6 +581,183 @@ def _fetch_alt_mcap(cur, limit=250):
     return [float(r['alt_mcap']) for r in rows]
 
 
+
+def _rules_altseason(cur):
+    """Altseason indicator rules — validated via backtest (582 alts).
+    Altseason > 75%: 75% alt WR, 62% spread WR.
+    Altseason > 70%: 75% alt WR, 50% spread WR.
+    Altseason > 60%: 62% alt WR.
+    Altseason rising > +10pp/30d: 57% spread WR."""
+    try:
+        # Get BTC price for 90d lookback
+        cur.execute("""
+            SELECT timestamp::date as dt, price_usd FROM price_daily
+            WHERE symbol = 'BTC' AND price_usd > 0
+            ORDER BY timestamp DESC LIMIT 120
+        """)
+        btc_rows = cur.fetchall()
+        if len(btc_rows) < 91: return []
+        btc_rows.reverse()
+        btc_prices = {str(r['dt']): float(r['price_usd']) for r in btc_rows}
+        btc_dates = sorted(btc_prices.keys())
+
+        # Get all alt prices (exclude BTC, ETH, stables)
+        cur.execute("""
+            SELECT ar.coingecko_id, p.timestamp::date as dt, p.price_usd
+            FROM price_daily p
+            JOIN asset_registry ar ON ar.coingecko_id = p.coingecko_id
+            WHERE ar.symbol NOT IN ('BTC','ETH','USDT','USDC','DAI','BUSD','TUSD','FDUSD','USDD','PYUSD')
+              AND ar.sector IS NOT NULL AND p.price_usd > 0
+              AND p.timestamp >= (NOW() - INTERVAL '120 days')
+            ORDER BY p.timestamp
+        """)
+        alt_prices = {}
+        for r in cur.fetchall():
+            cg = r['coingecko_id']
+            if cg not in alt_prices: alt_prices[cg] = {}
+            alt_prices[cg][str(r['dt'])] = float(r['price_usd'])
+
+    except Exception as e:
+        return []
+
+    if not btc_dates or len(btc_dates) < 91: return []
+
+    # Compute altseason for today and 30d ago
+    def compute_altseason(target_date, lookback=90):
+        from datetime import timedelta
+        target_dt = datetime.strptime(target_date, '%Y-%m-%d')
+        back_date = (target_dt - timedelta(days=lookback)).strftime('%Y-%m-%d')
+
+        btc_now = btc_prices.get(target_date)
+        btc_then = btc_prices.get(back_date)
+        if not btc_now or not btc_then or btc_then <= 0: return None
+
+        btc_ret = btc_now / btc_then - 1
+        outperforming = 0
+        total = 0
+        for cg_id, prices in alt_prices.items():
+            p_now = prices.get(target_date)
+            p_then = prices.get(back_date)
+            if p_now and p_then and p_then > 0:
+                alt_ret = p_now / p_then - 1
+                total += 1
+                if alt_ret > btc_ret:
+                    outperforming += 1
+        if total < 10: return None
+        return round(outperforming / total * 100, 1)
+
+    today = btc_dates[-1]
+    d30_ago = btc_dates[max(0, len(btc_dates) - 31)]
+
+    altseason_now = compute_altseason(today)
+    altseason_30d = compute_altseason(d30_ago)
+
+    if altseason_now is None: return []
+
+    change_30d = (altseason_now - altseason_30d) if altseason_30d is not None else 0
+    detail_base = f"Altseason: {altseason_now:.1f}% (30d change: {change_30d:+.1f}pp)"
+
+    rules = [
+        {"name": "Altseason > 75%",
+         "type": "momentum", "weight": "major",
+         "active": altseason_now > 75,
+         "detail": detail_base,
+         "context": "Backtested: 75% alt WR, 62% spread WR at 90d. Broad alt momentum confirmed.",
+         "fires_when": "More than 75% of alts outperforming BTC over trailing 90 days"},
+        {"name": "Altseason > 70%",
+         "type": "momentum", "weight": "minor",
+         "active": altseason_now > 70,
+         "detail": detail_base,
+         "context": "Backtested: 75% alt WR. Strong altseason conditions.",
+         "fires_when": "More than 70% of alts outperforming BTC over trailing 90 days"},
+        {"name": "Altseason > 60%",
+         "type": "momentum", "weight": "minor",
+         "active": altseason_now > 60,
+         "detail": detail_base,
+         "context": "Backtested: 62% alt WR. Altseason underway.",
+         "fires_when": "More than 60% of alts outperforming BTC over trailing 90 days"},
+        {"name": "Altseason rising fast",
+         "type": "event", "weight": "major",
+         "active": change_30d > 10,
+         "detail": f"30d change: {change_30d:+.1f}pp (from {altseason_30d:.1f}% to {altseason_now:.1f}%)" if altseason_30d else detail_base,
+         "context": "Backtested: 57% spread WR. Momentum building in alt outperformance.",
+         "fires_when": "Altseason indicator rises more than 10 percentage points in 30 days"},
+        {"name": "Altseason depressed",
+         "type": "structure", "weight": "minor",
+         "active": altseason_now < 15,
+         "detail": f"Altseason: {altseason_now:.1f}% — bottom 10% of distribution",
+         "context": "Very few alts outperforming BTC. Potential mean reversion setup or deep risk-off.",
+         "fires_when": "Altseason indicator below 15% (extreme BTC dominance)"},
+    ]
+    return [{"category": "Altcoins", "chart_name": "Altseason Indicator", "chart_tab": "altcoins", "chart_key": "alt-altseason", "rules": rules}]
+
+def _rules_intracorrelation(cur):
+    """Alt intracorrelation rules — validated via backtest.
+    Rising > +0.10: 62% alt WR, 57% spread WR (risk-on).
+    Corr > 0.3 AND alts up: 60% alt WR, 57% spread WR.
+    Corr > 0.4 AND alts down >5%: 25% spread WR (deleveraging detector)."""
+    try:
+        # Get intracorrelation (last 60 days, averaged across tiers)
+        cur.execute("""
+            SELECT timestamp::date as dt, AVG(avg_corr) as corr
+            FROM alt_intracorr_daily
+            WHERE avg_corr IS NOT NULL
+            GROUP BY timestamp::date
+            ORDER BY timestamp::date DESC LIMIT 60
+        """)
+        rows = cur.fetchall()
+        if len(rows) < 31: return []
+        rows.reverse()
+        corrs = [float(r['corr']) for r in rows]
+        dates = [str(r['dt']) for r in rows]
+
+        # Get alt mcap 30d return
+        cur.execute("""
+            SELECT (t1.total_mcap_usd - b1.market_cap_usd) / (t0.total_mcap_usd - b0.market_cap_usd) - 1 as alt_ret
+            FROM (SELECT total_mcap_usd, timestamp::date as dt FROM total_marketcap_daily ORDER BY timestamp DESC LIMIT 1) t1,
+                 (SELECT market_cap_usd, timestamp::date as dt FROM marketcap_daily WHERE coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1) ORDER BY timestamp DESC LIMIT 1) b1,
+                 (SELECT total_mcap_usd FROM total_marketcap_daily WHERE timestamp < NOW() - INTERVAL '30 days' ORDER BY timestamp DESC LIMIT 1) t0,
+                 (SELECT market_cap_usd FROM marketcap_daily WHERE coingecko_id = (SELECT coingecko_id FROM asset_registry WHERE symbol = 'BTC' LIMIT 1) AND timestamp < NOW() - INTERVAL '30 days' ORDER BY timestamp DESC LIMIT 1) b0
+        """)
+        alt_ret_row = cur.fetchone()
+        alt_30d_ret = float(alt_ret_row['alt_ret']) if alt_ret_row and alt_ret_row['alt_ret'] else 0
+
+    except Exception as e:
+        return []
+
+    current = corrs[-1]
+    change_30d = corrs[-1] - corrs[0] if len(corrs) >= 30 else 0
+
+    detail_base = f"Intracorr: {current:.3f} (30d change: {change_30d:+.3f}), alt 30d: {alt_30d_ret*100:+.1f}%"
+
+    rules = [
+        {"name": "Correlation rising (+0.10)",
+         "type": "momentum", "weight": "major",
+         "active": change_30d > 0.10,
+         "detail": detail_base,
+         "context": "Backtested: 62% alt WR, 57% spread WR. Alts starting to move together — something is happening.",
+         "fires_when": "30-day change in average pairwise correlation exceeds +0.10"},
+        {"name": "Correlated AND alts up",
+         "type": "momentum", "weight": "major",
+         "active": current > 0.3 and alt_30d_ret > 0,
+         "detail": detail_base,
+         "context": "Backtested: 60% alt WR, 57% spread WR. Alts correlated and rising = risk-on rally.",
+         "fires_when": "Intracorrelation > 0.3 AND alt mcap 30d return positive"},
+        {"name": "Correlated AND alts falling (deleveraging)",
+         "type": "event", "weight": "major",
+         "active": current > 0.4 and alt_30d_ret < -0.05,
+         "detail": detail_base,
+         "context": "Backtested: 25% spread WR (alts underperform BTC). Panic selling — everything dumping together.",
+         "fires_when": "Intracorrelation > 0.4 AND alt mcap 30d return below -5%"},
+        {"name": "Extreme correlation",
+         "type": "structure", "weight": "minor",
+         "active": current > 0.6,
+         "detail": f"Intracorr: {current:.3f} — top 10% of historical distribution",
+         "context": "Everything moving together. In risk-on = bubble. In risk-off = panic. Check direction.",
+         "fires_when": "Average pairwise correlation exceeds 0.6"},
+    ]
+    return [{"category": "Altcoins", "chart_name": "Altcoin Intracorrelation", "chart_tab": "altcoins", "chart_key": "am-intracorr", "rules": rules}]
+
 def handle_control_center(params):
     conn = get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

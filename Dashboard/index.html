@@ -4733,10 +4733,10 @@ async function fetchRegimePanel() {
       { name: 'Risk-on expansion', tag: 'bullish alts', color: '#3B6D11', bgColor: '#EAF3DE',
         indicators: [
           { label: 'BTC dominance falling', chartKey: 'btc-dom-ma', ruleMatch: 'dominance falling', fallbackDesc: '30d z < -1.0' },
-          { label: 'Altseason indicator > 60%', chartKey: null, ruleMatch: null, fallbackDesc: '% alts outperforming BTC' },
+          { label: 'Altseason elevated', chartKey: 'alt-altseason', ruleMatch: 'altseason > 75', fallbackDesc: '> 75% alts outperforming BTC' },
           { label: 'Funding rate positive', chartKey: 'btc-funding', ruleMatch: 'funding positive', fallbackDesc: '> 0.01% avg' },
           { label: 'ETH/BTC ratio rising', chartKey: 'eth-btc-ratio', ruleMatch: 'eth/btc rising', fallbackDesc: '30d > +5%' },
-          { label: 'Alt intracorrelation rising', chartKey: null, ruleMatch: null, fallbackDesc: 'Alts moving together up' },
+          { label: 'Alt intracorrelation rising', chartKey: 'am-intracorr', ruleMatch: 'correlation rising', fallbackDesc: 'Rising > +0.10' },
         ]},
       { name: 'BTC flight-to-quality', tag: 'btc dominance', color: '#185FA5', bgColor: '#E6F1FB',
         indicators: [
@@ -4744,7 +4744,7 @@ async function fetchRegimePanel() {
           { label: 'ETH/BTC ratio falling', chartKey: 'eth-btc-ratio', ruleMatch: 'falling sharply', fallbackDesc: '30d < -10%' },
           { label: 'Alt share declining', chartKey: 'am-dominance', ruleMatch: 'alt share', fallbackDesc: 'Alt mcap vs total' },
           { label: 'BTC ETF inflows, ETH flat', chartKey: null, ruleMatch: null, fallbackDesc: 'ETF flow divergence' },
-          { label: 'Alt intracorrelation high', chartKey: null, ruleMatch: null, fallbackDesc: '> 0.5 — everything falling together' },
+          { label: 'Alt correlated + falling', chartKey: 'am-intracorr', ruleMatch: 'correlated and alts falling', fallbackDesc: 'Corr > 0.4 AND alts down' },
         ]},
       { name: 'Deleveraging', tag: 'crisis', color: '#A32D2D', bgColor: '#FCEBEB',
         indicators: [
