@@ -704,6 +704,35 @@ const TABS = {
       { label: "Overview", children: [
         { key:"data-status", label:"Database status", sub:"All datasets with row counts, date ranges, and staleness.", src:"Internal" },
       ]},
+      { label: "Market Data", children: [
+        { key:"data-status", label:"Price (Daily)", sub:"584 assets, daily OHLC from CoinGecko Pro.", src:"CoinGecko" },
+        { key:"data-status", label:"Price (Hourly)", sub:"584 assets, hourly prices from CoinGecko Pro.", src:"CoinGecko" },
+        { key:"data-status", label:"Market Cap", sub:"584 assets, daily market cap.", src:"CoinGecko" },
+        { key:"data-status", label:"Volume", sub:"584 assets, daily trading volume.", src:"CoinGecko" },
+        { key:"data-status", label:"Total Crypto Mcap", sub:"Global crypto market cap.", src:"CoinGecko" },
+        { key:"data-status", label:"Alt Intracorrelation", sub:"Average pairwise 30d correlation for top 25/50 alts.", src:"Computed" },
+      ]},
+      { label: "Perpetuals", children: [
+        { key:"data-status", label:"Funding Rate", sub:"383 symbols, 8h funding from Binance + Bybit.", src:"Binance/Bybit" },
+        { key:"data-status", label:"Open Interest (Daily)", sub:"356 symbols, daily OI.", src:"Binance/Bybit" },
+        { key:"data-status", label:"Open Interest (Hourly)", sub:"356 symbols, hourly OI.", src:"Binance/Bybit" },
+        { key:"data-status", label:"Long/Short Ratio", sub:"355 symbols, account ratio.", src:"Binance/Bybit" },
+      ]},
+      { label: "Derivatives", children: [
+        { key:"data-status", label:"DVOL (Implied Vol)", sub:"BTC + ETH Deribit DVOL index.", src:"Deribit" },
+        { key:"data-status", label:"Options (BTC/ETH)", sub:"Daily aggregate options snapshot.", src:"Deribit" },
+        { key:"data-status", label:"Options Instruments", sub:"Per-instrument options data (~1600/day).", src:"Deribit" },
+      ]},
+      { label: "ETFs", children: [
+        { key:"data-status", label:"ETF AUM", sub:"17 BTC + ETH ETF total assets.", src:"yfinance" },
+        { key:"data-status", label:"ETF Flows", sub:"Daily net flows per ETF ticker.", src:"Farside" },
+      ]},
+      { label: "Miscellaneous", children: [
+        { key:"data-status", label:"Macro Assets (Daily)", sub:"29 tickers: SPY, QQQ, GLD, DXY, VIX, etc.", src:"yfinance" },
+        { key:"data-status", label:"Macro Assets (Hourly)", sub:"29 tickers, hourly.", src:"yfinance" },
+        { key:"data-status", label:"On-chain (BTC)", sub:"HashRate + Active Addresses from CoinMetrics.", src:"CoinMetrics" },
+        { key:"data-status", label:"Asset Registry", sub:"584 assets with sectors and metadata.", src:"Internal" },
+      ]},
     ]
   },
 };
