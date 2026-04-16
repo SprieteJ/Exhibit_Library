@@ -4844,13 +4844,13 @@ async function fetchChartOfMonth() {
 function navigateToChart(chartKey) {
   for (var t in TABS) {
     var tab = TABS[t];
-    if (tab.children) {
-      for (var g in tab.children) {
-        var group = tab.children[g];
-        if (Array.isArray(group)) {
-          for (var i = 0; i < group.length; i++) {
-            if (group[i].key === chartKey) {
-              selectView(group[i]);
+    if (tab.groups) {
+      for (var gi = 0; gi < tab.groups.length; gi++) {
+        var grp = tab.groups[gi];
+        if (grp.children) {
+          for (var ci = 0; ci < grp.children.length; ci++) {
+            if (grp.children[ci].key === chartKey) {
+              selectView(grp.children[ci]);
               return;
             }
           }
