@@ -1229,6 +1229,13 @@ const SELECTION_KEYS = new Set([
 
 function buildRightPanel(tab, key) {
   const rp          = document.getElementById('right-panel');
+  // Hide right panel entirely for Control Center views
+  if (key && key.startsWith('cc-')) {
+    rp.innerHTML = '';
+    rp.style.display = 'none';
+    return;
+  }
+  rp.style.display = '';
   const isBtcView   = key === 'btc-epochs' || key === 'btc-cycles' || key === 'btc-tradfi' || key === 'btc-bull';
   const isTradFi   = key === 'btc-tradfi';
   const isBubble    = key === 'ana-bubble';
