@@ -1352,7 +1352,7 @@ function buildRightPanel(tab, key) {
         <label>days after event</label>
       </div>
     </div>`;
-  } else if (isNewAuto && !isSelChart) {
+  } else if (isNewAuto && !isSelChart && !key.startsWith('cc-')) {
     // Auto-view with date range panel
     html += `<div class="rp-block">
       <div class="rp-label">Period</div>
