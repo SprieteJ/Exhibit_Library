@@ -702,25 +702,36 @@ const TABS = {
     label: "Data",
     groups: [
       { label: "Overview", children: [
-        { key:"data-status", label:"All datasets", sub:"Row counts, date ranges, and staleness across all tables.", src:"Internal" },
+        { key:"data-status", label:"Database status", sub:"All datasets with row counts, date ranges, and staleness.", src:"Internal" },
       ]},
-      { label: "Markets", children: [
-        { key:"data-markets", label:"Market data", sub:"Price, market cap, volume — 584 assets.", src:"CoinGecko" },
+      { label: "Market Data", children: [
+        { key:"data-status", label:"Price (Daily)", sub:"584 assets, daily OHLC from CoinGecko Pro.", src:"CoinGecko" },
+        { key:"data-status", label:"Price (Hourly)", sub:"584 assets, hourly prices from CoinGecko Pro.", src:"CoinGecko" },
+        { key:"data-status", label:"Market Cap", sub:"584 assets, daily market cap.", src:"CoinGecko" },
+        { key:"data-status", label:"Volume", sub:"584 assets, daily trading volume.", src:"CoinGecko" },
+        { key:"data-status", label:"Total Crypto Mcap", sub:"Global crypto market cap.", src:"CoinGecko" },
+        { key:"data-status", label:"Alt Intracorrelation", sub:"Average pairwise 30d correlation for top 25/50 alts.", src:"Computed" },
       ]},
       { label: "Perpetuals", children: [
-        { key:"data-perps", label:"Perps data", sub:"Funding, OI, long/short ratio — Binance + Bybit.", src:"Binance/Bybit" },
+        { key:"data-status", label:"Funding Rate", sub:"383 symbols, 8h funding from Binance + Bybit.", src:"Binance/Bybit" },
+        { key:"data-status", label:"Open Interest (Daily)", sub:"356 symbols, daily OI.", src:"Binance/Bybit" },
+        { key:"data-status", label:"Open Interest (Hourly)", sub:"356 symbols, hourly OI.", src:"Binance/Bybit" },
+        { key:"data-status", label:"Long/Short Ratio", sub:"355 symbols, account ratio.", src:"Binance/Bybit" },
       ]},
-      { label: "Options", children: [
-        { key:"data-options", label:"Options data", sub:"DVOL, OI snapshot, per-instrument — Deribit.", src:"Deribit" },
+      { label: "Derivatives", children: [
+        { key:"data-status", label:"DVOL (Implied Vol)", sub:"BTC + ETH Deribit DVOL index.", src:"Deribit" },
+        { key:"data-status", label:"Options (BTC/ETH)", sub:"Daily aggregate options snapshot.", src:"Deribit" },
+        { key:"data-status", label:"Options Instruments", sub:"Per-instrument options data (~1600/day).", src:"Deribit" },
       ]},
       { label: "ETFs", children: [
-        { key:"data-etf", label:"ETF data", sub:"AUM and flows for BTC + ETH ETFs.", src:"yfinance / Farside" },
-      ]},
-      { label: "Macro", children: [
-        { key:"data-macro", label:"Macro data", sub:"29 tickers: equities, rates, FX, commodities.", src:"yfinance" },
+        { key:"data-status", label:"ETF AUM", sub:"17 BTC + ETH ETF total assets.", src:"yfinance" },
+        { key:"data-status", label:"ETF Flows", sub:"Daily net flows per ETF ticker.", src:"Farside" },
       ]},
       { label: "Miscellaneous", children: [
-        { key:"data-misc", label:"On-chain + misc", sub:"BTC on-chain, intracorrelation, asset registry.", src:"CoinMetrics / Internal" },
+        { key:"data-status", label:"Macro Assets (Daily)", sub:"29 tickers: SPY, QQQ, GLD, DXY, VIX, etc.", src:"yfinance" },
+        { key:"data-status", label:"Macro Assets (Hourly)", sub:"29 tickers, hourly.", src:"yfinance" },
+        { key:"data-status", label:"On-chain (BTC)", sub:"HashRate + Active Addresses from CoinMetrics.", src:"CoinMetrics" },
+        { key:"data-status", label:"Asset Registry", sub:"584 assets with sectors and metadata.", src:"Internal" },
       ]},
     ]
   },
@@ -1208,7 +1219,7 @@ async function selectView(tab, key) {
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status','data-markets','data-perps','data-options','data-etf','data-macro','data-misc',
+    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status',
   ]);
   if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
@@ -1242,7 +1253,7 @@ const NEW_AUTO_KEYS = new Set([
   'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status','data-markets','data-perps','data-options','data-etf','data-macro','data-misc',
+  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status',
 ]);
 const SELECTION_KEYS = new Set([
   'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
@@ -1907,13 +1918,7 @@ async function fetchCurrent() {
       case 'mac-risk':       await fetchMacroRisk(from, to); break;
       case 'mac-real-yields': await fetchMacroRealYields(from, to); break;
       case 'mac-stablecoin': await fetchMacroStablecoin(from, to); break;
-      case 'data-status':   await fetchDataStatus('all'); break;
-      case 'data-markets':  await fetchDataStatus('market_data'); break;
-      case 'data-perps':    await fetchDataStatus('perps'); break;
-      case 'data-options':  await fetchDataStatus('derivatives'); break;
-      case 'data-etf':      await fetchDataStatus('etf'); break;
-      case 'data-macro':    await fetchDataStatus('macro'); break;
-      case 'data-misc':     await fetchDataStatus('misc'); break;
+      case 'data-status': await fetchDataStatus(); break;
     }
     document.getElementById('chart-spin').classList.remove('on');
     return;
@@ -4869,7 +4874,7 @@ async function fetchChartOfMonth() {
 
 // ── Control Center: Regime & Cycle Panel ──────────────────────────────────────
 
-async function fetchDataStatus(filterCat) {
+async function fetchDataStatus() {
   spinOn();
   try {
     var data = await fetch('/api/data-status', {signal: _navAbort?.signal}).then(function(r){return r.json()});
@@ -4885,29 +4890,24 @@ async function fetchDataStatus(filterCat) {
     container.style.cssText = 'width:100%;height:100%;overflow-y:auto;padding:20px 24px;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:5;';
 
     var categories = {
-      'market_data': {label: 'Markets'},
-      'perps':       {label: 'Perpetuals'},
-      'derivatives': {label: 'Options'},
-      'etf':         {label: 'ETFs'},
-      'macro':       {label: 'Macro'},
-      'misc':        {label: 'Miscellaneous'}
+      'market_data': {label: 'Market Data', icon: '📊'},
+      'perps': {label: 'Perpetuals', icon: '📈'},
+      'derivatives': {label: 'Derivatives', icon: '🎯'},
+      'etf': {label: 'ETFs', icon: '🏦'},
+      'misc': {label: 'Miscellaneous', icon: '📁'}
     };
 
     var datasets = data.datasets || [];
     var borderCol = 'var(--border)';
     var h = '';
 
-    var catsToShow = filterCat === 'all' || !filterCat ? Object.keys(categories) : [filterCat];
-
-    for (var ci = 0; ci < catsToShow.length; ci++) {
-      var catKey = catsToShow[ci];
+    for (var catKey in categories) {
       var cat = categories[catKey];
-      if (!cat) continue;
       var catData = datasets.filter(function(d) { return d.category === catKey; });
       if (!catData.length) continue;
 
       h += '<div style="margin-bottom:24px">';
-      h += '<div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">' + cat.label + '</div>';
+      h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">' + cat.icon + ' ' + cat.label + '</div>';
 
       h += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
       h += '<thead><tr style="border-bottom:1px solid ' + borderCol + '">';
@@ -4959,8 +4959,7 @@ async function fetchDataStatus(filterCat) {
     if (emptyEl) emptyEl.style.display = 'none';
     var perfRow = document.getElementById('perf-row');
     if (perfRow) perfRow.innerHTML = '';
-    var titleLabel = (!filterCat || filterCat === 'all') ? 'Database Status' : (categories[filterCat] ? categories[filterCat].label + ' — Data Status' : 'Database Status');
-    setTitle(titleLabel, liveCount + ' live · ' + staleCount + ' stale · ' + datasets.length + ' datasets');
+    setTitle('Database Status', liveCount + ' live · ' + staleCount + ' stale · ' + datasets.length + ' datasets');
     document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
