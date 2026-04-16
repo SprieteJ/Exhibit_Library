@@ -5034,6 +5034,13 @@ async function fetchRegimePanel() {
         navigateToChart(el.dataset.ck);
       }
     });
+    // Add click handlers for regime links
+    chartArea.addEventListener('click', function(e) {
+      var el = e.target.closest('.regime-link');
+      if (el && el.dataset.ck) {
+        navigateToChart(el.dataset.ck);
+      }
+    });
     setTitle('Market Regime & Cycle Position', 'Live scoring from ' + (ccData.charts ? ccData.charts.length : 0) + ' indicators');
     document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
