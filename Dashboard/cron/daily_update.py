@@ -1261,6 +1261,289 @@ def update_onchain():
         print(f"  +{n} rows inserted")
 
 
+
+
+def update_total_marketcap():
+    """Fetch total crypto market cap from CoinGecko /global endpoint."""
+    print("\n[Total Mcap] Updating total_marketcap_daily...")
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT MAX(timestamp) FROM total_marketcap_daily")
+    last = cur.fetchone()[0]
+    conn.close()
+
+    # CoinGecko /global/market_cap_chart gives historical total mcap
+    # But simpler: use /global for today's value
+    # For backfill we'd need /global/market_cap_chart?days=30
+    try:
+        days_back = 30
+        if last:
+            delta = (datetime.now(timezone.utc) - last.replace(tzinfo=timezone.utc if last.tzinfo is None else last.tzinfo)).days
+            days_back = min(max(delta + 2, 2), 365)
+
+        data = cg_get(f"{CG_BASE}/global/market_cap_chart", {"days": str(days_back), "vs_currency": "usd"})
+        mcap_points = data.get("market_cap_chart", {}).get("market_cap", [])
+
+        if not mcap_points:
+            print("  No data from CoinGecko"); return
+
+        rows = []
+        for ts_ms, val in mcap_points:
+            dt = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc)
+            rows.append({
+                "timestamp": dt.strftime("%Y-%m-%d"),
+                "total_mcap_usd": float(val),
+                "source": "coingecko",
+                "ingested_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            })
+
+        df = pd.DataFrame(rows)
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+        n = bulk_upsert("total_marketcap_daily", df, ["timestamp"])
+        print(f"  +{n} rows inserted ({len(rows)} fetched)")
+    except Exception as e:
+        print(f"  ERROR: {e}")
+
+
+
+def update_intracorrelation():
+    """Compute alt intracorrelation from price_daily. 
+    Calculates average pairwise 30d rolling correlation for top25/top50 alts."""
+    import numpy as np
+    print("\n[Intracorr] Updating alt_intracorr_daily...")
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    # Find last computed date
+    cur.execute("SELECT MAX(timestamp) FROM alt_intracorr_daily")
+    last = cur.fetchone()[0]
+    
+    if last:
+        last_date = last.date() if hasattr(last, 'date') else last
+        days_since = (datetime.now(timezone.utc).date() - last_date).days
+        if days_since <= 1:
+            print("  Already up to date"); conn.close(); return
+        lookback = min(days_since + 60, 120)  # Need 60 extra for rolling window
+    else:
+        lookback = 120
+    
+    # Get top 50 alts by recent market cap
+    cur.execute("""
+        SELECT ar.symbol, ar.coingecko_id FROM asset_registry ar
+        JOIN marketcap_daily m ON m.coingecko_id = ar.coingecko_id
+        WHERE m.timestamp = (SELECT MAX(timestamp) FROM marketcap_daily)
+          AND ar.symbol NOT IN ('BTC','ETH','USDT','USDC','DAI','BUSD','TUSD','FDUSD','USDD','PYUSD')
+          AND m.market_cap_usd > 0
+        ORDER BY m.market_cap_usd DESC LIMIT 50
+    """)
+    top_alts = cur.fetchall()
+    alt_ids = [r[1] for r in top_alts]
+    
+    # Get prices
+    cur.execute("""
+        SELECT coingecko_id, timestamp::date as dt, price_usd
+        FROM price_daily
+        WHERE coingecko_id = ANY(%s) AND price_usd > 0
+          AND timestamp >= NOW() - INTERVAL '%s days'
+        ORDER BY coingecko_id, timestamp
+    """ % ('%s', lookback), (alt_ids,))
+    
+    # Build price matrix
+    price_data = {}
+    for r in cur.fetchall():
+        cg = r[0]; d = str(r[1]); p = float(r[2])
+        if cg not in price_data: price_data[cg] = {}
+        price_data[cg][d] = p
+    
+    # Get all unique dates
+    all_dates = sorted(set(d for prices in price_data.values() for d in prices))
+    
+    if len(all_dates) < 35:
+        print(f"  Not enough dates ({len(all_dates)})"); conn.close(); return
+    
+    # Build return matrix
+    start_from = last.date().isoformat() if last else all_dates[31]
+    
+    rows_to_insert = []
+    for di in range(31, len(all_dates)):
+        current_date = all_dates[di]
+        if current_date <= start_from: continue
+        
+        # Get 30d returns for each alt
+        window_dates = all_dates[di-30:di+1]
+        returns_matrix = []
+        
+        for cg_id in alt_ids[:50]:
+            prices = price_data.get(cg_id, {})
+            rets = []
+            for j in range(1, len(window_dates)):
+                p0 = prices.get(window_dates[j-1])
+                p1 = prices.get(window_dates[j])
+                if p0 and p1 and p0 > 0:
+                    rets.append(np.log(p1/p0))
+                else:
+                    rets.append(np.nan)
+            returns_matrix.append(rets)
+        
+        # Compute average pairwise correlation
+        returns_matrix = np.array(returns_matrix)
+        
+        # For top25 and top50
+        for tier_name, tier_n in [("top25", 25), ("top50", 50)]:
+            tier_rets = returns_matrix[:tier_n]
+            # Remove alts with too many NaN
+            valid = []
+            for row in tier_rets:
+                if np.sum(~np.isnan(row)) >= 20:
+                    valid.append(row)
+            
+            if len(valid) < 5: continue
+            
+            valid = np.array(valid)
+            # Compute pairwise correlations
+            n_assets = len(valid)
+            corr_sum = 0; corr_count = 0
+            for a in range(n_assets):
+                for b in range(a+1, n_assets):
+                    mask = ~np.isnan(valid[a]) & ~np.isnan(valid[b])
+                    if mask.sum() < 15: continue
+                    r_val = np.corrcoef(valid[a][mask], valid[b][mask])[0, 1]
+                    if np.isfinite(r_val):
+                        corr_sum += r_val; corr_count += 1
+            
+            avg_corr = round(corr_sum / corr_count, 6) if corr_count > 0 else None
+            if avg_corr is not None:
+                rows_to_insert.append({
+                    "timestamp": current_date,
+                    "tier": tier_name,
+                    "avg_corr": avg_corr,
+                    "asset_count": len(valid),
+                    "source": "computed",
+                    "ingested_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+                })
+    
+    if rows_to_insert:
+        df = pd.DataFrame(rows_to_insert)
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+        n = bulk_upsert("alt_intracorr_daily", df, ["timestamp", "tier"])
+        print(f"  +{n} rows inserted ({len(rows_to_insert)} computed)")
+    else:
+        print("  No new rows to insert")
+    
+    conn.close()
+
+
+
+def update_etf_aum():
+    """Update ETF AUM from yfinance totalAssets."""
+    print("\n[ETF AUM] Updating etf_aum_daily...")
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    ETF_TICKERS = {
+        "BTC": ["IBIT","FBTC","ARKB","BITB","GBTC","HODL","BRRR","BTCO","EZBC","BTCW"],
+        "ETH": ["ETHA","FETH","ETHW","ETHV","CETH","EZET","QETH"]
+    }
+    
+    now = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    ingested = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    
+    total_inserted = 0
+    for asset_type, tickers in ETF_TICKERS.items():
+        for ticker in tickers:
+            try:
+                t = yf.Ticker(ticker)
+                info = t.info
+                total_assets = info.get("totalAssets")
+                price = info.get("regularMarketPrice") or info.get("previousClose")
+                
+                if total_assets and total_assets > 0:
+                    cur.execute("""
+                        INSERT INTO etf_aum_daily (timestamp, ticker, asset, aum_usd, close_price, shares_out, source, ingested_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (timestamp, ticker) DO UPDATE SET
+                            aum_usd = EXCLUDED.aum_usd, close_price = EXCLUDED.close_price, shares_out = EXCLUDED.shares_out, ingested_at = EXCLUDED.ingested_at
+                    """, (today, ticker, asset_type, float(total_assets), float(price) if price else None, info.get("sharesOutstanding"), "yfinance", ingested))
+                    conn.commit()
+                    total_inserted += 1
+                    print(f"  {ticker}: ${total_assets/1e9:.2f}B")
+                else:
+                    print(f"  {ticker}: no totalAssets available")
+                
+                time.sleep(SLEEP_MACRO)
+            except Exception as e:
+                print(f"  {ticker}: ERROR - {e}")
+    
+    conn.commit()
+    conn.close()
+    print(f"  Total: {total_inserted} ETFs updated")
+
+
+
+
+def update_price_hourly():
+    """Fetch hourly prices for all assets from CoinGecko Pro.
+    Uses /coins/{id}/market_chart with days=2 to get ~48 hourly points."""
+    print("\n[Price Hourly] Updating price_hourly...")
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT MAX(timestamp) FROM price_hourly")
+    last = cur.fetchone()[0]
+    conn.close()
+
+    if last:
+        hours_since = (datetime.now(timezone.utc) - last.replace(tzinfo=timezone.utc if last.tzinfo is None else last.tzinfo)).total_seconds() / 3600
+        if hours_since < 2:
+            print("  Already up to date (last update < 2h ago)"); return
+        print(f"  Last update: {hours_since:.0f}h ago")
+
+    registry = get_registry_from_db()
+    print(f"  {len(registry)} assets to update")
+
+    all_rows = []
+    errors = 0
+    for idx, row in registry.iterrows():
+        cg_id = row["coingecko_id"]
+        symbol = row["symbol"]
+        try:
+            data = cg_get(f"{CG_BASE}/coins/{cg_id}/market_chart", {
+                "vs_currency": "usd",
+                "days": "2",
+                "precision": "full"
+            })
+            prices = data.get("prices", [])
+            for ts_ms, price in prices:
+                dt = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc)
+                all_rows.append({
+                    "timestamp": dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "coingecko_id": cg_id,
+                    "symbol": symbol,
+                    "price_usd": float(price),
+                    "source": "coingecko",
+                    "ingested_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+                })
+            time.sleep(SLEEP_CG)
+        except Exception as e:
+            errors += 1
+            if errors <= 5:
+                print(f"    {symbol}: ERROR - {e}")
+            elif errors == 6:
+                print(f"    ... suppressing further errors")
+
+        if (idx + 1) % 50 == 0:
+            print(f"    {idx + 1}/{len(registry)} done ({len(all_rows)} rows)")
+
+    print(f"  Fetched: {len(all_rows)} data points, {errors} errors")
+
+    if all_rows:
+        df = pd.DataFrame(all_rows)
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+        df["price_usd"] = df["price_usd"].astype(float)
+        n = bulk_upsert("price_hourly", df, ["timestamp", "coingecko_id"])
+        print(f"  +{n} rows inserted")
+
+
 def main():
     start = time.time()
     print(f"\n{'━' * 70}")
@@ -1278,6 +1561,10 @@ def main():
         update_onchain()
         update_options()
         update_options_instruments()
+        update_total_marketcap()
+        update_intracorrelation()
+        update_etf_aum()
+        update_price_hourly()
     elif target in ("prices", "price"):
         update_coingecko_combined()
     elif target in ("derivatives", "derivs"):
