@@ -45,25 +45,25 @@ def handle_assets(params):
 
 def handle_db_status():
     TABLES = [
-        {"key": "price_daily",         "label": "Price",                    "granularity": "Daily",    "source": "CoinGecko",     "asset_col": "coingecko_id", "ts_col": "timestamp"},
-        {"key": "price_hourly",        "label": "Price",                    "granularity": "Hourly",   "source": "CoinGecko",     "asset_col": "coingecko_id", "ts_col": "timestamp"},
-        {"key": "marketcap_daily",     "label": "Market cap",               "granularity": "Daily",    "source": "CoinGecko",     "asset_col": "coingecko_id", "ts_col": "timestamp"},
-        {"key": "volume_daily",        "label": "Volume",                   "granularity": "Daily",    "source": "CoinGecko",     "asset_col": "coingecko_id", "ts_col": "timestamp"},
-        {"key": "funding_8h",          "label": "Funding rate",             "granularity": "8h",       "source": "Binance/Bybit", "asset_col": "coingecko_id", "ts_col": "timestamp"},
-        {"key": "open_interest_daily", "label": "Open interest",            "granularity": "Daily",    "source": "Binance/Bybit", "asset_col": "coingecko_id", "ts_col": "timestamp"},
-        {"key": "open_interest_hourly","label": "Open interest",            "granularity": "Hourly",   "source": "Binance/Bybit", "asset_col": "coingecko_id", "ts_col": "timestamp"},
-        {"key": "long_short_ratio",    "label": "Long/short ratio",         "granularity": "Daily/1h", "source": "Binance/Bybit", "asset_col": "coingecko_id", "ts_col": "timestamp"},
-        {"key": "macro_daily",         "label": "Macro assets",             "granularity": "Daily",    "source": "yfinance",      "asset_col": "ticker",       "ts_col": "timestamp"},
-        {"key": "macro_hourly",        "label": "Macro assets",             "granularity": "Hourly",   "source": "yfinance",      "asset_col": "ticker",       "ts_col": "timestamp"},
-        {"key": "dvol_daily",          "label": "DVOL (implied vol)",      "granularity": "Daily",    "source": "Deribit",        "asset_col": "currency",     "ts_col": "timestamp"},
-        {"key": "total_marketcap_daily","label": "Total crypto mcap",      "granularity": "Daily",    "source": "CoinGecko",      "asset_col": "source",       "ts_col": "timestamp"},
-        {"key": "alt_intracorr_daily", "label": "Alt intracorrelation",    "granularity": "Daily",    "source": "Computed",        "asset_col": "tier",         "ts_col": "timestamp"},
-        {"key": "onchain_daily",       "label": "On-chain (BTC)",          "granularity": "Daily",    "source": "CoinMetrics",     "asset_col": "asset",        "ts_col": "timestamp"},
-        {"key": "options_instruments_daily", "label": "Options instruments",   "granularity": "Daily",    "source": "Deribit",        "asset_col": "currency",     "ts_col": "timestamp"},
-        {"key": "options_daily",       "label": "Options (BTC/ETH)",       "granularity": "Daily",    "source": "Deribit",        "asset_col": "currency",     "ts_col": "timestamp"},
-        {"key": "etf_aum_daily",      "label": "ETF AUM",                "granularity": "Daily",    "source": "yfinance",       "asset_col": "ticker",       "ts_col": "timestamp"},
-        {"key": "etf_flows_daily",    "label": "ETF flows",              "granularity": "Daily",    "source": "Farside",        "asset_col": "ticker",       "ts_col": "timestamp"},
-        {"key": "asset_registry",      "label": "GMCI asset classification","granularity": "Static",   "source": "Internal",      "asset_col": "symbol",       "ts_col": None},
+        {"key": "price_daily",              "label": "Price (daily)",             "granularity": "Daily",    "source": "CoinGecko",     "category": "market_data", "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "price_hourly",             "label": "Price (hourly)",            "granularity": "Hourly",   "source": "CoinGecko",     "category": "market_data", "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "marketcap_daily",          "label": "Market cap",                "granularity": "Daily",    "source": "CoinGecko",     "category": "market_data", "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "volume_daily",             "label": "Volume",                    "granularity": "Daily",    "source": "CoinGecko",     "category": "market_data", "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "total_marketcap_daily",    "label": "Total crypto mcap",         "granularity": "Daily",    "source": "CoinGecko",     "category": "market_data", "asset_col": "source",       "ts_col": "timestamp"},
+        {"key": "alt_intracorr_daily",      "label": "Alt intracorrelation",      "granularity": "Daily",    "source": "Computed",      "category": "market_data", "asset_col": "tier",         "ts_col": "timestamp"},
+        {"key": "funding_8h",               "label": "Funding rate",              "granularity": "8h",       "source": "Binance/Bybit", "category": "perps",       "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "open_interest_daily",      "label": "Open interest (daily)",     "granularity": "Daily",    "source": "Binance/Bybit", "category": "perps",       "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "open_interest_hourly",     "label": "Open interest (hourly)",    "granularity": "Hourly",   "source": "Binance/Bybit", "category": "perps",       "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "long_short_ratio",         "label": "Long/short ratio",          "granularity": "Daily/1h", "source": "Binance/Bybit", "category": "perps",       "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "dvol_daily",               "label": "DVOL (implied vol)",        "granularity": "Daily",    "source": "Deribit",       "category": "derivatives", "asset_col": "currency",     "ts_col": "timestamp"},
+        {"key": "options_daily",            "label": "Options snapshot (BTC/ETH)","granularity": "Daily",    "source": "Deribit",       "category": "derivatives", "asset_col": "currency",     "ts_col": "timestamp"},
+        {"key": "options_instruments_daily","label": "Options instruments",       "granularity": "Daily",    "source": "Deribit",       "category": "derivatives", "asset_col": "currency",     "ts_col": "timestamp"},
+        {"key": "etf_aum_daily",            "label": "ETF AUM",                   "granularity": "Daily",    "source": "yfinance",      "category": "etf",         "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "etf_flows_daily",          "label": "ETF flows",                 "granularity": "Daily",    "source": "Farside",       "category": "etf",         "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "macro_daily",              "label": "Macro assets (daily)",      "granularity": "Daily",    "source": "yfinance",      "category": "macro",       "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "macro_hourly",             "label": "Macro assets (hourly)",     "granularity": "Hourly",   "source": "yfinance",      "category": "macro",       "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "onchain_daily",            "label": "On-chain (BTC)",            "granularity": "Daily",    "source": "CoinMetrics",   "category": "misc",        "asset_col": "asset",        "ts_col": "timestamp"},
+        {"key": "asset_registry",           "label": "Asset classification",      "granularity": "Static",   "source": "Internal",      "category": "misc",        "asset_col": "symbol",       "ts_col": None},
     ]
 
     conn = get_conn()
@@ -99,9 +99,11 @@ def handle_db_status():
                 lu = lu.strftime("%Y-%m-%d %H:%M")
 
             result.append({
+                "name":         t["label"],
                 "label":        t["label"],
                 "granularity":  t["granularity"],
                 "source":       t["source"],
+                "category":     t["category"],
                 "rows":         int(row["rows"]),
                 "assets":       int(row["assets"]),
                 "date_from":    str(row["date_from"]) if row["date_from"] else "—",
@@ -111,13 +113,17 @@ def handle_db_status():
             })
         except Exception as e:
             result.append({
-                "label": t["label"], "granularity": t["granularity"], "source": t["source"],
+                "name": t["label"], "label": t["label"], "granularity": t["granularity"],
+                "source": t["source"], "category": t.get("category", "misc"),
                 "rows": 0, "assets": 0, "date_from": "—", "date_to": "—",
                 "last_updated": "—", "status": "error", "error": str(e),
             })
 
     conn.close()
-    return result
+    return {
+        "datasets": result,
+        "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+    }
 
 
 def handle_latest_date():
