@@ -4980,7 +4980,8 @@ async function fetchRegimePanel() {
         var dot = isLive ? '&#10003;' : (isWired ? '&#9679;' : '&#10007;');
         indHtml += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">';
         indHtml += '<span style="font-size:12px;color:' + ic + ';width:16px;text-align:center">' + dot + '</span>';
-        if (ind.ck) { indHtml += '<span class="regime-link" data-ck="' + ind.ck + '" style="font-size:12px;color:' + (isLive ? green : 'var(--graphite)') + ';font-weight:' + (isLive ? '600' : '400') + ';cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px">' + ind.label + ' ↗</span>'; } else { indHtml += '<span style="font-size:12px;color:var(--graphite);font-weight:400">' + ind.label + '</span>'; }
+        indHtml += '<span style="font-size:12px;color:' + (isLive ? green : 'var(--graphite)') + ';font-weight:' + (isLive ? '600' : '400') + '">' + ind.label + '</span>';
+        if (ind.ck) { indHtml += '<a href="javascript:void(0)" data-chartkey="' + ind.ck + '" style="font-size:10px;color:var(--muted);margin-left:6px;text-decoration:none;padding:1px 6px;border:1px solid var(--border);border-radius:4px">view →</a>'; }
         indHtml += '<span style="font-size:11px;font-family:var(--mono);color:var(--muted);margin-left:auto;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + det + '</span>';
         indHtml += '</div>';
       }
@@ -5034,13 +5035,16 @@ async function fetchRegimePanel() {
         navigateToChart(el.dataset.ck);
       }
     });
-    // Add click handlers for regime links
-    chartArea.addEventListener('click', function(e) {
-      var el = e.target.closest('.regime-link');
-      if (el && el.dataset.ck) {
-        navigateToChart(el.dataset.ck);
-      }
-    });
+    // Bind chart navigation links
+    var links = container.querySelectorAll('a[data-chartkey]');
+    for (var li = 0; li < links.length; li++) {
+      (function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          navigateToChart(link.getAttribute('data-chartkey'));
+        });
+      })(links[li]);
+    }
     setTitle('Market Regime & Cycle Position', 'Live scoring from ' + (ccData.charts ? ccData.charts.length : 0) + ' indicators');
     document.getElementById('chart-spin').classList.remove('on');
   } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
