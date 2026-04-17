@@ -26,7 +26,7 @@ from api.altcoins import (handle_price, handle_alt_scatter,
                            handle_alt_ath_drawdown, handle_alt_funding_heatmap,
                            handle_alt_drawdown_ts)
 from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_dxy_btc,
-                           handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin)
+                           handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin, handle_macro_igv_btc)
 from api.crypto_market import handle_total_mcap
 from api.control_center import handle_control_center
 from api.ethereum import (handle_eth_ma, handle_eth_ma_gap, handle_eth_200d_dev,
