@@ -135,3 +135,64 @@ def fetch_sector_index(cur, cg_ids, date_from, date_to, weighting='equal', granu
             index = {d: round(v/first*100,4) for d,v in index.items()}
 
     return index, sorted(index.keys())
+
+
+def forward_fill_align(date_map_a, date_map_b, all_dates):
+    """Forward-fill two price maps onto a shared date index.
+    Handles weekends/holidays where one series has gaps.
+    Returns (vals_a, vals_b) as lists aligned to all_dates."""
+    vals_a, vals_b = [], []
+    last_a, last_b = None, None
+    for d in all_dates:
+        va = date_map_a.get(d)
+        vb = date_map_b.get(d)
+        if va is not None: last_a = va
+        if vb is not None: last_b = vb
+        vals_a.append(last_a)
+        vals_b.append(last_b)
+    return vals_a, vals_b
+
+
+def macro_crypto_comparison(cur, macro_ticker, crypto_symbol, date_from, date_to, window=30):
+    """Shared logic for macro-vs-crypto comparison charts.
+    Fetches both series with warmup period, forward-fills gaps, computes correlation.
+    Returns {dates, macro_vals, crypto_vals, correlation} trimmed to requested range."""
+    from datetime import datetime, timedelta
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = date_from
+
+    cur.execute("""
+        SELECT timestamp::date as date, close
+        FROM macro_daily
+        WHERE ticker = %s AND timestamp >= %s AND timestamp <= %s AND close > 0
+        ORDER BY timestamp
+    """, (macro_ticker, dt_from_ext, date_to))
+    macro_rows = cur.fetchall()
+
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = %s AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        ORDER BY timestamp
+    """, (crypto_symbol, dt_from_ext, date_to))
+    crypto_rows = cur.fetchall()
+
+    macro_map = {str(r['date']): float(r['close']) for r in macro_rows}
+    crypto_map = {str(r['date']): float(r['price_usd']) for r in crypto_rows}
+
+    all_dates = sorted(set(list(macro_map.keys()) + list(crypto_map.keys())))
+    macro_vals, crypto_vals = forward_fill_align(macro_map, crypto_map, all_dates)
+    corr = rolling_corr(macro_vals, crypto_vals, window)
+
+    # Trim to requested range
+    out_dates, out_macro, out_crypto, out_corr = [], [], [], []
+    for i, d in enumerate(all_dates):
+        if d >= date_from and d <= date_to:
+            out_dates.append(d)
+            out_macro.append(macro_vals[i])
+            out_crypto.append(crypto_vals[i])
+            out_corr.append(corr[i] if i < len(corr) else None)
+
+    return out_dates, out_macro, out_crypto, out_corr
