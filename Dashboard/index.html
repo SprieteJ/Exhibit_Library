@@ -490,20 +490,26 @@ const TABS = {
     label: "Control Center",
     groups: [
       { label: "Overview", children: [
-        { key:"cc-regime",    label:"Regime & cycle", sub:"Current market regime + cycle position tracker.", src:"Wintermute OTC" },
         { key:"cc-matrix",    label:"Flagged signals",    sub:"Only the indicators that need attention right now.", src:"Wintermute OTC — Multi-source" },
       ]},
-
+      { label: "Deep Dive", children: [
+        { key:"cc-bitcoin",   label:"Bitcoin rules",    sub:"All BTC indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-themes",    label:"Theme rules",      sub:"All sector/theme indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-altcoins",  label:"Altcoin rules",    sub:"All altcoin indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+        { key:"cc-macro",     label:"Macro rules",      sub:"All macro indicators with status and trend.", src:"Wintermute OTC — Multi-source" },
+      ]},
     ]
   },
   bitcoin: {
     label: "Bitcoin",
     groups: [
       { label: "Overview", children: [
+        { key:"btc-landing", label:"Bitcoin dashboard", sub:"Visual overview of all Bitcoin charts, grouped by category.", src:"Wintermute OTC" },
         { key:"btc-overview", label:"Signal overview", sub:"Active control center rules for Bitcoin.", src:"Wintermute OTC" },
       ]},
       { label: "Price Performance", children: [
         { key:"btc-rolling",  label:"Rolling return",        sub:"BTC N-day rolling return (%).", src:"CoinGecko Pro — Wintermute OTC" },
+        { key:"btc-risk-adj", label:"Risk-adjusted performance", sub:"Rolling z-score of returns: BTC vs macro assets. Adjustable window.", src:"CoinGecko Pro + Yahoo Finance" },
         { key:"btc-drawdown", label:"Drawdown from ATH",     sub:"Continuous drawdown from rolling ATH.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
       { label: "Moving Averages", children: [
@@ -588,10 +594,6 @@ const TABS = {
         { key:"alt-heatmap",    label:"Correlation heatmap",     sub:"Rolling 30d pairwise Pearson correlations.", src:"CoinGecko Pro" },
         { key:"am-intracorr",   label:"Altcoin intracorrelation", sub:"Avg pairwise correlation within top 10/25/50/100/250 alts.", src:"CoinGecko Pro" },
       ]},
-      { label: "Deep Dive", children: [
-        { key:"alt-rebase",     label:"Rebased performance",  sub:"Selected tokens rebased to 100. Pick assets in the sidebar.", src:"CoinGecko Pro" },
-        { key:"alt-zscore-mom", label:"Z-scored momentum",    sub:"14d return / 14d vol, z-scored over 90d. Highlights momentum leaders and laggards.", src:"CoinGecko Pro" },
-      ]},
       { label: "Drawdown", children: [
         { key:"alt-ath-drawdown", label:"Distance from ATH",    sub:"Current drawdown from ATH, sorted worst-first.", src:"CoinGecko Pro" },
         { key:"alt-drawdown-ts",  label:"Drawdown over time",   sub:"Drawdown from running ATH over time.", src:"CoinGecko Pro" },
@@ -641,7 +643,6 @@ const TABS = {
       { label: "Rotation", children: [
         { key:"sec-rrg",       label:"RRG scatter",             sub:"Which sectors are leading, catching up, losing steam, or lagging.", src:"CoinGecko Pro — Wintermute OTC" },
       ]},
-
       { label: "Analysis", children: [
         { key:"ana-bubble",    label:"Momentum vs correlation", sub:"Bubble: Y=momentum, X=autocorrelation, Size=mcap.", src:"CoinGecko Pro — Wintermute OTC" },
         { key:"sec-sharpe",    label:"Risk-adjusted returns",   sub:"Scatter: x=30d vol, y=30d return.", src:"CoinGecko Pro — Wintermute OTC" },
@@ -700,40 +701,7 @@ const TABS = {
   },
   data: {
     label: "Data",
-    groups: [
-      { label: "Overview", children: [
-        { key:"data-status", label:"Database status", sub:"All datasets with row counts, date ranges, and staleness.", src:"Internal" },
-      ]},
-      { label: "Market Data", children: [
-        { key:"data-status", label:"Price (Daily)", sub:"584 assets, daily OHLC from CoinGecko Pro.", src:"CoinGecko" },
-        { key:"data-status", label:"Price (Hourly)", sub:"584 assets, hourly prices from CoinGecko Pro.", src:"CoinGecko" },
-        { key:"data-status", label:"Market Cap", sub:"584 assets, daily market cap.", src:"CoinGecko" },
-        { key:"data-status", label:"Volume", sub:"584 assets, daily trading volume.", src:"CoinGecko" },
-        { key:"data-status", label:"Total Crypto Mcap", sub:"Global crypto market cap.", src:"CoinGecko" },
-        { key:"data-status", label:"Alt Intracorrelation", sub:"Average pairwise 30d correlation for top 25/50 alts.", src:"Computed" },
-      ]},
-      { label: "Perpetuals", children: [
-        { key:"data-status", label:"Funding Rate", sub:"383 symbols, 8h funding from Binance + Bybit.", src:"Binance/Bybit" },
-        { key:"data-status", label:"Open Interest (Daily)", sub:"356 symbols, daily OI.", src:"Binance/Bybit" },
-        { key:"data-status", label:"Open Interest (Hourly)", sub:"356 symbols, hourly OI.", src:"Binance/Bybit" },
-        { key:"data-status", label:"Long/Short Ratio", sub:"355 symbols, account ratio.", src:"Binance/Bybit" },
-      ]},
-      { label: "Derivatives", children: [
-        { key:"data-status", label:"DVOL (Implied Vol)", sub:"BTC + ETH Deribit DVOL index.", src:"Deribit" },
-        { key:"data-status", label:"Options (BTC/ETH)", sub:"Daily aggregate options snapshot.", src:"Deribit" },
-        { key:"data-status", label:"Options Instruments", sub:"Per-instrument options data (~1600/day).", src:"Deribit" },
-      ]},
-      { label: "ETFs", children: [
-        { key:"data-status", label:"ETF AUM", sub:"17 BTC + ETH ETF total assets.", src:"yfinance" },
-        { key:"data-status", label:"ETF Flows", sub:"Daily net flows per ETF ticker.", src:"Farside" },
-      ]},
-      { label: "Miscellaneous", children: [
-        { key:"data-status", label:"Macro Assets (Daily)", sub:"29 tickers: SPY, QQQ, GLD, DXY, VIX, etc.", src:"yfinance" },
-        { key:"data-status", label:"Macro Assets (Hourly)", sub:"29 tickers, hourly.", src:"yfinance" },
-        { key:"data-status", label:"On-chain (BTC)", sub:"HashRate + Active Addresses from CoinMetrics.", src:"CoinMetrics" },
-        { key:"data-status", label:"Asset Registry", sub:"584 assets with sectors and metadata.", src:"Internal" },
-      ]},
-    ]
+    groups: []
   },
 };
 
@@ -792,249 +760,6 @@ document.getElementById('btn-log')?.addEventListener('click', () => {
     chart.update();
   }
 });
-
-
-// ── Chart Search ──────────────────────────────────────────────────────────────
-(function() {
-  const searchEl = document.getElementById('chart-search');
-  if (!searchEl) return;
-
-  searchEl.addEventListener('input', function() {
-    const q = this.value.toLowerCase().trim();
-    let dropdown = document.getElementById('search-results');
-
-    if (!q) {
-      if (dropdown) dropdown.remove();
-      return;
-    }
-
-    const matches = [];
-    for (const [tabKey, tabDef] of Object.entries(TABS)) {
-      for (const group of (tabDef.groups || [])) {
-        for (const view of (group.children || [])) {
-          const haystack = (view.label + ' ' + (view.sub || '') + ' ' + tabDef.label + ' ' + group.label).toLowerCase();
-          if (haystack.includes(q)) {
-            matches.push({ tab: tabKey, tabLabel: tabDef.label, group: group.label, key: view.key, label: view.label });
-          }
-        }
-      }
-    }
-
-    if (!dropdown) {
-      dropdown = document.createElement('div');
-      dropdown.id = 'search-results';
-      dropdown.style.cssText = 'position:absolute;top:100%;left:0;right:0;max-height:400px;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:999;margin-top:4px;min-width:280px';
-      this.parentElement.appendChild(dropdown);
-    }
-
-    if (!matches.length) {
-      dropdown.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--muted)">No charts found</div>';
-      return;
-    }
-
-    dropdown.innerHTML = '';
-    matches.slice(0, 15).forEach(function(m) {
-      const row = document.createElement('div');
-      row.style.cssText = 'padding:8px 12px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background 0.1s';
-      row.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--graphite)">' + m.label + '</div><div style="font-size:10px;color:var(--muted)">' + m.tabLabel + ' &rsaquo; ' + m.group + '</div>';
-      row.addEventListener('mouseenter', function() { this.style.background = 'var(--hover)'; });
-      row.addEventListener('mouseleave', function() { this.style.background = ''; });
-      row.addEventListener('click', function() {
-        selectView(m.tab, m.key);
-        searchEl.value = '';
-        var dd = document.getElementById('search-results');
-        if (dd) dd.remove();
-      });
-      dropdown.appendChild(row);
-    });
-  });
-
-  searchEl.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      this.value = '';
-      var dd = document.getElementById('search-results');
-      if (dd) dd.remove();
-    }
-  });
-
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('#chart-search') && !e.target.closest('#search-results')) {
-      var dd = document.getElementById('search-results');
-      if (dd) dd.remove();
-    }
-  });
-})();
-
-// ── Window presets (for risk-adj, sharpe, correlation views)
-document.addEventListener('click', function(e) {
-  if (e.target.classList.contains('win-preset')) {
-    const win = e.target.dataset.win;
-    document.querySelectorAll('.win-preset').forEach(b => b.classList.toggle('active', b.dataset.win === win));
-    const winInput = document.getElementById('rp-window');
-    if (winInput) winInput.value = win;
-    fetchCurrent();
-  }
-});
-
-
-// ── Rule Zone Overlay System ──────────────────────────────────────────────────
-const RULE_HISTORY_CHARTS = ['btc-dom-ma','btc-funding','eth-btc-ratio','am-intracorr'];
-let _ruleHistoryData = null;
-let _ruleToggles = {};  // {ruleName: true/false}
-
-async function loadRuleOverlay(chartKey, from, to) {
-  // Check if this chart has rule history
-  if (!RULE_HISTORY_CHARTS.includes(chartKey)) {
-    document.getElementById('rule-toggles')?.remove();
-    return;
-  }
-
-  try {
-    const data = await fetch(`/api/rule-history?chart_key=${chartKey}&from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
-    if (!data?.rules?.length) return;
-    _ruleHistoryData = data;
-
-    // Initialize toggles (all on by default)
-    _ruleToggles = {};
-    for (const r of data.rules) {
-      _ruleToggles[r.name] = true;
-    }
-
-    // Build toggle buttons
-    renderRuleToggles(data.rules);
-
-    // Apply overlay to current chart
-    applyRuleZones();
-  } catch(e) {
-    if (e.name === 'AbortError') return;
-  }
-}
-
-function renderRuleToggles(rules) {
-  let container = document.getElementById('rule-toggles');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'rule-toggles';
-    container.style.cssText = 'padding:8px 0;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;border-top:0.5px solid var(--border)';
-    // Insert after the chart container
-    const chartWrap = document.getElementById('main-chart')?.parentElement;
-    if (chartWrap) chartWrap.appendChild(container);
-  }
-
-  container.innerHTML = '<span style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:4px 0;margin-right:4px">Rules</span>';
-
-  for (const r of rules) {
-    const isOn = _ruleToggles[r.name];
-    const wt = r.weight === 'major' ? '600' : '400';
-    const btn = document.createElement('button');
-    btn.style.cssText = `font-size:11px;font-weight:${wt};padding:3px 10px;border-radius:12px;border:1px solid ${isOn ? (darkMode ? 'rgba(0,214,74,0.4)' : 'rgba(0,180,60,0.4)') : 'var(--border)'};background:${isOn ? (darkMode ? 'rgba(0,214,74,0.08)' : 'rgba(0,180,60,0.06)') : 'transparent'};color:${isOn ? (darkMode ? '#5DCAA5' : '#059669') : 'var(--muted)'};cursor:pointer;transition:all 0.15s`;
-    btn.textContent = r.name;
-    btn.addEventListener('click', function() {
-      _ruleToggles[r.name] = !_ruleToggles[r.name];
-      renderRuleToggles(rules);
-      applyRuleZones();
-    });
-    container.appendChild(btn);
-  }
-
-  // Add "majority" mode button
-  const majBtn = document.createElement('button');
-  const allOn = Object.values(_ruleToggles).every(v => v);
-  majBtn.style.cssText = `font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid ${allOn ? (darkMode ? 'rgba(127,178,241,0.4)' : 'rgba(37,107,204,0.4)') : 'var(--border)'};background:${allOn ? (darkMode ? 'rgba(127,178,241,0.08)' : 'rgba(37,107,204,0.06)') : 'transparent'};color:${allOn ? (darkMode ? '#7Fb2F1' : '#2471CC') : 'var(--muted)'};cursor:pointer;margin-left:auto`;
-  majBtn.textContent = allOn ? '● majority' : '○ majority';
-  majBtn.addEventListener('click', function() {
-    const newState = !allOn;
-    for (const key of Object.keys(_ruleToggles)) _ruleToggles[key] = newState;
-    renderRuleToggles(rules);
-    applyRuleZones();
-  });
-  container.appendChild(majBtn);
-}
-
-function applyRuleZones() {
-  if (!chart || !_ruleHistoryData?.rules?.length) return;
-
-  // Remove existing zone annotations
-  if (chart.options.plugins.annotation) {
-    chart.options.plugins.annotation.annotations = {};
-  }
-
-  const rules = _ruleHistoryData.rules;
-  const activeRules = rules.filter(r => _ruleToggles[r.name]);
-  if (!activeRules.length) { chart.update('none'); return; }
-
-  // Get chart labels (dates)
-  const chartLabels = chart.data.labels || [];
-  if (!chartLabels.length) return;
-
-  // Determine green zones: majority of active (toggled-on) rules agree
-  // Build a date->score map
-  const dateScores = {};
-  const threshold = activeRules.length <= 2 ? 1 : Math.ceil(activeRules.length / 2);
-
-  for (const rule of activeRules) {
-    const dateMap = {};
-    rule.dates.forEach((d, i) => dateMap[d] = rule.active[i]);
-    for (const d of chartLabels) {
-      if (!(d in dateScores)) dateScores[d] = 0;
-      if (dateMap[d]) dateScores[d]++;
-    }
-  }
-
-  // Find contiguous green zones
-  const zones = [];
-  let zoneStart = null;
-  for (let i = 0; i < chartLabels.length; i++) {
-    const d = chartLabels[i];
-    const isGreen = (dateScores[d] || 0) >= threshold;
-    if (isGreen && zoneStart === null) {
-      zoneStart = i;
-    } else if (!isGreen && zoneStart !== null) {
-      zones.push([zoneStart, i - 1]);
-      zoneStart = null;
-    }
-  }
-  if (zoneStart !== null) zones.push([zoneStart, chartLabels.length - 1]);
-
-  // Apply as background color segments using the Chart.js dataset approach
-  // We'll use a custom plugin for background rectangles
-  const greenColor = darkMode ? 'rgba(0,214,74,0.06)' : 'rgba(0,180,60,0.06)';
-
-  // Store zones on chart for the plugin to read
-  chart._ruleZones = zones;
-  chart._ruleZoneColor = greenColor;
-
-  chart.update('none');
-}
-
-// Chart.js plugin to draw rule zone backgrounds
-const ruleZonePlugin = {
-  id: 'ruleZones',
-  beforeDraw(chart) {
-    if (!chart._ruleZones?.length) return;
-    const ctx = chart.ctx;
-    const xScale = chart.scales.x;
-    const yScale = chart.scales.y;
-    if (!xScale || !yScale) return;
-
-    ctx.save();
-    ctx.fillStyle = chart._ruleZoneColor || 'rgba(0,214,74,0.06)';
-
-    for (const [startIdx, endIdx] of chart._ruleZones) {
-      const x1 = xScale.getPixelForValue(startIdx);
-      const x2 = xScale.getPixelForValue(endIdx);
-      const y1 = yScale.top;
-      const y2 = yScale.bottom;
-      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-    }
-
-    ctx.restore();
-  }
-};
-
-// Register the plugin globally
-// Plugin registered after Chart.js loads below
-
 
 // ── Granularity ───────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-gran]').forEach(btn => {
@@ -1135,7 +860,7 @@ const DEFAULT_SELECTIONS = {
 };
 
 const ALL_PERIOD_KEYS = new Set(['btc-ma','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev']);
-const CUSTOM_START_DATE = {'alt-rebase': '2025-04-01', 'alt-zscore-mom': '2025-01-01', 'btc-200d-dev': '2023-04-15', 'btc-200w-floor': '2023-04-15', 'btc-dom-ma': '2023-04-15', 'btc-dominance': '2023-04-15', 'btc-gold': '2024-04-14', 'btc-ma': '2023-04-15', 'btc-realvol': '2025-04-14', 'btc-rolling': '2025-04-14', 'btc-rv-iv': '2024-04-14', 'etf-daily-bar': '2025-04-01', 'etf-net-flows': '2025-04-01', 'etf-weekly-bar': '2024-04-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2021-04-01'};
+const CUSTOM_START_DATE = {'btc-200d-dev': '2017-03-01', 'eth-200d-dev': '2017-09-01', 'mac-btc-corr': '2023-04-01', 'etf-net-flows': '2025-04-01', 'etf-daily-bar': '2025-04-01', 'etf-weekly-bar': '2024-04-01', 'btc-dom-ma': '2023-04-01', 'btc-risk-adj': '2023-04-01'};
 
 async function selectView(tab, key) {
   if (_navAbort) try { _navAbort.abort(); } catch(e) {}
@@ -1215,11 +940,11 @@ async function selectView(tab, key) {
   buildRightPanel(tab, key);
   // Views that auto-fetch without selection
   const AUTO_VIEWS = new Set([
-    'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','sec-analysis-rebase',
-    'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
-    'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','ana-bubble','btc-epochs','btc-cycles','btc-tradfi','alt-scatter','btc-gold','btc-rolling','sec-rrg','btc-landing',
+    'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe','btc-landing',
+    'btc-bull','btc-realvol','btc-risk-adj','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status',
+    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
@@ -1250,10 +975,10 @@ async function selectView(tab, key) {
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 const NEW_AUTO_KEYS = new Set([
-  'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
-  'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
+  'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe','btc-landing',
+  'btc-bull','btc-realvol','btc-risk-adj','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status',
+  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
   'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
@@ -1262,8 +987,8 @@ const SELECTION_KEYS = new Set([
 
 function buildRightPanel(tab, key) {
   const rp          = document.getElementById('right-panel');
-  // Hide right panel entirely for Control Center views
-  if (key && key.startsWith('cc-')) {
+  // Hide right panel for landing/overview pages
+  if (key === 'btc-landing' || (key && key.startsWith('cc-'))) {
     rp.innerHTML = '';
     rp.style.display = 'none';
     return;
@@ -1392,7 +1117,7 @@ function buildRightPanel(tab, key) {
         <label>days after event</label>
       </div>
     </div>`;
-  } else if (isNewAuto && !isSelChart && !key.startsWith('cc-')) {
+  } else if (isNewAuto && !isSelChart) {
     // Auto-view with date range panel
     html += `<div class="rp-block">
       <div class="rp-label">Period</div>
@@ -1500,8 +1225,8 @@ function buildRightPanel(tab, key) {
 
   if (!isBtcView && !isRRG) {
     // Long-history charts default to All; others default to 6M
-    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-dom-ma','btc-gold-ratio','btc-realvol','btc-drawdown',
-      'btc-funding','btc-funding-delta','alt-altseason','mac-stablecoin','data-status','sec-dominance']);
+    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-dom-ma','btc-gold-ratio','btc-realvol','btc-risk-adj','btc-drawdown',
+      'btc-funding','btc-funding-delta','alt-altseason','mac-stablecoin','sec-dominance']);
     const defaultDays = ALL_HISTORY_KEYS.has(key) ? 0 : 180;
     initDates('rp-from', 'rp-to', defaultDays);
     initPresets();
@@ -1866,6 +1591,7 @@ async function fetchCurrent() {
       case 'sec-sharpe':     await fetchSectorSharpe(to); break;
       case 'btc-bull':       await fetchBtcBull(); break;
       case 'btc-realvol':    await fetchBtcRealvol(from, to); break;
+      case 'btc-risk-adj':   await fetchBtcRiskAdj(from, to); break;
       case 'btc-drawdown':   await fetchBtcDrawdownATH(from, to); break;
       case 'btc-gold-ratio': await fetchBtcGoldRatio(from, to); break;
       case 'btc-dom-ma':     await fetchBtcDominanceMa(from, to); break;
@@ -1875,6 +1601,7 @@ async function fetchCurrent() {
       case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
       case 'sec-overview': await fetchSectorOverview(); break;
       case 'sec-overview': await fetchSectorOverview(); break;
+      case 'btc-landing':  await fetchBtcLanding(); break;
       case 'btc-overview': await fetchCategoryOverview('Bitcoin'); break;
       case 'eth-overview': await fetchCategoryOverview('Ethereum'); break;
       case 'alt-overview': await fetchCategoryOverview('Altcoins'); break;
@@ -1883,8 +1610,11 @@ async function fetchCurrent() {
       case 'etf-weekly-bar': await fetchEtfWeeklyBar(from, to); break;
       case 'etf-total-aum': await fetchEtfTotalAum(from, to); break;
       case 'etf-net-flows': await fetchEtfNetFlows(from, to); break;
-      case 'cc-regime':     await fetchRegimePanel(); break;
-            case 'cc-matrix':       await fetchControlCenter('flagged'); break;
+      case 'cc-matrix':       await fetchControlCenter('flagged'); break;
+      case 'cc-bitcoin':     await fetchControlCenter('bitcoin'); break;
+      case 'cc-themes':      await fetchControlCenter('themes'); break;
+      case 'cc-altcoins':    await fetchControlCenter('altcoins'); break;
+      case 'cc-macro':       await fetchControlCenter('macro'); break;
       case 'btc-ma':          await fetchBtcMA(from, to); break;
       case 'eth-ma':          await fetchEthMA(from, to); break;
       case 'eth-ma-combined': await fetchEthMACombined(from, to); break;
@@ -1918,7 +1648,6 @@ async function fetchCurrent() {
       case 'mac-risk':       await fetchMacroRisk(from, to); break;
       case 'mac-real-yields': await fetchMacroRealYields(from, to); break;
       case 'mac-stablecoin': await fetchMacroStablecoin(from, to); break;
-      case 'data-status': await fetchDataStatus(); break;
     }
     document.getElementById('chart-spin').classList.remove('on');
     return;
@@ -2005,15 +1734,6 @@ async function fetchCurrent() {
     await fetchBtcGold(from, to);
     document.getElementById('chart-spin').classList.remove('on');
     return;
-  } else if (key === 'alt-rebase') {
-    const syms = selected.join(',');
-    await fetchAltRebase(from, to);
-    document.getElementById('chart-spin').classList.remove('on');
-    return;
-  } else if (key === 'alt-zscore-mom') {
-    await fetchAltZscoreMom(from, to);
-    document.getElementById('chart-spin').classList.remove('on');
-    return;
   } else if (key === 'alt-scatter') {
     url = null;
     await fetchAltScatter(from, to, win);
@@ -2059,13 +1779,6 @@ async function fetchCurrent() {
     drawChart(data, chartKeys, isCorr, isMom, isZscore, isMcap);
     updatePerf(data, chartKeys, isCorr, isMom, isZscore, isMcap);
     document.getElementById('chart-title').textContent = selected.join(' · ');
-    // Load rule overlay if applicable
-    const _ruleKey = activeView?.key;
-    if (_ruleKey && typeof RULE_HISTORY_CHARTS !== 'undefined' && RULE_HISTORY_CHARTS.includes(_ruleKey)) {
-      const _rf = document.getElementById('rp-from')?.value || '2022-01-01';
-      const _rt = document.getElementById('rp-to')?.value || new Date().toISOString().split('T')[0];
-      loadRuleOverlay(_ruleKey, _rf, _rt);
-    }
   } catch(e) {
     console.error(e);
     document.getElementById('chart-empty').style.display = 'flex';
@@ -2090,7 +1803,7 @@ function exportCombinedChart(topChart, botChart) {
   const FOOTER_H = showSource ? 40 : 16;
   const GAP = 12;
 
-  const EXP_BG    = '#FAFAFA';
+  const EXP_BG    = '#BEC1BF';
   const EXP_FRAME = '#070B09';
   const EXP_TEXT  = '#070B09';
 
@@ -2119,7 +1832,7 @@ function exportCombinedChart(topChart, botChart) {
   // Apply export theme to both charts
   [topChart, botChart].forEach(c => {
     for (const [id, scale] of Object.entries(c.options.scales || {})) {
-      if (scale.ticks) { scale.ticks.color = EXP_FRAME; if (!scale.ticks.font) scale.ticks.font = {}; scale.ticks.font.size = 18; }
+      if (scale.ticks) { scale.ticks.color = EXP_FRAME; if (!scale.ticks.font) scale.ticks.font = {}; scale.ticks.font.size = 14; }
       if (!scale.border) scale.border = {}; scale.border.color = EXP_FRAME; scale.border.display = true;
       if (scale.grid) { scale.grid.color = 'rgba(0,0,0,0)'; scale.grid.display = false; }
     }
@@ -2240,7 +1953,7 @@ document.getElementById('btn-save').addEventListener('click', () => {
   const HEADER_H = showTitle ? 56 : 16;
   const FOOTER_H = showSource ? 40 : 16;
 
-  const EXP_BG    = '#FAFAFA';
+  const EXP_BG    = '#BEC1BF';
   const EXP_FRAME = '#070B09';
   const EXP_TEXT  = '#070B09';
 
@@ -2272,7 +1985,7 @@ document.getElementById('btn-save').addEventListener('click', () => {
     if (scale.ticks) {
       scale.ticks.color = EXP_FRAME;
       if (!scale.ticks.font) scale.ticks.font = {};
-      scale.ticks.font.size = 18;
+      scale.ticks.font.size = 14;
     }
     if (!scale.border) scale.border = {};
     scale.border.color = EXP_FRAME;
@@ -2298,9 +2011,6 @@ document.getElementById('btn-save').addEventListener('click', () => {
   chart.canvas.height = chartAreaH;
   chart.canvas.style.width = chartAreaW + 'px';
   chart.canvas.style.height = chartAreaH + 'px';
-  // Thicken lines for export
-  const _origWidths = chart.data.datasets.map(d => d.borderWidth);
-  chart.data.datasets.forEach(d => { if (d.borderWidth) d.borderWidth = Math.max(d.borderWidth * 2, 3); });
   chart.resize(chartAreaW, chartAreaH);
   chart.update();
 
@@ -3952,6 +3662,92 @@ async function fetchBtcRealvol(from, to) {
 
 // ── BTC: Drawdown from ATH ────────────────────────────────────────────────────
 
+// ── BTC: Risk-Adjusted Performance (z-score) ─────────────────────────────────
+async function fetchBtcRiskAdj(from, to) {
+  spinOn();
+  try {
+    const winEl = document.getElementById('rp-window');
+    const window = winEl?.value || '90';
+    const ALL_ASSETS = ['SPY','QQQ','IWM','TLT','GLD','BNO'];
+    const DEFAULT_VISIBLE = ['SPY', 'GLD'];
+
+    const data = await fetch(`/api/btc-risk-adjusted?from=${from}&to=${to}&window=${window}&symbols=${ALL_ASSETS.join(',')}`).then(r=>r.json());
+    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
+
+    // Common date axis
+    let allDates = new Set();
+    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
+    allDates = [...allDates].sort();
+
+    const datasets = [];
+
+    // BTC always first and visible
+    if (data.assets['BTC']) {
+      const a = data.assets['BTC'];
+      const dateMap = {};
+      a.dates.forEach((d, i) => dateMap[d] = a.zscore[i]);
+      datasets.push({
+        label: a.label, data: allDates.map(d => dateMap[d] ?? null),
+        borderColor: a.color, backgroundColor: 'transparent',
+        borderWidth: 2, pointRadius: 0, tension: 0.1, spanGaps: true, hidden: false,
+      });
+    }
+
+    // Macro assets
+    for (const [sym, a] of Object.entries(data.assets)) {
+      if (sym === 'BTC') continue;
+      const dateMap = {};
+      a.dates.forEach((d, i) => dateMap[d] = a.zscore[i]);
+      datasets.push({
+        label: a.label, data: allDates.map(d => dateMap[d] ?? null),
+        borderColor: a.color, backgroundColor: 'transparent',
+        borderWidth: 1.4, pointRadius: 0, tension: 0.1, spanGaps: true,
+        hidden: !DEFAULT_VISIBLE.includes(sym),
+      });
+    }
+
+    // Zero line
+    datasets.push({
+      label: 'Mean', data: allDates.map(() => 0),
+      borderColor: darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+      borderWidth: 1, pointRadius: 0, borderDash: [4, 4],
+    });
+
+    mkChart('line', { labels: allDates, datasets }, {
+      scales: {
+        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
+          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
+        y: { ticks: { ...YTICK, callback: v => v.toFixed(1) + 'σ' }, grid: YGRID },
+      },
+      plugins: {
+        legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 },
+          onClick: function(e, legendItem, legend) {
+            if (legend.chart.data.datasets[legendItem.datasetIndex].label === 'Mean') return;
+            Chart.defaults.plugins.legend.onClick.call(this, e, legendItem, legend);
+          }
+        },
+      },
+    });
+
+    // Summary bar
+    const summaryDiv = document.getElementById('perf-row');
+    if (summaryDiv) {
+      const sorted = Object.entries(data.assets)
+        .map(([sym, a]) => ({ sym, label: a.label, current: a.current, color: a.color }))
+        .filter(a => a.current != null)
+        .sort((a, b) => b.current - a.current);
+
+      summaryDiv.innerHTML = sorted.map(a => {
+        const clr = a.current > 1 ? '#00D64A' : (a.current < -1 ? '#EC5B5B' : '#888');
+        return `<div class="perf-item"><span style="color:${a.color};font-weight:600">${a.label}</span> <span style="color:${clr}">${a.current > 0 ? '+' : ''}${a.current.toFixed(2)}σ</span></div>`;
+      }).join('');
+    }
+
+    const winLabels = {'30': '30d', '60': '60d', '90': '90d', '180': '6M', '365': '1Y'};
+    setTitle('Risk-Adjusted Performance (' + (winLabels[window] || window + 'd') + ' z-score)', 'Source: CoinGecko + Yahoo Finance · rolling z-score of log returns · click legend to toggle');
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
+}
+
 
 async function fetchBtcDrawdownATH(from, to) {
   spinOn();
@@ -4164,152 +3960,6 @@ async function fetchBtcFundingDelta(from, to) {
 }
 
 // ── Alt: Altseason Index ──────────────────────────────────────────────────────
-
-// ── Altcoins: Deep Dive — Rebased Performance ────────────────────────────────
-async function fetchAltRebase(from, to) {
-  spinOn();
-  try {
-    if (!selected?.length) {
-      document.getElementById('chart-spin').classList.remove('on');
-      document.getElementById('chart-empty').style.display = 'flex';
-      document.getElementById('empty-msg').textContent = 'Select assets in the sidebar';
-      return;
-    }
-
-    const data = await fetch(`/api/alt-rebase?symbols=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
-    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
-
-    const PAL_LOCAL = ['#F7931A','#627EEA','#00D64A','#EC5B5B','#2471CC','#AEA9EA','#E1C87E','#DB33CB','#9EA4A0','#C084FC','#F87171','#34D399','#FBBF24','#A78BFA','#F472B6'];
-
-    let allDates = new Set();
-    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
-    allDates = [...allDates].sort();
-
-    const datasets = [];
-    let i = 0;
-    for (const [sym, a] of Object.entries(data.assets)) {
-      const dateMap = {};
-      a.dates.forEach((d, j) => dateMap[d] = a.rebased[j]);
-      datasets.push({
-        label: sym,
-        data: allDates.map(d => dateMap[d] ?? null),
-        borderColor: PAL_LOCAL[i % PAL_LOCAL.length],
-        backgroundColor: 'transparent',
-        borderWidth: 1.6,
-        pointRadius: 0,
-        tension: 0.1,
-        spanGaps: true,
-      });
-      i++;
-    }
-
-    mkChart('line', { labels: allDates, datasets }, {
-      scales: {
-        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
-          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
-        y: { ticks: { ...YTICK, callback: v => v.toFixed(0) }, grid: YGRID },
-      },
-      plugins: {
-        legend: { display: true, position: 'top', labels: { color: '#888', font: { size: 10 }, boxWidth: 10, padding: 8 } },
-      },
-    });
-
-    // Summary: performance from 100
-    const summaryDiv = document.getElementById('perf-row');
-    if (summaryDiv) {
-      const perfs = Object.entries(data.assets)
-        .map(([sym, a]) => ({ sym, perf: a.rebased[a.rebased.length - 1] - 100 }))
-        .sort((a, b) => b.perf - a.perf);
-      summaryDiv.innerHTML = perfs.map(p => {
-        const clr = p.perf >= 0 ? '#00D64A' : '#EC5B5B';
-        return `<div class="perf-item"><span style="font-weight:600">${p.sym}</span> <span style="color:${clr}">${p.perf >= 0 ? '+' : ''}${p.perf.toFixed(1)}%</span></div>`;
-      }).join('');
-    }
-
-    setTitle('Rebased Performance', 'Source: CoinGecko Pro · rebased to 100 · click legend to toggle');
-  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
-}
-
-// ── Altcoins: Deep Dive — Z-Scored Momentum ──────────────────────────────────
-async function fetchAltZscoreMom(from, to) {
-  spinOn();
-  try {
-    if (!selected?.length) {
-      document.getElementById('chart-spin').classList.remove('on');
-      document.getElementById('chart-empty').style.display = 'flex';
-      document.getElementById('empty-msg').textContent = 'Select assets in the sidebar';
-      return;
-    }
-
-    const data = await fetch(`/api/alt-zscore-mom?symbols=${encodeURIComponent(selected.join(','))}&from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
-    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
-
-    const PAL_LOCAL = ['#F7931A','#627EEA','#00D64A','#EC5B5B','#2471CC','#AEA9EA','#E1C87E','#DB33CB','#9EA4A0','#C084FC','#F87171','#34D399','#FBBF24','#A78BFA','#F472B6'];
-
-    let allDates = new Set();
-    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
-    allDates = [...allDates].sort();
-
-    const datasets = [];
-    let i = 0;
-    for (const [sym, a] of Object.entries(data.assets)) {
-      const dateMap = {};
-      a.dates.forEach((d, j) => dateMap[d] = a.zscore[j]);
-      datasets.push({
-        label: sym,
-        data: allDates.map(d => dateMap[d] ?? null),
-        borderColor: PAL_LOCAL[i % PAL_LOCAL.length],
-        backgroundColor: 'transparent',
-        borderWidth: 1.6,
-        pointRadius: 0,
-        tension: 0.1,
-        spanGaps: true,
-      });
-      i++;
-    }
-
-    // Zero line
-    datasets.push({
-      label: 'Mean',
-      data: allDates.map(() => 0),
-      borderColor: darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
-      borderWidth: 1, pointRadius: 0, borderDash: [4, 4],
-    });
-
-    mkChart('line', { labels: allDates, datasets }, {
-      scales: {
-        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
-          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
-        y: { ticks: { ...YTICK, callback: v => v.toFixed(1) + 'σ' }, grid: YGRID },
-      },
-      plugins: {
-        legend: { display: true, position: 'top', labels: { color: '#888', font: { size: 10 }, boxWidth: 10, padding: 8 },
-          onClick: function(e, legendItem, legend) {
-            if (legend.chart.data.datasets[legendItem.datasetIndex].label === 'Mean') return;
-            Chart.defaults.plugins.legend.onClick.call(this, e, legendItem, legend);
-          }
-        },
-      },
-    });
-
-    // Summary: current z-scores
-    const summaryDiv = document.getElementById('perf-row');
-    if (summaryDiv) {
-      const sorted = Object.entries(data.assets)
-        .map(([sym, a]) => ({ sym, z: a.current }))
-        .filter(a => a.z != null)
-        .sort((a, b) => b.z - a.z);
-      summaryDiv.innerHTML = sorted.map(a => {
-        const clr = a.z > 1 ? '#00D64A' : (a.z < -1 ? '#EC5B5B' : '#888');
-        return `<div class="perf-item"><span style="font-weight:600">${a.sym}</span> <span style="color:${clr}">${a.z > 0 ? '+' : ''}${a.z.toFixed(2)}σ</span></div>`;
-      }).join('');
-    }
-
-    setTitle('Z-Scored Momentum (14d ret / 14d vol, z over 90d)', 'Source: CoinGecko Pro · click legend to toggle');
-  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
-}
-
-
 async function fetchAltAltseason(from, to) {
   spinOn();
   try {
@@ -4365,6 +4015,143 @@ async function fetchAltBeta(to) {
 
 // ── Category Overview (embedded CC rules per tab) ─────────────────────────────
 let _ccDataCache = null;
+
+async function fetchBtcLanding() {
+  spinOn();
+  try {
+    if (chart) { chart.destroy(); chart = null; }
+    var canvas = document.getElementById('main-chart');
+    canvas.style.display = 'none';
+    var existing = document.getElementById('cc-matrix-container');
+    if (existing) existing.remove();
+
+    var container = document.createElement('div');
+    container.id = 'cc-matrix-container';
+    container.style.cssText = 'width:100%;height:100%;overflow-y:auto;padding:20px 24px;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:5;';
+
+    var borderCol = darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)';
+    var cardBg = darkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)';
+    var hoverBg = darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+
+    var categories = [
+      { title: 'Price Performance', icon: '📈', color: '#00D64A',
+        charts: [
+          { key: 'btc-rolling', name: 'Rolling return', desc: 'N-day rolling return (%)' },
+          { key: 'btc-risk-adj', name: 'Risk-adjusted performance', desc: 'Z-score vs macro assets' },
+          { key: 'btc-drawdown', name: 'Drawdown from ATH', desc: 'Continuous drawdown from peak' },
+        ]},
+      { title: 'Moving Averages', icon: '〰️', color: '#2471CC',
+        charts: [
+          { key: 'btc-ma', name: '50d & 200d MA', desc: 'Price with moving averages (log)' },
+          { key: 'btc-ma-gap', name: '50d/200d gap', desc: 'Golden/death cross proximity' },
+          { key: 'btc-200w-floor', name: '200-week MA', desc: 'The macro floor' },
+          { key: 'btc-200d-dev', name: '200-week deviation', desc: '% deviation from 200w MA' },
+          { key: 'btc-pi-cycle', name: 'Pi cycle top', desc: '111d vs 2×350d MA' },
+        ]},
+      { title: 'Market Cap', icon: '💰', color: '#F7931A',
+        charts: [
+          { key: 'btc-mcap', name: 'Total market cap', desc: 'BTC mcap with milestones' },
+          { key: 'btc-dominance', name: 'Market dominance', desc: 'BTC as % of total crypto' },
+        ]},
+      { title: 'BTC Dominance', icon: '👑', color: '#FFB800',
+        charts: [
+          { key: 'btc-dom-ma', name: '50d & 200d MA', desc: 'Dominance with moving averages' },
+        ]},
+      { title: 'Volatility', icon: '⚡', color: '#746BE6',
+        charts: [
+          { key: 'btc-realvol', name: 'Realised volatility', desc: '30d, 90d, 180d rolling vol' },
+          { key: 'btc-rv-iv', name: 'RV vs IV (DVOL)', desc: 'Realized vs implied vol' },
+        ]},
+      { title: 'Bitcoin vs Gold', icon: '🥇', color: '#DB33CB',
+        charts: [
+          { key: 'btc-gold', name: 'BTC vs Gold', desc: 'Price overlay comparison' },
+          { key: 'btc-gold-ratio', name: 'BTC/Gold ratio', desc: 'BTC priced in gold' },
+        ]},
+      { title: 'Derivatives', icon: '📊', color: '#EC5B5B',
+        charts: [
+          { key: 'btc-funding', name: 'Funding rate', desc: '8h perpetual funding' },
+          { key: 'btc-oi', name: 'Open interest', desc: 'Total OI with price overlay' },
+          { key: 'btc-funding-delta', name: 'Funding delta', desc: '30d funding change vs price' },
+        ]},
+      { title: 'Cycle Analysis', icon: '🔄', color: '#26A17B',
+        charts: [
+          { key: 'btc-epochs', name: 'Halving epochs', desc: 'x-fold from halving price' },
+          { key: 'btc-cycles', name: 'Bear market cycles', desc: 'Indexed to peak' },
+          { key: 'btc-bull', name: 'Bull market cycles', desc: 'Indexed to trough' },
+        ]},
+    ];
+
+    var h = '';
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:16px">';
+
+    for (var ci = 0; ci < categories.length; ci++) {
+      var cat = categories[ci];
+      h += '<div style="border:1px solid ' + borderCol + ';border-radius:10px;overflow:hidden;background:' + cardBg + '">';
+
+      // Card header
+      h += '<div style="padding:14px 16px 10px;border-bottom:1px solid ' + borderCol + ';display:flex;align-items:center;gap:10px">';
+      h += '<span style="font-size:18px">' + cat.icon + '</span>';
+      h += '<span style="font-size:14px;font-weight:600;color:var(--graphite)">' + cat.title + '</span>';
+      h += '<span style="margin-left:auto;font-size:11px;color:var(--muted)">' + cat.charts.length + '</span>';
+      h += '</div>';
+
+      // Chart list
+      h += '<div style="padding:6px 0">';
+      for (var chi = 0; chi < cat.charts.length; chi++) {
+        var ch = cat.charts[chi];
+        h += '<div class="btc-landing-item" data-key="' + ch.key + '" style="padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.1s">';
+        h += '<div style="width:3px;height:24px;border-radius:2px;background:' + cat.color + ';opacity:0.4;flex-shrink:0"></div>';
+        h += '<div style="flex:1;min-width:0">';
+        h += '<div style="font-size:13px;font-weight:500;color:var(--graphite);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + ch.name + '</div>';
+        h += '<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + ch.desc + '</div>';
+        h += '</div>';
+        h += '<svg width="14" height="14" viewBox="0 0 14 14" style="flex-shrink:0;opacity:0.3"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        h += '</div>';
+      }
+      h += '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+
+    container.innerHTML = h;
+
+    // Add hover effects and click handlers
+    var items = container.querySelectorAll('.btc-landing-item');
+    for (var ii = 0; ii < items.length; ii++) {
+      (function(item) {
+        item.addEventListener('mouseenter', function() { item.style.background = hoverBg; });
+        item.addEventListener('mouseleave', function() { item.style.background = ''; });
+        item.addEventListener('click', function() {
+          var chartKey = item.getAttribute('data-key');
+          // Find the view in TABS and select it
+          var btcTab = TABS.bitcoin;
+          if (btcTab && btcTab.groups) {
+            for (var gi = 0; gi < btcTab.groups.length; gi++) {
+              var grp = btcTab.groups[gi];
+              if (grp.children) {
+                for (var ci2 = 0; ci2 < grp.children.length; ci2++) {
+                  if (grp.children[ci2].key === chartKey) {
+                    selectView(grp.children[ci2]);
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        });
+      })(items[ii]);
+    }
+
+    var chartArea = document.getElementById('chart-area') || canvas.parentElement;
+    chartArea.appendChild(container);
+    var emptyEl = document.getElementById('chart-empty');
+    if (emptyEl) emptyEl.style.display = 'none';
+    var perfRow = document.getElementById('perf-row');
+    if (perfRow) perfRow.innerHTML = '';
+    setTitle('Bitcoin', '8 categories · ' + categories.reduce(function(s,c){return s+c.charts.length},0) + ' charts');
+    document.getElementById('chart-spin').classList.remove('on');
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
+}
 
 async function fetchCategoryOverview(category) {
   const _v = _navVersion;
@@ -4767,412 +4554,6 @@ async function fetchEtfNetFlows(from, to) {
 }
 
 
-
-// ── Control Center: Chart of the Month ────────────────────────────────────────
-async function fetchChartOfMonth() {
-  spinOn();
-  try {
-    // Fetch CC data to score charts
-    const ccData = await fetch('/api/control-center', {signal: _navAbort?.signal}).then(r=>r.json());
-    if (!ccData.charts?.length) throw new Error('no data');
-
-    // Score each chart
-    let scored = [];
-    for (const c of ccData.charts) {
-      let score = 0;
-      let activeRules = [];
-      for (const r of c.rules) {
-        if (r.active) {
-          score += (r.weight === 'major') ? 3 : 1;
-          activeRules.push(r);
-        }
-      }
-      if (score > 0 && c.chart_tab && c.chart_key) {
-        scored.push({ chart: c, score, activeRules });
-      }
-    }
-    scored.sort((a, b) => b.score - a.score);
-
-    if (!scored.length) {
-      if (chart) { chart.destroy(); chart = null; }
-      const canvas = document.getElementById('main-chart');
-      canvas.style.display = 'none';
-      let existing = document.getElementById('cc-matrix-container');
-      if (existing) existing.remove();
-      const container = document.createElement('div');
-      container.id = 'cc-matrix-container';
-      container.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px';
-      container.innerHTML = '<div style="font-size:48px;opacity:0.2">&#10003;</div><div style="font-size:15px;font-weight:500;color:var(--graphite)">All quiet</div><div style="font-size:13px;color:var(--muted)">No active signals right now.</div>';
-      canvas.parentElement.appendChild(container);
-      setTitle('Chart of the Month', 'No active signals');
-      document.getElementById('chart-spin').classList.remove('on');
-      return;
-    }
-
-    const top = scored[0];
-    const c = top.chart;
-
-    // Build info card above the chart
-    const rulesSummary = top.activeRules.map(r => {
-      const dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00D64A;margin-right:4px"></span>';
-      const weight = r.weight === 'major' ? '<span style="font-size:10px;font-weight:600;color:var(--graphite)">major</span>' : '<span style="font-size:10px;color:var(--muted)">minor</span>';
-      return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">' + dot + '<span style="font-weight:500">' + r.name + '</span> ' + weight + ' <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">' + r.detail + '</span></div>';
-    }).join('');
-
-    const perfRow = document.getElementById('perf-row');
-    if (perfRow) {
-      perfRow.innerHTML = `
-        <div style="display:flex;align-items:flex-start;gap:20px;width:100%;padding:4px 0">
-          <div style="flex:1">
-            <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${darkMode ? '#00D64A' : '#059669'};margin-bottom:6px">Chart of the Month — ${c.category}</div>
-            <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${top.activeRules.length} active signal${top.activeRules.length > 1 ? 's' : ''} (score: ${top.score})</div>
-            ${rulesSummary}
-          </div>
-        </div>`;
-    }
-
-    // Now load the actual chart by calling its fetch function
-    const from = document.getElementById('rp-from')?.value || '2020-01-01';
-    const to = document.getElementById('rp-to')?.value || new Date().toISOString().split('T')[0];
-
-    // Map chart_key to its fetch function
-    const fetchMap = {
-      'btc-ma-gap': () => fetchBtcMAGap(from, to),
-      'btc-ma': () => fetchBtcMA(from, to),
-      'btc-200w-floor': () => fetchBtc200wFloor(from, to),
-      'btc-200d-dev': () => fetchBtc200dDev(from, to),
-      'btc-drawdown': () => fetchBtcDrawdownATH(from, to),
-      'btc-realvol': () => fetchBtcRealvol(from, to),
-      'btc-rv-iv': () => fetchBtcRvIv(from, to),
-      'btc-funding': () => fetchBtcFunding(from, to),
-      'btc-dominance': () => fetchBtcDominance(from, to),
-      'btc-dom-ma': () => fetchBtcDominanceMa(from, to),
-      'btc-mcap': () => fetchBtcMcap(from, to),
-      'btc-pi-cycle': () => fetchBtcPiCycle(from, to),
-      'eth-ma-gap': () => fetchEthMAGap(from, to),
-      'eth-ma': () => fetchEthMA(from, to),
-      'eth-200d-dev': () => fetchEth200dDev(from, to),
-      'eth-drawdown': () => fetchEthDrawdown(from, to),
-      'eth-btc-ratio': () => fetchEthBtcRatio(from, to),
-      'am-dominance': () => fetchDominanceShares(from, to),
-    };
-
-    const loader = fetchMap[c.chart_key];
-    if (loader) {
-      await loader();
-      // Override the title to include COTM branding
-      setTitle('Chart of the Month: ' + c.chart_name, c.category + ' · ' + top.activeRules.length + ' active signals');
-    } else {
-      // Fallback: navigate to the chart
-      selectView(c.chart_tab, c.chart_key);
-    }
-
-  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
-}
-
-
-
-// ── Control Center: Regime & Cycle Panel ──────────────────────────────────────
-
-async function fetchDataStatus() {
-  spinOn();
-  try {
-    var data = await fetch('/api/data-status', {signal: _navAbort?.signal}).then(function(r){return r.json()});
-
-    if (chart) { chart.destroy(); chart = null; }
-    var canvas = document.getElementById('main-chart');
-    canvas.style.display = 'none';
-    var existing = document.getElementById('cc-matrix-container');
-    if (existing) existing.remove();
-
-    var container = document.createElement('div');
-    container.id = 'cc-matrix-container';
-    container.style.cssText = 'width:100%;height:100%;overflow-y:auto;padding:20px 24px;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:5;';
-
-    var categories = {
-      'market_data': {label: 'Market Data', icon: '📊'},
-      'perps': {label: 'Perpetuals', icon: '📈'},
-      'derivatives': {label: 'Derivatives', icon: '🎯'},
-      'etf': {label: 'ETFs', icon: '🏦'},
-      'misc': {label: 'Miscellaneous', icon: '📁'}
-    };
-
-    var datasets = data.datasets || [];
-    var borderCol = 'var(--border)';
-    var h = '';
-
-    for (var catKey in categories) {
-      var cat = categories[catKey];
-      var catData = datasets.filter(function(d) { return d.category === catKey; });
-      if (!catData.length) continue;
-
-      h += '<div style="margin-bottom:24px">';
-      h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">' + cat.icon + ' ' + cat.label + '</div>';
-
-      h += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
-      h += '<thead><tr style="border-bottom:1px solid ' + borderCol + '">';
-      h += '<th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600">Dataset</th>';
-      h += '<th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600">Granularity</th>';
-      h += '<th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600">Source</th>';
-      h += '<th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600">From</th>';
-      h += '<th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600">To</th>';
-      h += '<th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600">Assets</th>';
-      h += '<th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600">Rows</th>';
-      h += '<th style="text-align:center;padding:6px 8px;color:var(--muted);font-weight:600">Status</th>';
-      h += '</tr></thead><tbody>';
-
-      for (var di = 0; di < catData.length; di++) {
-        var d = catData[di];
-        var statusColor = d.status === 'live' ? (darkMode ? '#5DCAA5' : '#059669') : d.status === 'stale' ? (darkMode ? '#F09595' : '#DC2626') : d.status === 'static' ? 'var(--muted)' : '#E1C87E';
-        var statusLabel = d.status === 'live' ? 'Live' : d.status === 'stale' ? 'Stale' : d.status === 'static' ? 'Static' : d.status === 'empty' ? 'Empty' : 'Error';
-        var rowsStr = d.rows > 1000000 ? (d.rows / 1000000).toFixed(2) + 'M' : d.rows > 1000 ? (d.rows / 1000).toFixed(0) + 'k' : d.rows.toString();
-
-        h += '<tr style="border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">';
-        h += '<td style="padding:6px 8px;font-weight:500;color:var(--graphite)">' + d.name + '</td>';
-        h += '<td style="padding:6px 8px;color:var(--muted)">' + d.granularity + '</td>';
-        h += '<td style="padding:6px 8px;color:var(--muted)">' + d.source + '</td>';
-        h += '<td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--muted)">' + (d.date_from || '—') + '</td>';
-        h += '<td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--muted)">' + (d.date_to || '—') + '</td>';
-        h += '<td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--graphite)">' + d.assets + '</td>';
-        h += '<td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--graphite)">' + rowsStr + '</td>';
-        h += '<td style="padding:6px 8px;text-align:center"><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:' + statusColor + '20;color:' + statusColor + '">' + statusLabel + '</span></td>';
-        h += '</tr>';
-      }
-
-      h += '</tbody></table></div>';
-    }
-
-    // Summary
-    var totalRows = datasets.reduce(function(s, d) { return s + d.rows; }, 0);
-    var liveCount = datasets.filter(function(d) { return d.status === 'live'; }).length;
-    var staleCount = datasets.filter(function(d) { return d.status === 'stale'; }).length;
-    h += '<div style="margin-top:16px;font-size:11px;color:var(--muted)">';
-    h += datasets.length + ' datasets · ' + (totalRows > 1000000 ? (totalRows/1000000).toFixed(1) + 'M' : (totalRows/1000).toFixed(0) + 'k') + ' total rows · ';
-    h += liveCount + ' live · ' + staleCount + ' stale';
-    h += ' · Updated ' + (data.updated || '?');
-    h += '</div>';
-
-    container.innerHTML = h;
-    var chartArea = document.getElementById('chart-area') || canvas.parentElement;
-    chartArea.appendChild(container);
-    var emptyEl = document.getElementById('chart-empty');
-    if (emptyEl) emptyEl.style.display = 'none';
-    var perfRow = document.getElementById('perf-row');
-    if (perfRow) perfRow.innerHTML = '';
-    setTitle('Database Status', liveCount + ' live · ' + staleCount + ' stale · ' + datasets.length + ' datasets');
-    document.getElementById('chart-spin').classList.remove('on');
-  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
-}
-
-function navigateToChart(chartKey) {
-  for (var t in TABS) {
-    var tab = TABS[t];
-    if (tab.groups) {
-      for (var gi = 0; gi < tab.groups.length; gi++) {
-        var grp = tab.groups[gi];
-        if (grp.children) {
-          for (var ci = 0; ci < grp.children.length; ci++) {
-            if (grp.children[ci].key === chartKey) {
-              selectView(grp.children[ci]);
-              return;
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-async function fetchRegimePanel() {
-  spinOn();
-  try {
-    var ccData = await fetch('/api/control-center', {signal: _navAbort?.signal}).then(function(r){return r.json()});
-
-    if (chart) { chart.destroy(); chart = null; }
-    var canvas = document.getElementById('main-chart');
-    canvas.style.display = 'none';
-    var existing = document.getElementById('cc-matrix-container');
-    if (existing) existing.remove();
-
-    var container = document.createElement('div');
-    container.id = 'cc-matrix-container';
-    container.style.cssText = 'width:100%;height:100%;overflow-y:auto;padding:20px 24px;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:5;';
-
-    var red = darkMode ? '#F09595' : '#A32D2D';
-    var green = darkMode ? '#5DCAA5' : '#0F6E56';
-    var redBg = darkMode ? 'rgba(240,149,149,0.06)' : 'rgba(163,45,45,0.04)';
-    var greenBg = darkMode ? 'rgba(93,202,165,0.06)' : 'rgba(15,110,86,0.04)';
-    var borderCol = 'var(--border)';
-
-    // Build lookup
-    var ccLookup = {};
-    if (ccData && ccData.charts) {
-      for (var ci = 0; ci < ccData.charts.length; ci++) {
-        var ch = ccData.charts[ci];
-        if (!ccLookup[ch.chart_key]) ccLookup[ch.chart_key] = [];
-        for (var ri = 0; ri < ch.rules.length; ri++) {
-          var ru = ch.rules[ri];
-          ccLookup[ch.chart_key].push({name: ru.name, active: ru.active, detail: ru.detail || '', context: ru.context || '', weight: ru.weight || '', type: ru.type || ''});
-        }
-      }
-    }
-
-    function findRule(chartKey, sub, onlyActive) {
-      var arr = ccLookup[chartKey] || [];
-      for (var i = 0; i < arr.length; i++) {
-        if (arr[i].name.toLowerCase().indexOf(sub.toLowerCase()) >= 0) {
-          if (onlyActive && !arr[i].active) continue;
-          return arr[i];
-        }
-      }
-      return null;
-    }
-
-    var regimes = [
-      { name: 'Risk-on expansion', tag: 'bullish alts', color: '#3B6D11', bgColor: '#EAF3DE',
-        indicators: [
-          { label: 'BTC dominance falling', ck: 'btc-dom-ma', rm: 'dominance falling', fb: '30d z < -1.0' },
-          { label: 'Altseason elevated', ck: 'alt-altseason', rm: 'altseason > 75', fb: '> 75% alts outperforming BTC' },
-          { label: 'Funding rate positive', ck: 'btc-funding', rm: 'funding positive', fb: '> 0.01% avg' },
-          { label: 'ETH/BTC ratio rising', ck: 'eth-btc-ratio', rm: 'eth/btc rising', fb: '30d > +5%' },
-          { label: 'Alt intracorrelation rising', ck: 'am-intracorr', rm: 'correlation rising', fb: 'Rising > +0.10' },
-        ]},
-      { name: 'BTC flight-to-quality', tag: 'btc dominance', color: '#185FA5', bgColor: '#E6F1FB',
-        indicators: [
-          { label: 'BTC dominance rising', ck: 'btc-dom-ma', rm: 'dominance rising', fb: 'z > +1.0' },
-          { label: 'ETH/BTC ratio falling', ck: 'eth-btc-ratio', rm: 'falling sharply', fb: '30d < -10%' },
-          { label: 'Alt share declining', ck: 'am-dominance', rm: 'alt share', fb: 'Alt mcap vs total' },
-          { label: 'BTC ETF inflows, ETH flat', ck: null, rm: null, fb: 'ETF flow divergence' },
-          { label: 'Alt correlated + falling', ck: 'am-intracorr', rm: 'correlated and alts falling', fb: 'Corr > 0.4 AND alts down' },
-        ]},
-      { name: 'Deleveraging', tag: 'crisis', color: '#A32D2D', bgColor: '#FCEBEB',
-        indicators: [
-          { label: 'Funding flips negative', ck: 'btc-funding', rm: 'negative streak', fb: '5+ consecutive negative days' },
-          { label: 'Open interest dropping', ck: null, rm: null, fb: '> 15% drop in 7 days' },
-          { label: 'Realized vol spiking', ck: null, rm: null, fb: '> 80% annualized' },
-          { label: 'BTC-SPY correlation spiking', ck: null, rm: null, fb: '> 0.6' },
-          { label: 'BTC drawdown velocity', ck: null, rm: null, fb: '> 10% drop in 7 days' },
-        ]},
-      { name: 'Consolidation', tag: 'sideways', color: '#5F5E5A', bgColor: '#F1EFE8',
-        indicators: [
-          { label: 'Realized vol low', ck: null, rm: null, fb: '< 35% annualized' },
-          { label: 'BTC drawdown mild', ck: null, rm: null, fb: 'Between -5% and -20%' },
-          { label: 'Funding near zero', ck: null, rm: null, fb: '< 0.005%' },
-          { label: 'Stablecoin supply growing', ck: null, rm: null, fb: 'Or stable' },
-          { label: 'DVOL low', ck: null, rm: null, fb: '< 50' },
-        ]},
-      { name: 'Macro risk-off', tag: 'external shock', color: '#854F0B', bgColor: '#FAEEDA',
-        indicators: [
-          { label: 'SPY/QQQ falling', ck: null, rm: null, fb: '30d return < -5%' },
-          { label: 'DXY strengthening', ck: null, rm: null, fb: 'Rising trend' },
-          { label: 'BTC-SPY correlation high', ck: null, rm: null, fb: '> 0.5 sustained' },
-          { label: 'ETF outflows', ck: null, rm: null, fb: 'Net negative' },
-          { label: 'VIX elevated', ck: null, rm: null, fb: '> 25' },
-        ]},
-    ];
-
-    var h = '';
-    h += '<div style="margin-bottom:32px">';
-    h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Market regime</div>';
-    h += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Each regime confirmed when 3 of 5 indicators align. Green = wired + active. Grey = wired but inactive. Red = not yet wired.</div>';
-
-    for (var ri2 = 0; ri2 < regimes.length; ri2++) {
-      var reg = regimes[ri2];
-      var liveCount = 0;
-      var indHtml = '';
-
-      for (var ii = 0; ii < reg.indicators.length; ii++) {
-        var ind = reg.indicators[ii];
-        var isLive = false;
-        var det = ind.fb;
-        var isWired = !!(ind.ck && ind.rm);
-
-        if (ind.ck && ind.rm) {
-          var activeRule = findRule(ind.ck, ind.rm, true);
-          if (activeRule) {
-            isLive = true;
-            det = activeRule.detail;
-            liveCount++;
-          } else {
-            var anyRule = findRule(ind.ck, ind.rm, false);
-            if (anyRule) det = anyRule.detail;
-          }
-        }
-
-        var ic = isLive ? green : (isWired ? '#888' : red);
-        var dot = isLive ? '&#10003;' : (isWired ? '&#9679;' : '&#10007;');
-        indHtml += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)') + '">';
-        indHtml += '<span style="font-size:12px;color:' + ic + ';width:16px;text-align:center">' + dot + '</span>';
-        indHtml += '<span style="font-size:12px;color:' + (isLive ? green : 'var(--graphite)') + ';font-weight:' + (isLive ? '600' : '400') + '">' + ind.label + '</span>';
-        if (ind.ck) { indHtml += '<a href="javascript:void(0)" data-chartkey="' + ind.ck + '" style="font-size:10px;color:var(--muted);margin-left:6px;text-decoration:none;padding:1px 6px;border:1px solid var(--border);border-radius:4px">view →</a>'; }
-        indHtml += '<span style="font-size:11px;font-family:var(--mono);color:var(--muted);margin-left:auto;max-width:50%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + det + '</span>';
-        indHtml += '</div>';
-      }
-
-      var confirmed = liveCount >= 3;
-      h += '<div style="margin-bottom:16px;border:0.5px solid ' + borderCol + ';border-radius:8px;overflow:hidden' + (confirmed ? ';border-color:' + green : '') + '">';
-      h += '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:' + (confirmed ? greenBg : (darkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)')) + '">';
-      h += '<span style="font-size:13px;font-weight:600;color:var(--graphite)">' + reg.name + '</span>';
-      h += '<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:' + reg.bgColor + ';color:' + reg.color + '">' + reg.tag + '</span>';
-      h += '<span style="margin-left:auto;font-size:11px;font-weight:600;color:' + (liveCount >= 3 ? green : (liveCount > 0 ? '#E1C87E' : red)) + '">' + liveCount + '/5</span>';
-      if (confirmed) h += '<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:' + greenBg + ';color:' + green + ';font-weight:600">CONFIRMED</span>';
-      h += '</div>';
-      h += '<div style="padding:8px 16px 12px">' + indHtml + '</div></div>';
-    }
-    h += '</div>';
-
-    // Cycle blueprint
-    var steps = [
-      [1,'Liquidity conditions improve','Monetary policy easing. DXY weakening, real yields falling.'],
-      [2,'VCs raise capital','New fund raises, deployment into crypto startups accelerates.'],
-      [3,'Speculation demand increases','DEX activity, DeFi loans, stablecoin supply expanding.'],
-      [4,'Media covers crypto','Mainstream financial media running crypto stories regularly.'],
-      [5,'FOMO builds','New speculators. More builders. More VC capital. More DeFi demand.'],
-      [6,'DeFi boosts yields','Projects compete for TVL by boosting yields.'],
-      [7,'Rotation into alts','Asset prices rise, investors chase beta.'],
-      [8,'New products & capital markets','ETFs, IPOs, ICOs, VC investments, M&A surges.'],
-      [9,'Leverage builds','Funding elevated, OI/mcap high, vol compressed. Everyone is long.'],
-      [10,'Liquidity rolls over','Markets sell off. DXY reverses. Next crypto winter begins.'],
-    ];
-    h += '<div>';
-    h += '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Crypto cycle blueprint</div>';
-    for (var si = 0; si < steps.length; si++) {
-      h += '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid ' + borderCol + '">';
-      h += '<div style="width:28px;height:28px;border-radius:50%;background:' + redBg + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:' + red + ';flex-shrink:0">' + steps[si][0] + '</div>';
-      h += '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:' + red + '">' + steps[si][1] + '</div><div style="font-size:11px;color:var(--muted);margin-top:2px">' + steps[si][2] + '</div></div>';
-      h += '</div>';
-    }
-    h += '</div>';
-
-    container.innerHTML = h;
-    var chartArea = document.getElementById('chart-area') || canvas.parentElement;
-    chartArea.appendChild(container);
-    var emptyEl = document.getElementById('chart-empty');
-    if (emptyEl) emptyEl.style.display = 'none';
-    var perfRow = document.getElementById('perf-row');
-    if (perfRow) perfRow.innerHTML = '';
-    // Add click handlers for regime links
-    chartArea.addEventListener('click', function(e) {
-      var el = e.target.closest('.regime-link');
-      if (el && el.dataset.ck) {
-        navigateToChart(el.dataset.ck);
-      }
-    });
-    // Bind chart navigation links
-    var links = container.querySelectorAll('a[data-chartkey]');
-    for (var li = 0; li < links.length; li++) {
-      (function(link) {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          navigateToChart(link.getAttribute('data-chartkey'));
-        });
-      })(links[li]);
-    }
-    setTitle('Market Regime & Cycle Position', 'Live scoring from ' + (ccData.charts ? ccData.charts.length : 0) + ' indicators');
-    document.getElementById('chart-spin').classList.remove('on');
-  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
-}
-
 async function fetchControlCenter(mode) {
   const _v = _navVersion;
   spinOn();
@@ -5221,67 +4602,7 @@ async function fetchControlCenter(mode) {
       return;
     }
 
-    // ── Chart of the Day ──
-    let cotdHTML = '';
-    if (mode === 'flagged' || !mode) {
-      // Score each chart: major active = 3, minor active = 1
-      let scored = [];
-      for (const c of data.charts) {
-        let score = 0;
-        let activeRules = [];
-        for (const r of c.rules) {
-          if (r.active) {
-            const pts = (r.weight === 'major') ? 3 : 1;
-            score += pts;
-            activeRules.push(r.name);
-          }
-        }
-        if (score > 0) {
-          scored.push({ chart: c, score, activeRules });
-        }
-      }
-      scored.sort((a, b) => b.score - a.score);
-
-      if (scored.length > 0) {
-        const top = scored[0];
-        const c = top.chart;
-        const ruleList = top.activeRules.slice(0, 3).join(' · ');
-        const dotCount = top.activeRules.length;
-
-        // Build detailed context for each active rule
-        const ruleDetails = top.activeRules.map(rName => {
-          for (const r of top.chart.rules) {
-            if (r.name === rName && r.active) return r;
-          }
-          return null;
-        }).filter(Boolean);
-
-        const contextRows = ruleDetails.map(r => {
-          const wt = r.weight === 'major' ? '<span style="font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(0,214,74,0.15);color:#059669">MAJOR</span>' : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)') + ';color:var(--muted)">minor</span>';
-          return '<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:0.5px solid ' + (darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)') + '">' +
-            '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00D64A;margin-top:5px;flex-shrink:0"></span>' +
-            '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--graphite)">' + r.name + ' ' + wt + '</div>' +
-            '<div style="font-size:11px;font-family:var(--mono);color:' + (darkMode ? '#B0B3B0' : '#555') + ';margin-top:2px">' + r.detail + '</div>' +
-            (r.context ? '<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:2px">' + r.context + '</div>' : '') +
-            '</div></div>';
-        }).join('');
-
-        cotdHTML = `
-          <div style="margin-bottom:20px;padding:20px 24px;border-radius:8px;background:${darkMode ? 'rgba(0,214,74,0.04)' : 'rgba(0,180,60,0.04)'};border:1px solid ${darkMode ? 'rgba(0,214,74,0.12)' : 'rgba(0,180,60,0.12)'}">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-              <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${darkMode ? '#00D64A' : '#059669'}">Chart of the Day</span>
-              <span style="font-size:10px;color:var(--muted)">${dotCount} signal${dotCount > 1 ? 's' : ''} active · score ${top.score}</span>
-            </div>
-            <div style="margin-bottom:14px">
-              <a href="#" onclick="selectView('${c.chart_tab}','${c.chart_key}');return false;" style="font-size:18px;font-weight:600;color:var(--graphite);text-decoration:none;border-bottom:2px solid ${darkMode ? 'rgba(0,214,74,0.3)' : 'rgba(0,180,60,0.3)'}">${c.chart_name} →</a>
-              <div style="margin-top:4px;font-size:12px;color:var(--muted)">${c.category}</div>
-            </div>
-            <div style="margin-top:8px">${contextRows}</div>
-          </div>`;
-      }
-    }
-
-    let tableHTML = cotdHTML + '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
+    let tableHTML = '<div style="margin-bottom:12px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Last updated: ' + data.updated + '</span></div>';
     tableHTML += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
     tableHTML += '<thead><tr style="border-bottom:1px solid var(--border)">';
     tableHTML += '<th style="text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;width:22%">Chart</th>';
@@ -5790,107 +5111,6 @@ async function fetchBtcRvIv(from, to) {
 
 
 // ── Themes: Sector Overview Matrix ────────────────────────────────────────────
-
-// ── Baskets: Deep Dive — Rebased Performance ─────────────────────────────────
-async function fetchSectorAnalysisRebase(from, to) {
-  spinOn();
-  try {
-    // Get selected sector from sidebar or default
-    const sectorSel = selected?.length ? selected[0] : 'Layer 2';
-
-    const data = await fetch(`/api/sector-analysis-rebase?sector=${encodeURIComponent(sectorSel)}&from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
-    if (!data.assets || !Object.keys(data.assets).length) throw new Error('no data');
-
-    const PAL_LOCAL = ['#F7931A','#627EEA','#00D64A','#EC5B5B','#2471CC','#AEA9EA','#E1C87E','#DB33CB','#9EA4A0','#C084FC','#F87171','#34D399'];
-
-    // Build common date axis
-    let allDates = new Set();
-    for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
-    allDates = [...allDates].sort();
-
-    const datasets = [];
-    let colorIdx = 0;
-
-    // Benchmarks and index first (dashed, thicker)
-    for (const key of ['_INDEX', '_ALTS', '_ETH']) {
-      const a = data.assets[key];
-      if (!a) continue;
-      const dateMap = {};
-      a.dates.forEach((d, i) => dateMap[d] = a.rebased[i]);
-
-      datasets.push({
-        label: a.label,
-        data: allDates.map(d => dateMap[d] ?? null),
-        borderColor: a.color,
-        backgroundColor: 'transparent',
-        borderWidth: key === '_INDEX' ? 2.5 : 1.8,
-        pointRadius: 0,
-        tension: 0.1,
-        spanGaps: true,
-        borderDash: key === '_INDEX' ? [] : [5, 3],
-      });
-    }
-
-    // Constituents
-    for (const [sym, a] of Object.entries(data.assets)) {
-      if (sym.startsWith('_')) continue;
-      const dateMap = {};
-      a.dates.forEach((d, i) => dateMap[d] = a.rebased[i]);
-
-      datasets.push({
-        label: sym,
-        data: allDates.map(d => dateMap[d] ?? null),
-        borderColor: PAL_LOCAL[colorIdx % PAL_LOCAL.length],
-        backgroundColor: 'transparent',
-        borderWidth: 1.4,
-        pointRadius: 0,
-        tension: 0.1,
-        spanGaps: true,
-      });
-      colorIdx++;
-    }
-
-    mkChart('line', { labels: allDates, datasets }, {
-      scales: {
-        x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 10,
-          callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID },
-        y: { ticks: { ...YTICK, callback: v => v.toFixed(0) }, grid: YGRID },
-      },
-      plugins: {
-        legend: { display: true, position: 'top', labels: { color: '#888', font: { size: 10 }, boxWidth: 10, padding: 8 } },
-      },
-    });
-
-    // Summary bar: current rebased values
-    const summaryDiv = document.getElementById('perf-row');
-    if (summaryDiv) {
-      const items = [];
-      // Show index performance
-      const idx = data.assets['_INDEX'];
-      if (idx) {
-        const last = idx.rebased[idx.rebased.length - 1];
-        const perf = last - 100;
-        const clr = perf >= 0 ? '#00D64A' : '#EC5B5B';
-        items.push(`<div class="perf-item"><span style="color:${data.color};font-weight:600">${sectorSel}</span> <span style="color:${clr}">${perf >= 0 ? '+' : ''}${perf.toFixed(1)}%</span></div>`);
-      }
-      // Top 3 and bottom 3 constituents
-      const perfs = Object.entries(data.assets)
-        .filter(([k]) => !k.startsWith('_'))
-        .map(([sym, a]) => ({ sym, perf: a.rebased[a.rebased.length - 1] - 100 }))
-        .sort((a, b) => b.perf - a.perf);
-      const show = [...perfs.slice(0, 3), ...perfs.slice(-2)];
-      for (const p of show) {
-        const clr = p.perf >= 0 ? '#00D64A' : '#EC5B5B';
-        items.push(`<div class="perf-item"><span style="font-weight:500">${p.sym}</span> <span style="color:${clr}">${p.perf >= 0 ? '+' : ''}${p.perf.toFixed(1)}%</span></div>`);
-      }
-      summaryDiv.innerHTML = items.join('');
-    }
-
-    setTitle('Rebased Performance — ' + sectorSel, 'Source: CoinGecko Pro · all constituents rebased to 100 · click legend to toggle');
-  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
-}
-
-
 async function fetchSectorOverview() {
   const _v = _navVersion;
   spinOn();
@@ -6219,7 +5439,7 @@ async function fetchMacroBtcCorr(from, to) {
   spinOn();
   try {
     const winEl = document.getElementById('rp-window');
-    const window = winEl?.value || '90';
+    const window = winEl?.value || '30';
 
     // Default assets — user can change via console or we add UI later
     const MACRO_ASSETS = ['SPY','QQQ','IWM','TLT','GLD','BNO','DX-Y.NYB','^VIX'];
@@ -6236,7 +5456,7 @@ async function fetchMacroBtcCorr(from, to) {
     };
 
     // Default visibility: only QQQ and GLD shown initially
-    const DEFAULT_VISIBLE = ['SPY', 'GLD'];
+    const DEFAULT_VISIBLE = ['QQQ', 'GLD'];
 
     // Build common date axis
     let allDates = new Set();
