@@ -2629,7 +2629,7 @@ function heatFunding(v, maxAbs) {
 }
 function drawHeatmapCanvas(rowLabels, colLabels, matrix, colorFn) {
   if (chart) { chart.destroy(); chart = null; }
-  const box = document.getElementById('chart-box');
+  const box = document.getElementById('chart-area');
   const canvas = document.getElementById('main-chart');
   const W = box.clientWidth  || 600;
   const H = box.clientHeight || 400;
