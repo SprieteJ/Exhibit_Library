@@ -195,6 +195,11 @@ def handle_macro_igv_btc(params):
     date_from = params.get("from",   ["2022-01-01"])[0]
     date_to   = params.get("to",     ["2099-01-01"])[0]
     window    = int(params.get("window", ["30"])[0])
+    # Fetch extra days before date_from for correlation warmup
+    try:
+        dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
+    except:
+        dt_from_ext = date_from
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
@@ -204,7 +209,7 @@ def handle_macro_igv_btc(params):
           AND timestamp >= %s AND timestamp <= %s
           AND close > 0
         ORDER BY timestamp
-    """, (date_from, date_to))
+    """, (dt_from_ext, date_to))
     igv_rows = cur.fetchall()
     cur.execute("""
         SELECT timestamp::date as date, price_usd
@@ -213,16 +218,33 @@ def handle_macro_igv_btc(params):
           AND timestamp >= %s AND timestamp <= %s
           AND price_usd > 0
         ORDER BY timestamp
-    """, (date_from, date_to))
+    """, (dt_from_ext, date_to))
     btc_rows = cur.fetchall()
     conn.close()
     igv_map = {str(r['date']): float(r['close']) for r in igv_rows}
     btc_map = {str(r['date']): float(r['price_usd']) for r in btc_rows}
     all_dates = sorted(set(list(igv_map.keys()) + list(btc_map.keys())))
-    igv_vals = [igv_map.get(d) for d in all_dates]
+    # Forward-fill IGV for weekends/holidays
+    igv_vals = []
+    last_igv = None
+    for d in all_dates:
+        v = igv_map.get(d)
+        if v is not None: last_igv = v
+        igv_vals.append(last_igv)
     btc_vals = [btc_map.get(d) for d in all_dates]
-    corr     = rolling_corr(igv_vals, btc_vals, window)
-    return {"dates": all_dates, "igv": igv_vals, "btc": btc_vals, "correlation": corr}
+    corr = rolling_corr(igv_vals, btc_vals, window)
+    # Trim to requested date range
+    trim_dates = []
+    trim_igv = []
+    trim_btc = []
+    trim_corr = []
+    for i, d in enumerate(all_dates):
+        if d >= date_from and d <= date_to:
+            trim_dates.append(d)
+            trim_igv.append(igv_vals[i])
+            trim_btc.append(btc_vals[i])
+            trim_corr.append(corr[i] if i < len(corr) else None)
+    return {"dates": trim_dates, "igv": trim_igv, "btc": trim_btc, "correlation": trim_corr}
 def handle_macro_risk(params):
     """Composite risk-on/off score: VIX + DXY (+ HYG/LQD if available)."""
     date_from = params.get("from", ["2022-01-01"])[0]
