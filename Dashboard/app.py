@@ -26,9 +26,10 @@ from api.altcoins import (handle_price, handle_alt_scatter,
                            handle_alt_ath_drawdown, handle_alt_funding_heatmap,
                            handle_alt_drawdown_ts)
 from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_dxy_btc,
-                           handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin, handle_macro_igv_btc)
+                           handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin,
+                           handle_macro_igv_btc, handle_macro_sharpe, handle_macro_btc_corr)
 from api.crypto_market import handle_total_mcap
-from api.control_center import handle_control_center
+from api.control_center import handle_control_center, handle_rule_history
 from api.ethereum import (handle_eth_ma, handle_eth_ma_gap, handle_eth_200d_dev,
                            handle_eth_drawdown, handle_eth_mcap, handle_eth_btc_ratio)
 from api.alt_market import (handle_alt_mcap, handle_alt_mcap_gap, handle_alt_mcap_dev,
@@ -52,7 +53,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def send_file(self, path: Path):
+    def send_file(self, path: Path, cache_secs=0):
         if not path.exists():
             self.send_response(404); self.end_headers(); return
         mime = {
@@ -64,6 +65,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", mime)
         self.send_header("Content-Length", len(body))
+        if cache_secs > 0:
+            self.send_header("Cache-Control", f"public, max-age={cache_secs}")
         self.end_headers()
         self.wfile.write(body)
 
@@ -155,8 +158,12 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/btc-alt-ratio":     self.send_json(handle_btc_alt_ratio(params))
             elif p == "/api/alt-intracorr":     self.send_json(handle_alt_intracorr(params))
 
+            elif p == "/api/macro-sharpe":      self.send_json(handle_macro_sharpe(params))
+            elif p == "/api/macro-btc-corr":    self.send_json(handle_macro_btc_corr(params))
+            elif p == "/api/rule-history":       self.send_json(handle_rule_history(params))
+
             elif p.startswith("/static/"):
-                self.send_file(BASE_DIR / p[8:])
+                self.send_file(BASE_DIR / p[8:], cache_secs=86400)
             else:
                 self.send_response(404); self.end_headers()
 

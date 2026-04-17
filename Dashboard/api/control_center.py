@@ -3,10 +3,13 @@ api/control_center.py — Rule-based signal matrix
 Each chart can have multiple rules. Each rule is green (look at this) or grey (nothing to see).
 Structure: category > chart > rules
 """
-import math
+import math, time
 from datetime import datetime, timedelta
 from api.shared import get_conn
 import psycopg2.extras
+
+# Simple cache: store last CC result for 60 seconds
+_cc_cache = {"data": None, "ts": 0}
 
 
 def _sma(prices, window):
@@ -759,6 +762,10 @@ def _rules_intracorrelation(cur):
     return [{"category": "Altcoins", "chart_name": "Altcoin Intracorrelation", "chart_tab": "altcoins", "chart_key": "am-intracorr", "rules": rules}]
 
 def handle_control_center(params):
+    # Return cached result if less than 60 seconds old
+    if _cc_cache["data"] and (time.time() - _cc_cache["ts"]) < 60:
+        return _cc_cache["data"]
+
     conn = get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     charts = []
@@ -785,7 +792,10 @@ def handle_control_center(params):
     charts.extend(_rules_intracorrelation(cur))
 
     conn.close()
-    return {"updated": datetime.now().strftime("%Y-%m-%d %H:%M UTC"), "charts": charts}
+    result = {"updated": datetime.now().strftime("%Y-%m-%d %H:%M UTC"), "charts": charts}
+    _cc_cache["data"] = result
+    _cc_cache["ts"] = time.time()
+    return result
 
 
 def _compute_zscore_series(values, lookback=30, z_window=365):
