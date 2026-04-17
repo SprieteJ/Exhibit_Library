@@ -137,26 +137,28 @@ def fetch_sector_index(cur, cg_ids, date_from, date_to, weighting='equal', granu
     return index, sorted(index.keys())
 
 
-def forward_fill_align(date_map_a, date_map_b, all_dates):
-    """Forward-fill two price maps onto a shared date index.
-    Handles weekends/holidays where one series has gaps.
-    Returns (vals_a, vals_b) as lists aligned to all_dates."""
-    vals_a, vals_b = [], []
-    last_a, last_b = None, None
+# ── Forward-fill + comparison helpers ─────────────────────────────────────────
+
+def forward_fill(date_map, all_dates):
+    """Forward-fill a {date: value} map onto all_dates.
+    Carries last known value through weekends/holidays."""
+    result = []
+    last = None
     for d in all_dates:
-        va = date_map_a.get(d)
-        vb = date_map_b.get(d)
-        if va is not None: last_a = va
-        if vb is not None: last_b = vb
-        vals_a.append(last_a)
-        vals_b.append(last_b)
-    return vals_a, vals_b
+        v = date_map.get(d)
+        if v is not None:
+            last = v
+        result.append(last)
+    return result
 
 
 def macro_crypto_comparison(cur, macro_ticker, crypto_symbol, date_from, date_to, window=30):
     """Shared logic for macro-vs-crypto comparison charts.
-    Fetches both series with warmup period, forward-fills gaps, computes correlation.
-    Returns {dates, macro_vals, crypto_vals, correlation} trimmed to requested range."""
+    - Fetches extra days before date_from for correlation warmup
+    - Forward-fills macro gaps (weekends/holidays)
+    - Computes rolling correlation
+    - Trims output to requested date range
+    Returns (dates, macro_vals, crypto_vals, correlation)"""
     from datetime import datetime, timedelta
     try:
         dt_from_ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + 10)).strftime("%Y-%m-%d")
@@ -183,7 +185,8 @@ def macro_crypto_comparison(cur, macro_ticker, crypto_symbol, date_from, date_to
     crypto_map = {str(r['date']): float(r['price_usd']) for r in crypto_rows}
 
     all_dates = sorted(set(list(macro_map.keys()) + list(crypto_map.keys())))
-    macro_vals, crypto_vals = forward_fill_align(macro_map, crypto_map, all_dates)
+    macro_vals = forward_fill(macro_map, all_dates)
+    crypto_vals = forward_fill(crypto_map, all_dates)
     corr = rolling_corr(macro_vals, crypto_vals, window)
 
     # Trim to requested range
