@@ -21,7 +21,7 @@ async function fetchDataStatus() {
       'misc': {label: 'Miscellaneous', icon: '📁'}
     };
 
-    var datasets = data.datasets || [];
+    var datasets = Array.isArray(data) ? data : (data.datasets || []);
     var borderCol = 'var(--border)';
     var h = '';
 
