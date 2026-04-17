@@ -91,6 +91,7 @@ MACRO_ASSETS = {
     "COIN":      ("Coinbase",                 "crypto_equity"),
     "MARA":      ("Marathon Digital",         "crypto_equity"),
     "RIOT":      ("Riot Platforms",           "crypto_equity"),
+    "IGV":       ("iShares Tech-Software ETF", "equity_index"),
 }
 
 
