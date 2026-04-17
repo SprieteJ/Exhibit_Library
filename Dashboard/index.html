@@ -1577,7 +1577,7 @@ function buildRightPanel(tab, key) {
 
   if (!isBtcView && !isRRG) {
     // Long-history charts default to All; others default to 6M
-    const ALL_HISTORY_KEYS = new Set(['btc-oi','btc-dominance','btc-dom-ma','btc-gold-ratio','btc-realvol','btc-drawdown',
+    const ALL_HISTORY_KEYS = new Set(['mac-sharpe','btc-oi','btc-dominance','btc-dom-ma','btc-gold-ratio','btc-realvol','btc-drawdown',
       'btc-funding','btc-funding-delta','alt-altseason','mac-stablecoin','data-status','sec-dominance']);
     const defaultDays = ALL_HISTORY_KEYS.has(key) ? 0 : 180;
     initDates('rp-from', 'rp-to', defaultDays);
