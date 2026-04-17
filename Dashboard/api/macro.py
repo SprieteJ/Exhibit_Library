@@ -3,7 +3,7 @@ api/macro.py — macro asset price endpoint
 """
 import math
 from datetime import datetime, timedelta
-from api.shared import get_conn, rebase_series, macro_table, ts_cast, macro_crypto_comparison, rolling_corr, SECTORS, fetch_sector_index
+from api.shared import get_conn, rebase_series, macro_table, ts_cast, rolling_corr, SECTORS, fetch_sector_index
 import psycopg2.extras
 
 
@@ -189,18 +189,44 @@ def handle_macro_dxy_btc(params):
 
 
 
-
 def handle_macro_igv_btc(params):
-    """IGV (US Software ETF) + BTC daily + rolling 30d correlation. Forward-filled + warmup."""
+    """IGV (US Software ETF) + BTC daily + rolling 30d correlation."""
     date_from = params.get("from",   ["2022-01-01"])[0]
     date_to   = params.get("to",     ["2099-01-01"])[0]
     window    = int(params.get("window", ["30"])[0])
     conn = get_conn()
     cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    dates, igv_vals, btc_vals, corr = macro_crypto_comparison(cur, 'IGV', 'BTC', date_from, date_to, window)
+    cur.execute("""
+        SELECT timestamp::date as date, close
+        FROM macro_daily
+        WHERE ticker = 'IGV'
+          AND timestamp >= %s AND timestamp <= %s
+          AND close > 0
+        ORDER BY timestamp
+    """, (date_from, date_to))
+    igv_rows = cur.fetchall()
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC'
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY timestamp
+    """, (date_from, date_to))
+    btc_rows = cur.fetchall()
     conn.close()
-    return {"dates": dates, "igv": igv_vals, "btc": btc_vals, "correlation": corr}
-
+    igv_map = {str(r["date"]): float(r["close"]) for r in igv_rows}
+    btc_map = {str(r["date"]): float(r["price_usd"]) for r in btc_rows}
+    all_dates = sorted(set(list(igv_map.keys()) + list(btc_map.keys())))
+    # Forward-fill IGV for weekends
+    igv_vals, last_igv = [], None
+    for d in all_dates:
+        v = igv_map.get(d)
+        if v is not None: last_igv = v
+        igv_vals.append(last_igv)
+    btc_vals = [btc_map.get(d) for d in all_dates]
+    corr = rolling_corr(igv_vals, btc_vals, window)
+    return {"dates": all_dates, "igv": igv_vals, "btc": btc_vals, "correlation": corr}
 
 def handle_macro_risk(params):
     """Composite risk-on/off score: VIX + DXY (+ HYG/LQD if available)."""
