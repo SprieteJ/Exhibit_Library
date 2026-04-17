@@ -667,6 +667,7 @@ const TABS = {
         { key:"mac-matrix",       label:"Macro vs crypto correlation",  sub:"30d Pearson correlation heatmap.", src:"Yahoo Finance + CoinGecko Pro" },
         { key:"mac-btc-corr",     label:"Correlation against BTC", sub:"Rolling correlation of macro assets vs BTC using log daily returns. Adjustable window.", src:"CoinGecko Pro + Yahoo Finance" },
         { key:"mac-dxy-btc",      label:"DXY vs BTC",                  sub:"DXY and BTC with rolling correlation.", src:"Yahoo Finance + CoinGecko Pro" },
+        { key:"mac-igv-btc",      label:"US Software vs BTC",           sub:"IGV (iShares Tech-Software ETF) vs BTC with rolling correlation.", src:"Yahoo Finance + CoinGecko Pro" },
       ]},
       { label: "Risk Regime", children: [
         { key:"mac-risk",         label:"Risk-on / Risk-off indicator", sub:"Composite score from VIX + credit spreads + DXY.", src:"Yahoo Finance" },
@@ -944,7 +945,7 @@ async function selectView(tab, key) {
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe','btc-landing',
     'btc-bull','btc-realvol','btc-risk-adj','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-igv-btc','mac-risk','mac-real-yields','mac-stablecoin',
   ]);
   if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
@@ -978,7 +979,7 @@ const NEW_AUTO_KEYS = new Set([
   'btc-overview','eth-overview','alt-overview','bas-overview','cc-matrix','sec-overview','sec-overview','cc-bitcoin','cc-themes','cc-altcoins','cc-macro','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe','btc-landing',
   'btc-bull','btc-realvol','btc-risk-adj','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin',
+  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-igv-btc','mac-risk','mac-real-yields','mac-stablecoin',
 ]);
 const SELECTION_KEYS = new Set([
   'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
@@ -1645,6 +1646,7 @@ async function fetchCurrent() {
       case 'mac-sharpe':     await fetchMacroSharpe(from, to); break;
       case 'mac-matrix':     await fetchMacroMatrix(from, to); break;
       case 'mac-dxy-btc':    await fetchMacroDxyBtc(from, to); break;
+      case 'mac-igv-btc':    await fetchMacroIgvBtc(from, to); break;
       case 'mac-risk':       await fetchMacroRisk(from, to); break;
       case 'mac-real-yields': await fetchMacroRealYields(from, to); break;
       case 'mac-stablecoin': await fetchMacroStablecoin(from, to); break;
@@ -5538,6 +5540,51 @@ async function fetchMacroMatrix(from, to) {
 }
 
 // ── Macro: DXY vs BTC ─────────────────────────────────────────────────────────
+
+async function fetchMacroIgvBtc(from, to) {
+  const _v = _navVersion;
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-igv-btc?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
+    if (_v !== _navVersion) return;
+
+    // Rebase both to 100 at first overlapping date
+    const igvFirst = data.igv.findIndex(v => v !== null);
+    const btcFirst = data.btc.findIndex(v => v !== null);
+    const startIdx = Math.max(igvFirst, btcFirst);
+    const igvBase = data.igv[startIdx];
+    const btcBase = data.btc[startIdx];
+    const igvRebased = data.igv.map(v => v !== null ? v / igvBase * 100 : null);
+    const btcRebased = data.btc.map(v => v !== null ? v / btcBase * 100 : null);
+
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'IGV (US Software)', data: igvRebased, borderColor: '#2471CC', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, yAxisID: 'y', tension: 0.1 },
+        { label: 'BTC', data: btcRebased, borderColor: '#F7931A', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, yAxisID: 'y', tension: 0.1 },
+        { label: '30d Correlation', data: data.correlation, borderColor: darkMode ? '#746BE6' : '#5B4FCF', backgroundColor: 'transparent', borderWidth: 1, pointRadius: 0, yAxisID: 'y1', borderDash: [4,3], tension: 0.3 },
+      ]
+    }, {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { usePointStyle: true, pointStyle: 'line', padding: 16, font: { size: 11 }, color: darkMode ? '#AAA' : '#555' } },
+        tooltip: { callbacks: {
+          label: function(ctx) {
+            if (ctx.datasetIndex <= 1) return ctx.dataset.label + ': ' + (ctx.parsed.y?.toFixed(1) || '—');
+            return 'Correlation: ' + (ctx.parsed.y?.toFixed(3) || '—');
+          }
+        }}
+      },
+      scales: {
+        x: { ticks: { maxTicksToAuto: 10, font: { size: 10 }, color: darkMode ? '#888' : '#999' }, grid: { color: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)' } },
+        y: { position: 'left', title: { display: true, text: 'Rebased (100)', font: { size: 11 }, color: darkMode ? '#888' : '#999' }, ticks: { font: { size: 10 }, color: darkMode ? '#888' : '#999' }, grid: { color: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)' } },
+        y1: { position: 'right', min: -1, max: 1, title: { display: true, text: 'Correlation', font: { size: 11 }, color: darkMode ? '#888' : '#999' }, ticks: { font: { size: 10 }, color: darkMode ? '#888' : '#999' }, grid: { drawOnChartArea: false } },
+      }
+    });
+    setTitle('US Software (IGV) vs BTC', 'Rebased price comparison + 30d rolling correlation');
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
+}
 async function fetchMacroDxyBtc(from, to) {
   spinOn();
   try {

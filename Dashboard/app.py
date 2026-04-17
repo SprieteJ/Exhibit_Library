@@ -132,6 +132,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/alt-drawdown-ts":    self.send_json(handle_alt_drawdown_ts(params))
 
             elif p == "/api/macro-matrix":      self.send_json(handle_macro_matrix(params))
+            elif p == "/api/macro-igv-btc":     self.send_json(handle_macro_igv_btc(params))
             elif p == "/api/macro-dxy-btc":     self.send_json(handle_macro_dxy_btc(params))
             elif p == "/api/macro-risk":        self.send_json(handle_macro_risk(params))
             elif p == "/api/macro-real-yields": self.send_json(handle_macro_real_yields(params))

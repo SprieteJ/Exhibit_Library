@@ -188,6 +188,41 @@ def handle_macro_dxy_btc(params):
     return {"dates": all_dates, "dxy": dxy_vals, "btc": btc_vals, "correlation": corr}
 
 
+
+
+def handle_macro_igv_btc(params):
+    """IGV (US Software ETF) + BTC daily + rolling 30d correlation."""
+    date_from = params.get("from",   ["2022-01-01"])[0]
+    date_to   = params.get("to",     ["2099-01-01"])[0]
+    window    = int(params.get("window", ["30"])[0])
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT timestamp::date as date, close
+        FROM macro_daily
+        WHERE ticker = 'IGV'
+          AND timestamp >= %s AND timestamp <= %s
+          AND close > 0
+        ORDER BY timestamp
+    """, (date_from, date_to))
+    igv_rows = cur.fetchall()
+    cur.execute("""
+        SELECT timestamp::date as date, price_usd
+        FROM price_daily
+        WHERE symbol = 'BTC'
+          AND timestamp >= %s AND timestamp <= %s
+          AND price_usd > 0
+        ORDER BY timestamp
+    """, (date_from, date_to))
+    btc_rows = cur.fetchall()
+    conn.close()
+    igv_map = {str(r['date']): float(r['close']) for r in igv_rows}
+    btc_map = {str(r['date']): float(r['price_usd']) for r in btc_rows}
+    all_dates = sorted(set(list(igv_map.keys()) + list(btc_map.keys())))
+    igv_vals = [igv_map.get(d) for d in all_dates]
+    btc_vals = [btc_map.get(d) for d in all_dates]
+    corr     = rolling_corr(igv_vals, btc_vals, window)
+    return {"dates": all_dates, "igv": igv_vals, "btc": btc_vals, "correlation": corr}
 def handle_macro_risk(params):
     """Composite risk-on/off score: VIX + DXY (+ HYG/LQD if available)."""
     date_from = params.get("from", ["2022-01-01"])[0]
