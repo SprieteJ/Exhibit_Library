@@ -3,7 +3,7 @@ api/macro.py — macro asset price endpoint
 """
 import math
 from datetime import datetime, timedelta
-from api.shared import get_conn, rebase_series, macro_table, ts_cast, macro_crypto_comparison, forward_fill, rolling_corr, macro_crypto_comparison, forward_fill, rolling_corr, rolling_corr, SECTORS, fetch_sector_index
+from api.shared import get_conn, rebase_series, macro_table, ts_cast, macro_crypto_comparison, forward_fill, rolling_corr, macro_crypto_comparison, forward_fill, rolling_corr, macro_crypto_comparison, forward_fill, rolling_corr, rolling_corr, SECTORS, fetch_sector_index
 import psycopg2.extras
 
 

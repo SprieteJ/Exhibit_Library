@@ -500,6 +500,7 @@ const TABS = {
     label: "Bitcoin",
     groups: [
       { label: "Overview", children: [
+        { key:"btc-landing", label:"Bitcoin dashboard", sub:"Visual overview of all Bitcoin charts, grouped by category.", src:"Wintermute OTC" },
         { key:"btc-overview", label:"Signal overview", sub:"Active control center rules for Bitcoin.", src:"Wintermute OTC" },
       ]},
       { label: "Price Performance", children: [
@@ -666,6 +667,7 @@ const TABS = {
         { key:"mac-matrix",       label:"Macro vs crypto correlation",  sub:"30d Pearson correlation heatmap.", src:"Yahoo Finance + CoinGecko Pro" },
         { key:"mac-btc-corr",     label:"Correlation against BTC", sub:"Rolling correlation of macro assets vs BTC using log daily returns. Adjustable window.", src:"CoinGecko Pro + Yahoo Finance" },
         { key:"mac-dxy-btc",      label:"DXY vs BTC",                  sub:"DXY and BTC with rolling correlation.", src:"Yahoo Finance + CoinGecko Pro" },
+        { key:"mac-igv-btc",      label:"US Software vs BTC",           sub:"IGV (iShares Tech-Software ETF) vs BTC with rolling correlation.", src:"Yahoo Finance + CoinGecko Pro" },
       ]},
       { label: "Risk Regime", children: [
         { key:"mac-risk",         label:"Risk-on / Risk-off indicator", sub:"Composite score from VIX + credit spreads + DXY.", src:"Yahoo Finance" },
@@ -1219,7 +1221,7 @@ async function selectView(tab, key) {
     'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
     'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
     'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status',
+    'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status','btc-landing','mac-igv-btc',
   ]);
   if (AUTO_VIEWS.has(key)) {
     document.getElementById('chart-empty').style.display = 'none';
@@ -1253,7 +1255,7 @@ const NEW_AUTO_KEYS = new Set([
   'btc-overview','eth-overview','alt-overview','bas-overview','cc-regime','cc-matrix','sec-overview','sec-overview','sec-dominance','sec-xheatmap','sec-cumulative','sec-sharpe',
   'btc-bull','btc-realvol','btc-drawdown','btc-gold-ratio','btc-dominance','btc-dom-ma','btc-funding','btc-oi','btc-funding-delta',
   'btc-ma','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','eth-ma','eth-ma-combined','eth-ma-gap','eth-200d-dev','eth-drawdown','eth-mcap','eth-btc-ratio','am-mcap','am-mcap-gap','am-mcap-dev','am-dominance','am-rel-share','am-btc-ratio','am-intracorr','btc-ma-gap','btc-200w-floor','btc-200d-dev','btc-pi-cycle','btc-mcap','btc-rv-iv','cm-total-mcap','alt-altseason','alt-beta','alt-ath-drawdown','alt-drawdown-ts',
-  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status',
+  'mac-sharpe','etf-net-flows','etf-daily-bar','etf-weekly-bar','etf-total-aum','mac-btc-corr','mac-matrix','mac-dxy-btc','mac-risk','mac-real-yields','mac-stablecoin','data-status','btc-landing','mac-igv-btc',
 ]);
 const SELECTION_KEYS = new Set([
   'sec-vol','sec-drawdown','sec-breadth','sec-funding','sec-oi',
@@ -1262,8 +1264,8 @@ const SELECTION_KEYS = new Set([
 
 function buildRightPanel(tab, key) {
   const rp          = document.getElementById('right-panel');
-  // Hide right panel entirely for Control Center views
-  if (key && key.startsWith('cc-')) {
+  // Hide right panel entirely for Control Center views, landing pages, data tab
+  if (key && (key.startsWith('cc-') || key === 'btc-landing' || key === 'data-status')) {
     rp.innerHTML = '';
     rp.style.display = 'none';
     return;
@@ -1875,6 +1877,7 @@ async function fetchCurrent() {
       case 'btc-funding-delta': await fetchBtcFundingDelta(from, to); break;
       case 'sec-overview': await fetchSectorOverview(); break;
       case 'sec-overview': await fetchSectorOverview(); break;
+      case 'btc-landing':  await fetchBtcLanding(); break;
       case 'btc-overview': await fetchCategoryOverview('Bitcoin'); break;
       case 'eth-overview': await fetchCategoryOverview('Ethereum'); break;
       case 'alt-overview': await fetchCategoryOverview('Altcoins'); break;
@@ -1915,6 +1918,7 @@ async function fetchCurrent() {
       case 'mac-sharpe':     await fetchMacroSharpe(from, to); break;
       case 'mac-matrix':     await fetchMacroMatrix(from, to); break;
       case 'mac-dxy-btc':    await fetchMacroDxyBtc(from, to); break;
+      case 'mac-igv-btc':    await fetchMacroIgvBtc(from, to); break;
       case 'mac-risk':       await fetchMacroRisk(from, to); break;
       case 'mac-real-yields': await fetchMacroRealYields(from, to); break;
       case 'mac-stablecoin': await fetchMacroStablecoin(from, to); break;
@@ -4366,6 +4370,121 @@ async function fetchAltBeta(to) {
 // ── Category Overview (embedded CC rules per tab) ─────────────────────────────
 let _ccDataCache = null;
 
+async function fetchBtcLanding() {
+  spinOn();
+  try {
+    if (chart) { chart.destroy(); chart = null; }
+    var canvas = document.getElementById('main-chart');
+    canvas.style.display = 'none';
+    var existing = document.getElementById('cc-matrix-container');
+    if (existing) existing.remove();
+
+    var container = document.createElement('div');
+    container.id = 'cc-matrix-container';
+    container.style.cssText = 'width:100%;height:100%;overflow-y:auto;padding:20px 24px;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:5;';
+
+    var borderCol = darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)';
+    var cardBg = darkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)';
+    var hoverBg = darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+
+    var categories = [
+      { title: 'Price Performance', icon: '\u{1F4C8}', color: '#00D64A',
+        charts: [
+          { key: 'btc-rolling', name: 'Rolling return', desc: 'N-day rolling return (%)' },
+          { key: 'btc-drawdown', name: 'Drawdown from ATH', desc: 'Continuous drawdown from peak' },
+        ]},
+      { title: 'Moving Averages', icon: '\u301C\uFE0F', color: '#2471CC',
+        charts: [
+          { key: 'btc-ma', name: '50d & 200d MA', desc: 'Price with moving averages (log)' },
+          { key: 'btc-ma-gap', name: '50d/200d gap', desc: 'Golden/death cross proximity' },
+          { key: 'btc-200w-floor', name: '200-week MA', desc: 'The macro floor' },
+          { key: 'btc-200d-dev', name: '200-week deviation', desc: '% deviation from 200w MA' },
+          { key: 'btc-pi-cycle', name: 'Pi cycle top', desc: '111d vs 2x350d MA' },
+        ]},
+      { title: 'Market Cap', icon: '\u{1F4B0}', color: '#F7931A',
+        charts: [
+          { key: 'btc-mcap', name: 'Total market cap', desc: 'BTC mcap with milestones' },
+          { key: 'btc-dominance', name: 'Market dominance', desc: 'BTC as % of total crypto' },
+        ]},
+      { title: 'BTC Dominance', icon: '\u{1F451}', color: '#FFB800',
+        charts: [
+          { key: 'btc-dom-ma', name: '50d & 200d MA', desc: 'Dominance with moving averages' },
+        ]},
+      { title: 'Volatility', icon: '\u26A1', color: '#746BE6',
+        charts: [
+          { key: 'btc-realvol', name: 'Realised volatility', desc: '30d, 90d, 180d rolling vol' },
+          { key: 'btc-rv-iv', name: 'RV vs IV (DVOL)', desc: 'Realized vs implied vol' },
+        ]},
+      { title: 'Bitcoin vs Gold', icon: '\u{1F947}', color: '#DB33CB',
+        charts: [
+          { key: 'btc-gold', name: 'BTC vs Gold', desc: 'Price overlay comparison' },
+          { key: 'btc-gold-ratio', name: 'BTC/Gold ratio', desc: 'BTC priced in gold' },
+        ]},
+      { title: 'Derivatives', icon: '\u{1F4CA}', color: '#EC5B5B',
+        charts: [
+          { key: 'btc-funding', name: 'Funding rate', desc: '8h perpetual funding' },
+          { key: 'btc-oi', name: 'Open interest', desc: 'Total OI with price overlay' },
+          { key: 'btc-funding-delta', name: 'Funding delta', desc: '30d funding change vs price' },
+        ]},
+      { title: 'Cycle Analysis', icon: '\u{1F504}', color: '#26A17B',
+        charts: [
+          { key: 'btc-epochs', name: 'Halving epochs', desc: 'x-fold from halving price' },
+          { key: 'btc-cycles', name: 'Bear market cycles', desc: 'Indexed to peak' },
+          { key: 'btc-bull', name: 'Bull market cycles', desc: 'Indexed to trough' },
+        ]},
+    ];
+
+    var h = '';
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:16px">';
+
+    for (var ci = 0; ci < categories.length; ci++) {
+      var cat = categories[ci];
+      h += '<div style="border:1px solid ' + borderCol + ';border-radius:10px;overflow:hidden;background:' + cardBg + '">';
+      h += '<div style="padding:14px 16px 10px;border-bottom:1px solid ' + borderCol + ';display:flex;align-items:center;gap:10px">';
+      h += '<span style="font-size:18px">' + cat.icon + '</span>';
+      h += '<span style="font-size:14px;font-weight:600;color:var(--graphite)">' + cat.title + '</span>';
+      h += '<span style="margin-left:auto;font-size:11px;color:var(--muted)">' + cat.charts.length + '</span>';
+      h += '</div>';
+      h += '<div style="padding:6px 0">';
+      for (var chi = 0; chi < cat.charts.length; chi++) {
+        var ch = cat.charts[chi];
+        h += '<div class="btc-landing-item" data-key="' + ch.key + '" style="padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.1s">';
+        h += '<div style="width:3px;height:24px;border-radius:2px;background:' + cat.color + ';opacity:0.4;flex-shrink:0"></div>';
+        h += '<div style="flex:1;min-width:0">';
+        h += '<div style="font-size:13px;font-weight:500;color:var(--graphite);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + ch.name + '</div>';
+        h += '<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + ch.desc + '</div>';
+        h += '</div>';
+        h += '<svg width="14" height="14" viewBox="0 0 14 14" style="flex-shrink:0;opacity:0.3"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        h += '</div>';
+      }
+      h += '</div></div>';
+    }
+    h += '</div>';
+
+    container.innerHTML = h;
+    var items = container.querySelectorAll('.btc-landing-item');
+    for (var ii = 0; ii < items.length; ii++) {
+      (function(item) {
+        item.addEventListener('mouseenter', function() { item.style.background = hoverBg; });
+        item.addEventListener('mouseleave', function() { item.style.background = ''; });
+        item.addEventListener('click', function() {
+          var chartKey = item.getAttribute('data-key');
+          selectView('bitcoin', chartKey);
+        });
+      })(items[ii]);
+    }
+
+    var chartArea = document.getElementById('chart-area') || canvas.parentElement;
+    chartArea.appendChild(container);
+    var emptyEl = document.getElementById('chart-empty');
+    if (emptyEl) emptyEl.style.display = 'none';
+    var perfRow = document.getElementById('perf-row');
+    if (perfRow) perfRow.innerHTML = '';
+    setTitle('Bitcoin', '8 categories \u00b7 ' + categories.reduce(function(s,c){return s+c.charts.length},0) + ' charts');
+    document.getElementById('chart-spin').classList.remove('on');
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
+}
+
 async function fetchCategoryOverview(category) {
   const _v = _navVersion;
   spinOn();
@@ -6318,6 +6437,48 @@ async function fetchMacroMatrix(from, to) {
 }
 
 // ── Macro: DXY vs BTC ─────────────────────────────────────────────────────────
+async function fetchMacroIgvBtc(from, to) {
+  const _v = _navVersion;
+  spinOn();
+  try {
+    const data = await fetch(`/api/macro-igv-btc?from=${from}&to=${to}`, {signal: _navAbort?.signal}).then(r=>r.json());
+    if (_v !== _navVersion) return;
+    const igvFirst = data.igv.findIndex(v => v !== null);
+    const btcFirst = data.btc.findIndex(v => v !== null);
+    const startIdx = Math.max(igvFirst, btcFirst);
+    const igvBase = data.igv[startIdx];
+    const btcBase = data.btc[startIdx];
+    const igvRebased = data.igv.map(v => v !== null ? v / igvBase * 100 : null);
+    const btcRebased = data.btc.map(v => v !== null ? v / btcBase * 100 : null);
+    mkChart('line', {
+      labels: data.dates,
+      datasets: [
+        { label: 'IGV (US Software)', data: igvRebased, borderColor: '#2471CC', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, yAxisID: 'y', tension: 0.1 },
+        { label: 'BTC', data: btcRebased, borderColor: '#F7931A', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, yAxisID: 'y', tension: 0.1 },
+        { label: '30d Correlation', data: data.correlation, borderColor: darkMode ? '#746BE6' : '#5B4FCF', backgroundColor: 'transparent', borderWidth: 1, pointRadius: 0, yAxisID: 'y1', borderDash: [4,3], tension: 0.3 },
+      ]
+    }, {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { usePointStyle: true, pointStyle: 'line', padding: 16, font: { size: 11 }, color: darkMode ? '#AAA' : '#555' } },
+        tooltip: { callbacks: {
+          label: function(ctx) {
+            if (ctx.datasetIndex <= 1) return ctx.dataset.label + ': ' + (ctx.parsed.y?.toFixed(1) || '\u2014');
+            return 'Correlation: ' + (ctx.parsed.y?.toFixed(3) || '\u2014');
+          }
+        }}
+      },
+      scales: {
+        x: { ticks: { maxTicksToAuto: 10, font: { size: 10 }, color: darkMode ? '#888' : '#999' }, grid: { color: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)' } },
+        y: { position: 'left', title: { display: true, text: 'Rebased (100)', font: { size: 11 }, color: darkMode ? '#888' : '#999' }, ticks: { font: { size: 10 }, color: darkMode ? '#888' : '#999' }, grid: { color: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)' } },
+        y1: { position: 'right', min: -1, max: 1, title: { display: true, text: 'Correlation', font: { size: 11 }, color: darkMode ? '#888' : '#999' }, ticks: { font: { size: 10 }, color: darkMode ? '#888' : '#999' }, grid: { drawOnChartArea: false } },
+      }
+    });
+    setTitle('US Software (IGV) vs BTC', 'Rebased price comparison + 30d rolling correlation');
+  } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
+}
+
 async function fetchMacroDxyBtc(from, to) {
   spinOn();
   try {
