@@ -162,6 +162,8 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/macro-btc-corr":    self.send_json(handle_macro_btc_corr(params))
             elif p == "/api/rule-history":       self.send_json(handle_rule_history(params))
 
+            elif p.startswith("/js/"):
+                self.send_file(BASE_DIR / p[1:], cache_secs=0)
             elif p.startswith("/static/"):
                 self.send_file(BASE_DIR / p[8:], cache_secs=86400)
             else:
