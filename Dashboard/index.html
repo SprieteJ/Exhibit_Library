@@ -1353,7 +1353,7 @@ function buildRightPanel(tab, key) {
   const isNewAuto   = NEW_AUTO_KEYS.has(key);
   const isSelChart  = SELECTION_KEYS.has(key);
   const needsSearch = tab !== 'baskets' && !isBtcView && key !== 'alt-scatter' && key !== 'btc-gold' && key !== 'btc-rolling' && !isNewAuto;
-  const needsWindow = key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble' || key === 'alt-scatter' || key === 'btc-rolling';
+  const needsWindow = key === 'mac-sharpe' || key === 'sec-intra' || key === 'sec-vs' || key === 'sec-mom' || key === 'sec-zscore' || key === 'ana-bubble' || key === 'alt-scatter' || key === 'btc-rolling';
   const needsVersus = key === 'sec-vs';
   const isAutoView  = isBubble || isRRG || isBtcView || key === 'alt-scatter' || key === 'btc-gold' || key === 'btc-rolling' || isNewAuto;
   const showList    = !isAutoView || isSelChart;
@@ -1509,15 +1509,31 @@ function buildRightPanel(tab, key) {
 
   // Rolling window
   if (needsWindow) {
-    const winDefault = key === 'btc-rolling' ? 7 : 30;
-    const winMin     = key === 'btc-rolling' ? 1 : 7;
-    html += `<div class="rp-block">
-      <div class="rp-label">Rolling window</div>
-      <div class="window-row">
-        <input type="number" id="rp-window" value="${winDefault}" min="${winMin}" max="365">
-        <label>days</label>
-      </div>
-    </div>`;
+    if (key === 'mac-sharpe' || key === 'mac-btc-corr') {
+      const winDefault = key === 'mac-sharpe' ? '180' : '90';
+      html += `<div class="rp-block">
+        <div class="rp-label">Sharpe Window</div>
+        <div class="presets">
+          <button class="win-preset preset ${winDefault==='30'?'active':''}" data-win="30">1M</button>
+          <button class="win-preset preset ${winDefault==='90'?'active':''}" data-win="90">3M</button>
+          <button class="win-preset preset ${winDefault==='180'?'active':''}" data-win="180">6M</button>
+          <button class="win-preset preset ${winDefault==='365'?'active':''}" data-win="365">1Y</button>
+          <button class="win-preset preset ${winDefault==='730'?'active':''}" data-win="730">2Y</button>
+          <button class="win-preset preset ${winDefault==='1460'?'active':''}" data-win="1460">4Y</button>
+        </div>
+        <input type="hidden" id="rp-window" value="${winDefault}">
+      </div>`;
+    } else {
+      const winDefault = key === 'btc-rolling' ? 7 : 30;
+      const winMin     = key === 'btc-rolling' ? 1 : 7;
+      html += `<div class="rp-block">
+        <div class="rp-label">Rolling window</div>
+        <div class="window-row">
+          <input type="number" id="rp-window" value="${winDefault}" min="${winMin}" max="365">
+          <label>days</label>
+        </div>
+      </div>`;
+    }
   }
 
   // TopN selector for alt-scatter

@@ -1,3 +1,6 @@
+// Track which datasets are hidden across re-renders
+let _sharpeHidden = {};
+
 async function fetchMacroSharpe(from, to) {
   spinOn();
   try {
@@ -12,7 +15,13 @@ async function fetchMacroSharpe(from, to) {
       'TLT': '#ED9B9B', 'GLD': '#E1C87E', 'BNO': '#9EA4A0',
     };
 
-    // Build common date axis
+    // Save current hidden state before destroying chart
+    if (chart && chart.data?.datasets) {
+      chart.data.datasets.forEach((ds, i) => {
+        _sharpeHidden[ds.label] = !chart.isDatasetVisible(i);
+      });
+    }
+
     let allDates = new Set();
     for (const a of Object.values(data.assets)) a.dates.forEach(d => allDates.add(d));
     allDates = [...allDates].sort();
@@ -30,6 +39,7 @@ async function fetchMacroSharpe(from, to) {
         pointRadius: 0,
         tension: 0.1,
         spanGaps: true,
+        hidden: _sharpeHidden[a.label] || false,
       });
     }
 
@@ -44,16 +54,13 @@ async function fetchMacroSharpe(from, to) {
       },
     });
 
-    // Summary bar below the chart
     const summaryDiv = document.getElementById('perf-row');
     if (summaryDiv) {
       const sorted = Object.entries(data.assets)
         .map(([sym, a]) => ({ sym, label: a.label, current: a.current, color: COLORS[sym] || '#888' }))
         .filter(a => a.current != null)
         .sort((a, b) => b.current - a.current);
-
       summaryDiv.innerHTML = sorted.map(a => {
-        const color = a.current > 0 ? '#00D64A' : '#EC5B5B';
         return `<div class="perf-item"><span style="color:${a.color};font-weight:600">${a.label}</span> <span class="${a.current > 0 ? 'pos' : 'neg'}">${a.current > 0 ? '+' : ''}${a.current.toFixed(2)}</span></div>`;
       }).join('');
     }
@@ -62,6 +69,3 @@ async function fetchMacroSharpe(from, to) {
     setTitle('Rolling Sharpe Ratio (' + (winLabels[window] || window + 'd') + ')', 'Source: CoinGecko + Yahoo Finance · annualised, risk-free = 0');
   } catch(e) { if (e.name === 'AbortError') return; showErr(e); }
 }
-
-
-
