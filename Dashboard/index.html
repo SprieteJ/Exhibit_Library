@@ -4131,7 +4131,7 @@ async function fetchBtcLanding() {
               if (grp.children) {
                 for (var ci2 = 0; ci2 < grp.children.length; ci2++) {
                   if (grp.children[ci2].key === chartKey) {
-                    selectView(grp.children[ci2]);
+                    selectView('bitcoin', grp.children[ci2].key);
                     return;
                   }
                 }
